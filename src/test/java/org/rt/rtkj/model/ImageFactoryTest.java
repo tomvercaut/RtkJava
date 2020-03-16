@@ -1,0 +1,72 @@
+package org.rt.rtkj.model;
+
+import org.apache.commons.math3.util.Precision;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.io.DicomInputStream;
+import org.junit.jupiter.api.Test;
+import org.rt.rtkj.dicom.DicomException;
+import org.rt.rtkj.dicom.Modality;
+import org.rt.rtkj.dicom.PixelRepresentation;
+import org.rt.rtkj.dicom.Reader;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.ByteOrder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class ImageFactoryTest {
+
+    private static Path getResourceDirectory() {
+        return Paths.get("src", "test", "resources");
+    }
+
+    @Test
+    void buildCT() throws IOException, DicomException {
+        var resourceDirectory = getResourceDirectory();
+        var file = Paths.get(resourceDirectory.toFile().getAbsolutePath(), "dicom",
+                "carpet", "ct3",
+                "CT1.2.392.200036.9116.2.6.1.16.1613471639.1540891557.581701.dcm").toFile();
+        assertTrue(file.exists());
+        assertTrue(file.isFile());
+        DicomInputStream dis = new DicomInputStream(new BufferedInputStream(new FileInputStream(file)));
+        Attributes meta = dis.readFileMetaInformation();
+        var bo = (dis.bigEndian()) ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
+        Attributes dataset = dis.readDataset(-1, -1);
+        var optCT = Reader.ct(meta, dataset, bo);
+        assertTrue(optCT.isPresent());
+        var ct = optCT.get();
+
+        String propertyTmpDir = "java.io.tmpdir";
+        var optImage = ImageFactory.build(ct);
+        assertTrue(optImage.isPresent());
+        var image = optImage.get();
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891557.581701", image.getSOPInstanceUID());
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891246.945610", image.getFrameOfReferenceUID());
+        assertEquals(Modality.CT, image.getModality());
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891206.523047", image.getStudyInstanceUID());
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891527.871910", image.getSeriesInstanceUID());
+        assertEquals(6, image.getImageOrientationPatient().length);
+        assertTrue(Precision.equals(1.00000, image.getImageOrientationPatient()[0], Precision.EPSILON));
+        assertTrue(Precision.equals(0.00000, image.getImageOrientationPatient()[1], Precision.EPSILON));
+        assertTrue(Precision.equals(0.00000, image.getImageOrientationPatient()[2], Precision.EPSILON));
+        assertTrue(Precision.equals(0.00000, image.getImageOrientationPatient()[3], Precision.EPSILON));
+        assertTrue(Precision.equals(1.00000, image.getImageOrientationPatient()[4], Precision.EPSILON));
+        assertTrue(Precision.equals(0.00000, image.getImageOrientationPatient()[5], Precision.EPSILON));
+        assertEquals(3, image.getImagePositionPatient().length);
+        assertTrue(Precision.equals(-201.953000, image.getImagePositionPatient()[0], Precision.EPSILON));
+        assertTrue(Precision.equals(-201.953100, image.getImagePositionPatient()[1], Precision.EPSILON));
+        assertTrue(Precision.equals(46.000000, image.getImagePositionPatient()[2], Precision.EPSILON));
+        assertEquals(2, image.getPixelSpacing().length);
+        assertTrue(Precision.equals(0.788, image.getPixelSpacing()[0], Precision.EPSILON));
+        assertTrue(Precision.equals(0.788, image.getPixelSpacing()[1], Precision.EPSILON));
+        assertTrue(Precision.equals(0, image.getRescaleIntercept()));
+        assertTrue(Precision.equals(1, image.getRescaleSlope()));
+        assertEquals(PixelRepresentation.TWO_COMPLEMENT, image.getPixelRepresentation());
+        assertEquals(16, image.getBitsAllocated());
+    }
+}

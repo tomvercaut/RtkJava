@@ -205,10 +205,28 @@ public class Reader {
         return Optional.of(item);
     }
 
+    private static TransformationMatrixType frameOfReferenceTransformationMatrixType(Attributes attr) {
+        if (attr == null) return TransformationMatrixType.NONE;
+        if (attr.contains(Tag.FrameOfReferenceTransformationMatrixType)) {
+            var s = attr.getString(Tag.FrameOfReferenceTransformationMatrixType);
+            switch (s) {
+                case "RIGID":
+                    return TransformationMatrixType.RIGID;
+                case "RIGID_SCALE":
+                    return TransformationMatrixType.RIGID_SCALE;
+                case "AFFINE":
+                    return TransformationMatrixType.AFFINE;
+                default:
+                    return TransformationMatrixType.NONE;
+            }
+        }
+        return TransformationMatrixType.NONE;
+    }
+
     private static Optional<MatrixItem> matrix(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new MatrixItem();
-        item.setFrameOfReferenceTransformationMatrixType(attr.getString(Tag.FrameOfReferenceTransformationMatrixType, ""));
+        item.setFrameOfReferenceTransformationMatrixType(frameOfReferenceTransformationMatrixType(attr));
         item.setFrameOfReferenceTransformationMatrix(attr.getDoubles(Tag.FrameOfReferenceTransformationMatrix));
         return Optional.of(item);
     }

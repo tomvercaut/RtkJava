@@ -111,7 +111,7 @@ public class SpatialRegistrationTest {
             var matrixSequence = matrixRegistrationSequence.get(0).getMatrixSequence();
             assertEquals(1, matrixSequence.size());
             var matrix = matrixSequence.get(0);
-            assertEquals("RIGID", matrix.getFrameOfReferenceTransformationMatrixType());
+            assertEquals(TransformationMatrixType.RIGID, matrix.getFrameOfReferenceTransformationMatrixType());
             double exp[] = new double[]{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
             double actual[] = matrix.getFrameOfReferenceTransformationMatrix();
             assertEquals(exp.length, actual.length);
@@ -136,7 +136,7 @@ public class SpatialRegistrationTest {
             var matrixSequence = matrixRegistrationSequence.get(0).getMatrixSequence();
             assertEquals(1, matrixSequence.size());
             var matrix = matrixSequence.get(0);
-            assertEquals("RIGID", matrix.getFrameOfReferenceTransformationMatrixType());
+            assertEquals(TransformationMatrixType.RIGID, matrix.getFrameOfReferenceTransformationMatrixType());
             double exp[] = new double[]{1, 0, 0, -76.89132, 0, 1, 0, -40.52152, 0, 0, 1, -40.24639, 0, 0, 0, 1};
             double actual[] = matrix.getFrameOfReferenceTransformationMatrix();
             assertEquals(exp.length, actual.length);

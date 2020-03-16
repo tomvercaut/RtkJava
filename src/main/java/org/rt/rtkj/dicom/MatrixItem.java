@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class MatrixItem {
-    private String frameOfReferenceTransformationMatrixType;
+    private TransformationMatrixType frameOfReferenceTransformationMatrixType;
     private double[] frameOfReferenceTransformationMatrix;
 }

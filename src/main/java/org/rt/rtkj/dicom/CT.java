@@ -82,7 +82,7 @@ public class CT extends MetaHeader implements DicomImage<Long> {
     private PhotometricInterpretation photometricInterpretation;
     private int rows;
     private int columns;
-    private double[] pixelSpacing;
+    private double[] pixelSpacing; // 0: row spacing / 1: column spacing
     private int bitsAllocated;
     private int bitsStored;
     private int highBit;

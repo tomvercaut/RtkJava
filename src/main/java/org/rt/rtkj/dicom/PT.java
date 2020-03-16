@@ -78,7 +78,7 @@ public class PT extends MetaHeader implements DicomImage<Long> {
     private PhotometricInterpretation photometricInterpretation;
     private int rows;
     private int columns;
-    private double[] pixelSpacing;
+    private double[] pixelSpacing; // 0: row spacing / 1: column spacing
     private List<String> correctedImage;
     private int bitsAllocated;
     private int bitsStored;

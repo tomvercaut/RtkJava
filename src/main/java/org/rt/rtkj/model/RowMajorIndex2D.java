@@ -6,7 +6,7 @@ public class RowMajorIndex2D {
     public int rows;
     public int cols;
 
-    public Optional<Integer> offset(int r, int c) {
+    public Optional<Integer> offset(int c, int r) {
         if (r < 0 || r >= rows || c < 0 || c >= cols) return Optional.empty();
         return Optional.of(r * cols + c);
     }
