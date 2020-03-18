@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class StructureSet extends MetaHeader {
+public class RTStructureSet extends MetaHeader {
     private String SpecificCharacterSet;
     private LocalDate InstanceCreationDate;
     private LocalTime InstanceCreationTime;
@@ -47,7 +47,7 @@ public class StructureSet extends MetaHeader {
     private List<RTROIObservationsItem> rtROIObservationsSequence = new ArrayList<>();
     private String approvalStatus;
 
-    public StructureSet(MetaHeader meta) {
+    public RTStructureSet(MetaHeader meta) {
         super(meta);
     }
 }

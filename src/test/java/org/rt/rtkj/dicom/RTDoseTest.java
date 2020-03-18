@@ -5,12 +5,12 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.io.DicomInputStream;
 import org.junit.jupiter.api.Test;
+import org.rt.rtkj.ResourceFactory;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteOrder;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -19,14 +19,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class RTDoseTest {
 
-    private static Path getResourceDirectory() {
-        return Paths.get("src", "test", "resources");
-    }
-
     @Test
     public void build() throws IOException, DicomException {
-        var resourceDirectory = getResourceDirectory();
-        var file = Paths.get(resourceDirectory.toFile().getAbsolutePath(), "dicom", "rtdose.dcm").toFile();
+        var resourceDirectory = ResourceFactory.getInstance().getDicomPath();
+        var file = Paths.get(resourceDirectory.toFile().getAbsolutePath(), "rtdose.dcm").toFile();
         assertTrue(file.exists());
         assertTrue(file.isFile());
         DicomInputStream dis = new DicomInputStream(new BufferedInputStream(new FileInputStream(file)));

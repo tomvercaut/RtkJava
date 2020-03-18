@@ -4,12 +4,12 @@ import org.apache.commons.math3.util.Precision;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.io.DicomInputStream;
 import org.junit.jupiter.api.Test;
+import org.rt.rtkj.ResourceFactory;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteOrder;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -18,14 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SpatialRegistrationTest {
-    private static Path getResourceDirectory() {
-        return Paths.get("src", "test", "resources");
-    }
 
     @Test
     public void read() throws IOException, DicomException {
-        var resourceDirectory = getResourceDirectory();
-        var file = Paths.get(resourceDirectory.toFile().getAbsolutePath(), "dicom", "carpet", "ct1",
+        var resourceDirectory = ResourceFactory.getInstance().getDicomPath();
+        var file = Paths.get(resourceDirectory.toFile().getAbsolutePath(), "carpet", "ct1",
                 "REG1.2.752.243.1.1.20191009143733562.5000.74370.dcm").toFile();
         assertTrue(file.exists());
         assertTrue(file.isFile());

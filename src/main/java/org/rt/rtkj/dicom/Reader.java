@@ -256,7 +256,7 @@ public class Reader {
         if (optReferencedSOPClassInstance.isEmpty()) {
             item = new RTReferencedStudyItem();
         } else {
-            item = (RTReferencedStudyItem) optReferencedSOPClassInstance.get();
+            item = new RTReferencedStudyItem(optReferencedSOPClassInstance.get());
         }
         if (attr.contains(Tag.RTReferencedSeriesSequence)) {
             Sequence seq = attr.getSequence(Tag.RTReferencedSeriesSequence);
@@ -596,9 +596,10 @@ public class Reader {
      */
     private static List<Long> getPixelData(byte[] buffer, int offset, int length,
                                            int bps, PixelRepresentation pixelRepresentation, ByteOrder order) throws UnsupportedOperationException {
-        List<Long> pixels = new ArrayList<>();
+        List<Long> pixels;
         int end = offset + length;
-        if (buffer == null || end > buffer.length || order == null) return pixels;
+        if (buffer == null || end > buffer.length || order == null) return new ArrayList<>();
+        pixels = new ArrayList<>(length / bps + 1);
         if (bps == 2) {
             int i = offset;
             switch (pixelRepresentation) {
@@ -658,7 +659,7 @@ public class Reader {
         return Optional.of(hdr);
     }
 
-    public static Optional<DvhItem> dvh(Attributes attr) throws IOException {
+    private static Optional<DvhItem> dvh(Attributes attr) throws IOException {
         if (attr == null) return Optional.empty();
         DvhItem item = new DvhItem();
         item.setDvhType(attr.getString(Tag.DVHType, ""));
@@ -1194,14 +1195,14 @@ public class Reader {
         return Optional.of(sr);
     }
 
-    public static Optional<StructureSet> structureSet(Attributes meta, Attributes attr, ByteOrder order) throws IOException {
+    public static Optional<RTStructureSet> structureSet(Attributes meta, Attributes attr, ByteOrder order) throws IOException {
         if (attr == null) return Optional.empty();
         var optMeta = metaHeader(meta);
-        StructureSet ss;
+        RTStructureSet ss;
         if (optMeta.isEmpty()) {
-            ss = new StructureSet();
+            ss = new RTStructureSet();
         } else {
-            ss = new StructureSet(optMeta.get());
+            ss = new RTStructureSet(optMeta.get());
         }
         ss.setSpecificCharacterSet(attr.getString(Tag.SpecificCharacterSet, ""));
         ss.setInstanceCreationDate(attr.getDate(Tag.InstanceCreationDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
