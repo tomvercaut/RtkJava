@@ -349,7 +349,7 @@ public class Reader {
         if (attr == null) return Optional.empty();
         var item = new ROIPhysicalPropertiesItem();
         item.setROIPhysicalProperty(attr.getString(Tag.ROIPhysicalProperty, ""));
-        item.setROIPhysicalPropertyValue(attr.getString(Tag.ROIPhysicalPropertyValue, ""));
+        item.setROIPhysicalPropertyValue(attr.getDouble(Tag.ROIPhysicalPropertyValue, DicomUtils.UNDEFINED_DOUBLE));
         if (attr.contains(Tag.ROIElementalCompositionSequence)) {
             Sequence seq = attr.getSequence(Tag.ROIElementalCompositionSequence);
             for (Attributes value : seq) {

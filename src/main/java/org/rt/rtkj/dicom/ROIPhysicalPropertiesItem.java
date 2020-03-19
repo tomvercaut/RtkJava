@@ -8,6 +8,6 @@ import java.util.List;
 @Data
 public class ROIPhysicalPropertiesItem {
     private String rOIPhysicalProperty;
-    private String rOIPhysicalPropertyValue;
+    private double rOIPhysicalPropertyValue;
     private List<ROIElementalCompositionItem> rOIElementalCompositionSequence = new ArrayList<>();
 }
