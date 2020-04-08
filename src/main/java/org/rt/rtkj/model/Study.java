@@ -30,7 +30,8 @@ public class Study {
     }
 
     public void add(Image2D image) {
-        if (image == null || image.getSOPInstanceUID().isEmpty() || image.getStudyInstanceUID().isEmpty() || image.getSeriesInstanceUID().isEmpty())
+        if (image == null || image.getSOPInstanceUID().isEmpty() ||
+                image.getStudyInstanceUID().isEmpty() || image.getSeriesInstanceUID().isEmpty())
             return;
         if (series.isEmpty() && studyInstanceUID.isEmpty())
             this.studyInstanceUID = image.getStudyInstanceUID();

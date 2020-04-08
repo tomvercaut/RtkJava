@@ -1,6 +1,8 @@
 package org.rt.rtkj.dicom;
 
 import lombok.extern.log4j.Log4j2;
+import org.dcm4che3.data.Attributes;
+import org.rt.rtkj.model.Image3D;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageTypeSpecifier;
@@ -12,6 +14,7 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Optional;
 
 import static java.awt.image.DataBuffer.TYPE_USHORT;
 
@@ -66,4 +69,7 @@ public class Writer {
         writer.write(bi);
     }
 
+    public Optional<Attributes> rtdose(CT3d volume, Image3D dose) {
+        return Optional.empty();
+    }
 }

@@ -32,7 +32,7 @@ public class Patient {
             return;
         String uid = image.getStudyInstanceUID();
         for (Study study : studies) {
-            if (uid == study.getStudyInstanceUID()) {
+            if (uid.equals(study.getStudyInstanceUID())) {
                 study.add(image);
                 return;
             }

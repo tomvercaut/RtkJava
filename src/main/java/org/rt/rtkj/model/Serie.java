@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.math3.util.Precision;
+import org.rt.rtkj.dicom.Modality;
 
 import java.util.List;
 
@@ -16,8 +17,10 @@ public class Serie {
     private List<Image3D> images;
 
     public void add(Image2D slice) {
-        if (slice == null || slice.getSOPInstanceUID().isEmpty() || slice.getSeriesInstanceUID().isEmpty()) return;
-        if (seriesInstanceUID.isEmpty() && images.isEmpty()) seriesInstanceUID = slice.getSeriesInstanceUID();
+        if (slice == null || slice.getSOPInstanceUID().isEmpty() ||
+                slice.getSeriesInstanceUID().isEmpty()) return;
+        if (seriesInstanceUID.isEmpty() && images.isEmpty())
+            seriesInstanceUID = slice.getSeriesInstanceUID();
         for (Image3D image3D : images) {
             if (image3D.getFrameOfReferenceUID().equals(slice.getFrameOfReferenceUID()) &&
                     image3D.getModality().equals(slice.getModality()) &&
@@ -36,7 +39,8 @@ public class Serie {
                     Precision.equals(image3D.getImageOrientationPatient()[4], slice.getImageOrientationPatient()[4], Precision.EPSILON) &&
                     Precision.equals(image3D.getImageOrientationPatient()[5], slice.getImageOrientationPatient()[5], Precision.EPSILON) &&
                     image3D.getPixelRepresentation() == slice.getPixelRepresentation() &&
-                    image3D.getBitsAllocated() == slice.getBitsAllocated()
+                    image3D.getBitsAllocated() == slice.getBitsAllocated() &&
+                    (image3D.getModality() == Modality.CT || image3D.getModality() == Modality.PT || image3D.getModality() == Modality.MR)
             ) {
                 image3D.add(slice);
                 return;
