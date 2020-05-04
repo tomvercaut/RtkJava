@@ -387,6 +387,13 @@ public class Reader {
         return PatientPosition.UNKOWN;
     }
 
+    private static RotationDirection rotationDirection(String s) {
+        if (s == null) return RotationDirection.None;
+        if (s.equals("CC")) return RotationDirection.CC;
+        if (s.equals("CW")) return RotationDirection.CW;
+        return RotationDirection.None;
+    }
+
     private static PhotometricInterpretation photometricInterpretation(Attributes attr) {
         if (attr == null) return PhotometricInterpretation.UNKOWN;
         var val = attr.getString(Tag.PhotometricInterpretation, "");
@@ -416,6 +423,92 @@ public class Reader {
             default:
                 return PhotometricInterpretation.UNKOWN;
         }
+    }
+
+    private static Optional<TreatmentSessionBeamItem> treatmentSessionBeamstructureSetROI(Attributes attr) {
+        if (attr == null) return Optional.empty();
+        var item = new TreatmentSessionBeamItem();
+        item.setCurrentFractionNumber(attr.getInt(Tag.CurrentFractionNumber, DicomUtils.UNDEFINED_U32));
+        item.setTreatmentTerminationStatus(attr.getString(Tag.TreatmentTerminationStatus, ""));
+        item.setTreatmentTerminationCode(attr.getString(Tag.TreatmentTerminationCode, ""));
+        item.setTreatmentVerificationStatus(attr.getString(Tag.TreatmentVerificationStatus, ""));
+        item.setDeliveredTreatmentTime(attr.getDouble(Tag.DeliveredTreatmentTime, DicomUtils.UNDEFINED_DOUBLE));
+        if (attr.contains(Tag.ControlPointDeliverySequence)) {
+            Sequence seq = attr.getSequence(Tag.ControlPointDeliverySequence);
+            for (Attributes value : seq) {
+                var optTmp = controlPointDelivery(value);
+                optTmp.ifPresent(tmp -> item.getControlPointDeliverySequence().add(tmp));
+            }
+        }
+        if (attr.contains(Tag.ReferencedCalculatedDoseReferenceSequence)) {
+            Sequence seq = attr.getSequence(Tag.ReferencedCalculatedDoseReferenceSequence);
+            for (Attributes value : seq) {
+                var optTmp = referencedCalculatedDoseReference(value);
+                optTmp.ifPresent(tmp -> item.getReferencedCalculatedDoseReferenceSequence().add(tmp));
+            }
+        }
+        item.setSourceAxisDistance(attr.getDouble(Tag.SourceAxisDistance, DicomUtils.UNDEFINED_DOUBLE));
+        item.setBeamName(attr.getString(Tag.BeamName, ""));
+        item.setBeamType(attr.getString(Tag.BeamType, ""));
+        item.setRadiationType(attr.getString(Tag.RadiationType, ""));
+        item.setTreatmentDeliveryType(attr.getString(Tag.TreatmentDeliveryType, ""));
+        item.setNumberOfWedges(attr.getInt(Tag.NumberOfWedges, DicomUtils.UNDEFINED_I32));
+        item.setNumberOfCompensators(attr.getInt(Tag.NumberOfCompensators, DicomUtils.UNDEFINED_I32));
+        item.setNumberOfBoli(attr.getInt(Tag.NumberOfBoli, DicomUtils.UNDEFINED_I32));
+        item.setNumberOfBlocks(attr.getInt(Tag.NumberOfBlocks, DicomUtils.UNDEFINED_I32));
+        item.setNumberOfControlPoints(attr.getInt(Tag.NumberOfControlPoints, DicomUtils.UNDEFINED_I32));
+        item.setReferencedBeamNumber(attr.getInt(Tag.ReferencedBeamNumber, DicomUtils.UNDEFINED_I32));
+        return Optional.of(item);
+    }
+
+    private static Optional<ReferencedCalculatedDoseReferenceItem> referencedCalculatedDoseReference(Attributes attr) {
+        if (attr == null) return Optional.empty();
+        var item = new ReferencedCalculatedDoseReferenceItem();
+        item.setCalculatedDoseReferenceDoseValue(attr.getDouble(Tag.CalculatedDoseReferenceDoseValue, DicomUtils.UNDEFINED_DOUBLE));
+        item.setReferencedDoseReferenceNumber(attr.getInt(Tag.ReferencedDoseReferenceNumber, DicomUtils.UNDEFINED_I32));
+        return Optional.of(item);
+    }
+
+    private static Optional<ControlPointDeliveryItem> controlPointDelivery(Attributes attr) {
+        if (attr == null) return Optional.empty();
+        var item = new ControlPointDeliveryItem();
+        item.setTreatmentControlPointDate(attr.getDate(Tag.TreatmentControlPointDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        item.setTreatmentControlPointTime(DicomUtils.tmToLocalTime(attr.getString(Tag.TreatmentControlPointTime, "")));
+        item.setSpecifiedMeterset(attr.getString(Tag.SpecifiedMeterset, ""));
+        item.setDeliveredMeterset(attr.getString(Tag.DeliveredMeterset, ""));
+        item.setDoseRateDelivered(attr.getString(Tag.DoseRateDelivered, ""));
+        item.setNominalBeamEnergyUnit(attr.getString(Tag.NominalBeamEnergyUnit, ""));
+        item.setNominalBeamEnergy(attr.getString(Tag.NominalBeamEnergy, ""));
+        item.setDoseRateSet(attr.getString(Tag.DoseRateSet, ""));
+        if (attr.contains(Tag.BeamLimitingDevicePositionSequence)) {
+            Sequence seq = attr.getSequence(Tag.BeamLimitingDevicePositionSequence);
+            for (Attributes value : seq) {
+                var optTmp = beamLimitingDevicePosition(value);
+                optTmp.ifPresent(tmp -> item.getBeamLimitingDevicePositionSequence().add(tmp));
+            }
+        }
+        item.setGantryAngle(attr.getDouble(Tag.GantryAngle, DicomUtils.UNDEFINED_DOUBLE));
+        item.setGantryRotationDirection(rotationDirection(attr.getString(Tag.GantryRotationDirection, "")));
+        item.setBeamLimitingDeviceAngle(attr.getDouble(Tag.BeamLimitingDeviceAngle, DicomUtils.UNDEFINED_DOUBLE));
+        item.setBeamLimitingDeviceRotationDirection(rotationDirection(attr.getString(Tag.BeamLimitingDeviceRotationDirection, "")));
+        item.setPatientSupportAngle(attr.getDouble(Tag.PatientSupportAngle, DicomUtils.UNDEFINED_DOUBLE));
+        item.setPatientSupportRotationDirection(rotationDirection(attr.getString(Tag.PatientSupportRotationDirection, "")));
+        item.setTableTopEccentricAxisDistance(attr.getDouble(Tag.TableTopEccentricAxisDistance, DicomUtils.UNDEFINED_DOUBLE));
+        item.setTableTopEccentricAngle(attr.getDouble(Tag.TableTopEccentricAngle, DicomUtils.UNDEFINED_DOUBLE));
+        item.setTableTopEccentricRotationDirection(rotationDirection(attr.getString(Tag.TableTopEccentricRotationDirection, "")));
+        item.setTableTopVerticalPosition(attr.getDouble(Tag.TableTopVerticalPosition, DicomUtils.UNDEFINED_DOUBLE));
+        item.setTableTopLongitudinalPosition(attr.getDouble(Tag.TableTopLongitudinalPosition, DicomUtils.UNDEFINED_DOUBLE));
+        item.setTableTopLateralPosition(attr.getDouble(Tag.TableTopLateralPosition, DicomUtils.UNDEFINED_DOUBLE));
+        item.setReferencedControlPointIndex(attr.getInt(Tag.ReferencedControlPointIndex, DicomUtils.UNDEFINED_I32));
+        return Optional.of(item);
+    }
+
+    private static Optional<BeamLimitingDevicePositionItem> beamLimitingDevicePosition(Attributes attr) {
+        if (attr == null) return Optional.empty();
+        var item = new BeamLimitingDevicePositionItem();
+        item.setRtBeamLimitingDeviceType(attr.getString(Tag.RTBeamLimitingDeviceType, ""));
+        item.setLeafJawPositions(Arrays.stream(attr.getDoubles(Tag.LeafJawPositions)).boxed().collect(Collectors.toList()));
+        return Optional.of(item);
     }
 
     private static Modality modality(Attributes attr) {
@@ -1268,5 +1361,57 @@ public class Reader {
         }
         ss.setApprovalStatus(attr.getString(Tag.ApprovalStatus, ""));
         return Optional.of(ss);
+    }
+
+    public static Optional<RTBeamsTreatmentRecordStorage> rtBeamsTreatmentRecordStorage(Attributes meta, Attributes attr, ByteOrder order) throws IOException {
+        if (attr == null) return Optional.empty();
+        var optMeta = metaHeader(meta);
+        RTBeamsTreatmentRecordStorage record;
+        if (optMeta.isEmpty()) {
+            record = new RTBeamsTreatmentRecordStorage();
+        } else {
+            record = new RTBeamsTreatmentRecordStorage(optMeta.get());
+        }
+        record.setInstanceCreationDate(attr.getDate(Tag.InstanceCreationDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        record.setInstanceCreationTime(DicomUtils.tmToLocalTime(attr.getString(Tag.InstanceCreationTime, "")));
+        record.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
+        if (!record.getSOPClassUID().equals(UID.RTBeamsTreatmentRecordStorage)) {
+            log.error("Trying to read a DICOM file that is not a RTRECORD");
+            return Optional.empty();
+        }
+        record.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
+        record.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        record.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
+        record.setAccessionNumber(attr.getString(Tag.AccessionNumber, ""));
+        record.setModality(modality(attr));
+        if (record.getModality() != Modality.RTRECORD) {
+            log.error("Trying to read a DICOM file that is not a RTRECORD");
+            return Optional.empty();
+        }
+        record.setManufacturer(attr.getString(Tag.Manufacturer, ""));
+        record.setReferringPhysicianName(attr.getString(Tag.ReferringPhysicianName, ""));
+        record.setOperatorsName(attr.getString(Tag.OperatorsName, ""));
+        record.setManufacturerModelName(attr.getString(Tag.ManufacturerModelName, ""));
+        record.setPatientName(attr.getString(Tag.PatientName, ""));
+        record.setPatientID(attr.getString(Tag.PatientID, ""));
+        if (!attr.getString(Tag.PatientBirthDate, "").isBlank())
+            record.setPatientBirthDate(attr.getDate(Tag.PatientBirthDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        record.setPatientSex(attr.getString(Tag.PatientSex, ""));
+        record.setEthnicGroup(attr.getString(Tag.EthnicGroup, ""));
+        record.setSoftwareVersions(attr.getString(Tag.SoftwareVersions, ""));
+        record.setStudyInstanceUID(attr.getString(Tag.StudyInstanceUID, ""));
+        record.setSeriesInstanceUID(attr.getString(Tag.SeriesInstanceUID, ""));
+        record.setStudyID(attr.getString(Tag.StudyID, ""));
+        record.setSeriesNumber(attr.getInt(Tag.SeriesNumber, DicomUtils.UNDEFINED_U32));
+        record.setInstanceNumber(attr.getInt(Tag.InstanceNumber, DicomUtils.UNDEFINED_U32));
+        if (attr.contains(Tag.TreatmentSessionBeamSequence)) {
+            Sequence seq = attr.getSequence(Tag.TreatmentSessionBeamSequence);
+            for (Attributes value : seq) {
+                var optTmp = treatmentSessionBeamstructureSetROI(value);
+                optTmp.ifPresent(tmp -> record.getTreatmentSessionBeamSequence().add(tmp));
+            }
+        }
+
+        return Optional.of(record);
     }
 }
