@@ -35,16 +35,16 @@ public class SpatialRegistrationTest {
         var sr = optSr.get();
 
         assertEquals("ISO_IR 100", sr.getSpecificCharacterSet());
-        assertEquals(LocalDate.of(2020, 2, 19), sr.getInstanceCreationDate());
-        assertEquals(LocalTime.of(18, 12, 33), sr.getInstanceCreationTime());
+        assertEquals(LocalDate.of(2020, 2, 19), sr.getInstanceCreationDate().get());
+        assertEquals(LocalTime.of(18, 12, 33), sr.getInstanceCreationTime().get());
         assertEquals(UID.SpatialRegistrationStorage, sr.getSOPClassUID());
         assertEquals("1.2.752.243.1.1.20191009143733562.5000.74370", sr.getSOPInstanceUID());
-        assertEquals(LocalDate.of(2019, 10, 2), sr.getStudyDate());
-        assertEquals(LocalDate.of(2020, 2, 29), sr.getSeriesDate());
-        assertEquals(LocalDate.of(2019, 10, 9), sr.getContentDate());
-        assertEquals(LocalTime.of(10, 53, 9), sr.getStudyTime());
-        assertEquals(LocalTime.of(16, 23, 54), sr.getSeriesTime());
-        assertEquals(LocalTime.of(14, 37, 33), sr.getContentTime());
+        assertEquals(LocalDate.of(2019, 10, 2), sr.getStudyDate().get());
+        assertEquals(LocalDate.of(2020, 2, 29), sr.getSeriesDate().get());
+        assertEquals(LocalDate.of(2019, 10, 9), sr.getContentDate().get());
+        assertEquals(LocalTime.of(10, 53, 9), sr.getStudyTime().get());
+        assertEquals(LocalTime.of(16, 23, 54), sr.getSeriesTime().get());
+        assertEquals(LocalTime.of(14, 37, 33), sr.getContentTime().get());
         assertEquals("1662", sr.getAccessionNumber());
         assertEquals(Modality.REG, sr.getModality());
         assertEquals("RaySearch Laboratories", sr.getManufacturer());

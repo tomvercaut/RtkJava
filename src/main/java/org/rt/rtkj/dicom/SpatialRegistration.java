@@ -8,22 +8,23 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class SpatialRegistration extends MetaHeader {
     private String specificCharacterSet;
-    private LocalDate instanceCreationDate;
-    private LocalTime instanceCreationTime;
+    private Optional<LocalDate> instanceCreationDate;
+    private Optional<LocalTime> instanceCreationTime;
     private String sOPClassUID;
     private String sOPInstanceUID;
-    private LocalDate studyDate;
-    private LocalDate seriesDate;
-    private LocalDate contentDate;
-    private LocalTime studyTime;
-    private LocalTime seriesTime;
-    private LocalTime contentTime;
+    private Optional<LocalDate> studyDate;
+    private Optional<LocalDate> seriesDate;
+    private Optional<LocalDate> contentDate;
+    private Optional<LocalTime> studyTime;
+    private Optional<LocalTime> seriesTime;
+    private Optional<LocalTime> contentTime;
     private String accessionNumber;
     private Modality modality;
     private String manufacturer;

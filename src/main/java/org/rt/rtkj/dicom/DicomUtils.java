@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Optional;
 
 public class DicomUtils {
 
@@ -13,9 +14,10 @@ public class DicomUtils {
     public static final int UNDEFINED_U32 = -2 ^ 31;
     public static final double UNDEFINED_DOUBLE = Double.MAX_VALUE;
 
-    public static LocalTime tmToLocalTime(String s) {
+    public static Optional<LocalTime> tmToLocalTime(String s) {
+        if (s == null) return Optional.empty();
         int n = s.length();
-        if (n == 0) return LocalTime.now();
+        if (n == 0) return Optional.empty();
         int hour = 0;
         int minute = 0;
         int second = 0;
@@ -30,36 +32,39 @@ public class DicomUtils {
             }
             milli = Integer.parseInt(ts);
         }
-        return LocalTime.of(hour, minute, second, milli * 1000);
+        return Optional.of(LocalTime.of(hour, minute, second, milli * 1000));
     }
 
-    public static LocalDate getLocalDate(String s) {
+    public static Optional<LocalDate> getLocalDate(String s) {
+        if (s == null) return Optional.empty();
         int n = s.length();
-        if (n == 0) return LocalDate.now();
+        if (n == 0) return Optional.empty();
         int year = 0;
         int month = 0;
         int day = 0;
         if (n >= 4) year = Integer.parseInt(s.substring(0, 4));
         if (n >= 6) month = Integer.parseInt(s.substring(4, 6));
-        if (n >= 8) month = Integer.parseInt(s.substring(6, 8));
-        return LocalDate.of(year, month, day);
+        if (n >= 8) day = Integer.parseInt(s.substring(6, 8));
+        return Optional.of(LocalDate.of(year, month, day));
     }
 
-    public static LocalDate getLocalDate(Date date) {
-        if (date == null) return null;
+    public static Optional<LocalDate> getLocalDate(Date date) {
+        if (date == null) return Optional.empty();
         var instant = date.toInstant();
         var zoneDt = instant.atZone(ZoneId.systemDefault());
         var ld = zoneDt.toLocalDate();
-        return ld;
+        return Optional.of(ld);
     }
 
-    public static LocalDateTime getLocalDateTime(String s) {
+    public static Optional<LocalDateTime> getLocalDateTime(String s) {
         int n = s.length();
-        if (n < 14) return null;
+        if (n < 14) return Optional.empty();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddhhmmss");
-        LocalDate ld = getLocalDate(s);
-        LocalTime lt = tmToLocalTime(s.substring(8));
-        if (ld == null || lt == null) return null;
-        return LocalDateTime.of(ld.getYear(), ld.getMonth(), ld.getDayOfMonth(), lt.getHour(), lt.getMinute(), lt.getSecond(), lt.getNano());
+        var opt_ld = getLocalDate(s);
+        var opt_lt = tmToLocalTime(s.substring(8));
+        if (opt_ld.isEmpty() || opt_lt.isEmpty()) return Optional.empty();
+        var ld = opt_ld.get();
+        var lt = opt_lt.get();
+        return Optional.of(LocalDateTime.of(ld.getYear(), ld.getMonth(), ld.getDayOfMonth(), lt.getHour(), lt.getMinute(), lt.getSecond(), lt.getNano()));
     }
 }

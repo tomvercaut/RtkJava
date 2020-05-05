@@ -6,14 +6,15 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class RadiopharmaceuticalInformationItem {
     private String radiopharmaceutical;
-    private LocalTime radiopharmaceuticalStartTime;
+    private Optional<LocalTime> radiopharmaceuticalStartTime;
     private double radionuclideTotalDose;
     private double radionuclideHalfLife;
     private double radionuclidePositronFraction;
-    private LocalDateTime radiopharmaceuticalStartDateTime;
+    private Optional<LocalDateTime> radiopharmaceuticalStartDateTime;
     private List<CodeItem> radionuclideCodeSequence = new ArrayList<>();
 }

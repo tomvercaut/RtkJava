@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 @NoArgsConstructor
@@ -17,14 +18,14 @@ public class CT extends MetaHeader implements DicomImage<Long> {
     private List<String> imageType;
     private String sOPClassUID;
     private String sOPInstanceUID;
-    private LocalDate studyDate;
-    private LocalDate seriesDate;
-    private LocalDate acquisitionDate;
-    private LocalDate contentDate;
-    private LocalTime studyTime;
-    private LocalTime seriesTime;
-    private LocalTime acquisitionTime;
-    private LocalTime contentTime;
+    private Optional<LocalDate> studyDate;
+    private Optional<LocalDate> seriesDate;
+    private Optional<LocalDate> acquisitionDate;
+    private Optional<LocalDate> contentDate;
+    private Optional<LocalTime> studyTime;
+    private Optional<LocalTime> seriesTime;
+    private Optional<LocalTime> acquisitionTime;
+    private Optional<LocalTime> contentTime;
     private String accessionNumber;
     private Modality modality;
     private String manufacturer;
@@ -38,7 +39,7 @@ public class CT extends MetaHeader implements DicomImage<Long> {
     private List<ReferencedSOPClassInstanceItem> referencedStudySequence = new ArrayList<>();
     private String patientName;
     private String patientID;
-    private LocalDate patientBirthDate;
+    private Optional<LocalDate> patientBirthDate;
     private String patientSex;
     private String patientAge;
     private String patientIdentityRemoved;
@@ -91,12 +92,12 @@ public class CT extends MetaHeader implements DicomImage<Long> {
     private double windowWidth;
     private double rescaleIntercept;
     private double rescaleSlope;
-    private LocalDate scheduledProcedureStepStartDate;
-    private LocalTime scheduledProcedureStepStartTime;
-    private LocalDate scheduledProcedureStepEndDate;
-    private LocalTime scheduledProcedureStepEndTime;
-    private LocalDate performedProcedureStepStartDate;
-    private LocalTime performedProcedureStepStartTime;
+    private Optional<LocalDate> scheduledProcedureStepStartDate;
+    private Optional<LocalTime> scheduledProcedureStepStartTime;
+    private Optional<LocalDate> scheduledProcedureStepEndDate;
+    private Optional<LocalTime> scheduledProcedureStepEndTime;
+    private Optional<LocalDate> performedProcedureStepStartDate;
+    private Optional<LocalTime> performedProcedureStepStartTime;
     private String performedProcedureStepID;
     private List<ReducedCodeItem> performedProtocolCodeSequence = new ArrayList<>();
     private List<Long> pixelData = new ArrayList<>();

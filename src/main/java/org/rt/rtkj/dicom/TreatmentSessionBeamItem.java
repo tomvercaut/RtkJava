@@ -14,6 +14,7 @@ public class TreatmentSessionBeamItem {
     private double deliveredTreatmentTime;
     private List<ControlPointDeliveryItem> controlPointDeliverySequence = new ArrayList<>();
     private List<ReferencedCalculatedDoseReferenceItem> referencedCalculatedDoseReferenceSequence = new ArrayList<>();
+    private List<BeamLimitingDeviceLeafPairsItem> beamLimitingDeviceLeafPairsSequence = new ArrayList<>();
     private double sourceAxisDistance;
     private String beamName;
     private String beamType;

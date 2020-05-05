@@ -10,7 +10,6 @@ import org.rt.rtkj.utils.ByteTools;
 
 import java.io.IOException;
 import java.nio.ByteOrder;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -447,6 +446,14 @@ public class Reader {
                 optTmp.ifPresent(tmp -> item.getReferencedCalculatedDoseReferenceSequence().add(tmp));
             }
         }
+
+        if (attr.contains(Tag.BeamLimitingDeviceLeafPairsSequence)) {
+            Sequence seq = attr.getSequence(Tag.BeamLimitingDeviceLeafPairsSequence);
+            for (Attributes value : seq) {
+                var optTmp = beamLimitingDeviceLeafPairs(value);
+                optTmp.ifPresent(tmp -> item.getBeamLimitingDeviceLeafPairsSequence().add(tmp));
+            }
+        }
         item.setSourceAxisDistance(attr.getDouble(Tag.SourceAxisDistance, DicomUtils.UNDEFINED_DOUBLE));
         item.setBeamName(attr.getString(Tag.BeamName, ""));
         item.setBeamType(attr.getString(Tag.BeamType, ""));
@@ -461,6 +468,25 @@ public class Reader {
         return Optional.of(item);
     }
 
+    private static Optional<BeamLimitingDeviceLeafPairsItem> beamLimitingDeviceLeafPairs(Attributes attr) {
+        if (attr == null) return Optional.empty();
+        var item = new BeamLimitingDeviceLeafPairsItem();
+        item.setRTBeamLimitingDeviceType(attr.getString(Tag.RTBeamLimitingDeviceType, ""));
+        item.setNumberOfLeafJawPairs(attr.getInt(Tag.NumberOfLeafJawPairs, DicomUtils.UNDEFINED_I32));
+        return Optional.of(item);
+    }
+
+    private static Optional<TreatmentMachineItem> treatmentMachine(Attributes attr) {
+        if (attr == null) return Optional.empty();
+        var item = new TreatmentMachineItem();
+        item.setManufacturer(attr.getString(Tag.Manufacturer, ""));
+        item.setInstitutionName(attr.getString(Tag.InstitutionName, ""));
+        item.setManufacturerModelName(attr.getString(Tag.ManufacturerModelName, ""));
+        item.setDeviceSerialNumber(attr.getString(Tag.DeviceSerialNumber, ""));
+        item.setTreatmentMachineName(attr.getString(Tag.TreatmentMachineName, ""));
+        return Optional.of(item);
+    }
+
     private static Optional<ReferencedCalculatedDoseReferenceItem> referencedCalculatedDoseReference(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new ReferencedCalculatedDoseReferenceItem();
@@ -472,14 +498,14 @@ public class Reader {
     private static Optional<ControlPointDeliveryItem> controlPointDelivery(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new ControlPointDeliveryItem();
-        item.setTreatmentControlPointDate(attr.getDate(Tag.TreatmentControlPointDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        item.setTreatmentControlPointDate(DicomUtils.getLocalDate(attr.getString(Tag.TreatmentControlPointDate, "")));
         item.setTreatmentControlPointTime(DicomUtils.tmToLocalTime(attr.getString(Tag.TreatmentControlPointTime, "")));
-        item.setSpecifiedMeterset(attr.getString(Tag.SpecifiedMeterset, ""));
-        item.setDeliveredMeterset(attr.getString(Tag.DeliveredMeterset, ""));
-        item.setDoseRateDelivered(attr.getString(Tag.DoseRateDelivered, ""));
+        item.setSpecifiedMeterset(attr.getDouble(Tag.SpecifiedMeterset, DicomUtils.UNDEFINED_DOUBLE));
+        item.setDeliveredMeterset(attr.getDouble(Tag.DeliveredMeterset, DicomUtils.UNDEFINED_DOUBLE));
+        item.setDoseRateDelivered(attr.getDouble(Tag.DoseRateDelivered, DicomUtils.UNDEFINED_DOUBLE));
         item.setNominalBeamEnergyUnit(attr.getString(Tag.NominalBeamEnergyUnit, ""));
-        item.setNominalBeamEnergy(attr.getString(Tag.NominalBeamEnergy, ""));
-        item.setDoseRateSet(attr.getString(Tag.DoseRateSet, ""));
+        item.setNominalBeamEnergy(attr.getDouble(Tag.NominalBeamEnergy, DicomUtils.UNDEFINED_DOUBLE));
+        item.setDoseRateSet(attr.getDouble(Tag.DoseRateSet, DicomUtils.UNDEFINED_DOUBLE));
         if (attr.contains(Tag.BeamLimitingDevicePositionSequence)) {
             Sequence seq = attr.getSequence(Tag.BeamLimitingDevicePositionSequence);
             for (Attributes value : seq) {
@@ -791,10 +817,10 @@ public class Reader {
         ct.setImageType(Arrays.stream(attr.getString(Tag.ImageType, "").split("\\\\")).collect(Collectors.toList()));
         ct.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
         ct.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
-        ct.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setSeriesDate(attr.getDate(Tag.SeriesDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setAcquisitionDate(attr.getDate(Tag.AcquisitionDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setContentDate(attr.getDate(Tag.ContentDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        ct.setStudyDate(DicomUtils.getLocalDate(attr.getString(Tag.StudyDate, "")));
+        ct.setSeriesDate(DicomUtils.getLocalDate(attr.getString(Tag.SeriesDate, "")));
+        ct.setAcquisitionDate(DicomUtils.getLocalDate(attr.getString(Tag.AcquisitionDate, "")));
+        ct.setContentDate(DicomUtils.getLocalDate(attr.getString(Tag.ContentDate, "")));
         ct.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
         ct.setSeriesTime(DicomUtils.tmToLocalTime(attr.getString(Tag.SeriesTime, "")));
         ct.setAcquisitionTime(DicomUtils.tmToLocalTime(attr.getString(Tag.AcquisitionTime, "")));
@@ -830,7 +856,7 @@ public class Reader {
         }
         ct.setPatientName(attr.getString(Tag.PatientName, ""));
         ct.setPatientID(attr.getString(Tag.PatientID, ""));
-        ct.setPatientBirthDate(attr.getDate(Tag.PatientBirthDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        ct.setPatientBirthDate(DicomUtils.getLocalDate(attr.getString(Tag.PatientBirthDate, "")));
         ct.setPatientSex(attr.getString(Tag.PatientSex, ""));
         ct.setPatientAge(attr.getString(Tag.PatientAge, ""));
         ct.setPatientIdentityRemoved(attr.getString(Tag.PatientIdentityRemoved, ""));
@@ -883,11 +909,11 @@ public class Reader {
         ct.setWindowWidth(attr.getDouble(Tag.WindowWidth, 0.0));
         ct.setRescaleIntercept(attr.getDouble(Tag.RescaleIntercept, 0.0));
         ct.setRescaleSlope(attr.getDouble(Tag.RescaleSlope, 0.0));
-        ct.setScheduledProcedureStepStartDate(attr.getDate(Tag.ScheduledProcedureStepStartDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        ct.setScheduledProcedureStepStartDate(DicomUtils.getLocalDate(attr.getString(Tag.ScheduledProcedureStepStartDate, "")));
         ct.setScheduledProcedureStepStartTime(DicomUtils.tmToLocalTime(attr.getString(Tag.ScheduledProcedureStepStartTime, "")));
-        ct.setScheduledProcedureStepEndDate(attr.getDate(Tag.ScheduledProcedureStepEndDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        ct.setScheduledProcedureStepEndDate(DicomUtils.getLocalDate(attr.getString(Tag.ScheduledProcedureStepEndDate, "")));
         ct.setScheduledProcedureStepEndTime(DicomUtils.tmToLocalTime(attr.getString(Tag.ScheduledProcedureStepEndTime, "")));
-        ct.setPerformedProcedureStepStartDate(attr.getDate(Tag.PerformedProcedureStepStartDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        ct.setPerformedProcedureStepStartDate(DicomUtils.getLocalDate(attr.getString(Tag.PerformedProcedureStepStartDate, "")));
         ct.setPerformedProcedureStepStartTime(DicomUtils.tmToLocalTime(attr.getString(Tag.PerformedProcedureStepStartTime, "")));
         ct.setPerformedProcedureStepID(attr.getString(Tag.PerformedProcedureStepID, ""));
         ct.getPerformedProtocolCodeSequence().clear();
@@ -924,12 +950,12 @@ public class Reader {
             rtdose.setImplementationVersionName(meta.getString(Tag.ImplementationVersionName, ""));
         }
         rtdose.setSpecificCharacterSet(attr.getString(Tag.SpecificCharacterSet, ""));
-        rtdose.setInstanceCreationDate(attr.getDate(Tag.InstanceCreationDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        rtdose.setInstanceCreationDate(DicomUtils.getLocalDate(attr.getString(Tag.InstanceCreationDate, "")));
         rtdose.setInstanceCreationTime(DicomUtils.tmToLocalTime(attr.getString(Tag.InstanceCreationTime, "")));
         rtdose.setSopClassUID(attr.getString(Tag.SOPClassUID, ""));
         if (!rtdose.getSopClassUID().equals(UID.RTDoseStorage)) return Optional.empty();
         rtdose.setSopInstanceUID(attr.getString(Tag.SOPInstanceUID));
-        rtdose.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        rtdose.setStudyDate(DicomUtils.getLocalDate(attr.getString(Tag.StudyDate, "")));
         rtdose.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
         rtdose.setAccessionNumber(attr.getString(Tag.AccessionNumber, ""));
         rtdose.setModality(modality(attr));
@@ -944,10 +970,7 @@ public class Reader {
         rtdose.setManufacturerModelName(attr.getString(Tag.ManufacturerModelName, ""));
         rtdose.setPatientName(attr.getString(Tag.PatientName, ""));
         rtdose.setPatientID(attr.getString(Tag.PatientID, ""));
-        if (attr.contains(Tag.PatientBirthDate))
-            rtdose.setPatientBirthDate(DicomUtils.getLocalDate(attr.getDate(Tag.PatientBirthDate)));
-        else
-            rtdose.setPatientBirthDate(null);
+        rtdose.setPatientBirthDate(DicomUtils.getLocalDate(attr.getString(Tag.PatientBirthDate, "")));
         rtdose.setPatientSex(attr.getString(Tag.PatientSex, ""));
         rtdose.setSliceThicknes(attr.getDouble(Tag.SliceThickness, 0.0));
         rtdose.setDeviceSerialNumber(attr.getString(Tag.DeviceSerialNumber, ""));
@@ -1043,10 +1066,10 @@ public class Reader {
         pt.setImageType(attr.getString(Tag.ImageType, ""));
         pt.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
         pt.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
-        pt.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        pt.setSeriesDate(attr.getDate(Tag.SeriesDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        pt.setAcquisitionDate(attr.getDate(Tag.AcquisitionDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        pt.setContentDate(attr.getDate(Tag.ContentDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        pt.setStudyDate(DicomUtils.getLocalDate(attr.getString(Tag.StudyDate, "")));
+        pt.setSeriesDate(DicomUtils.getLocalDate(attr.getString(Tag.SeriesDate, "")));
+        pt.setAcquisitionDate(DicomUtils.getLocalDate(attr.getString(Tag.AcquisitionDate, "")));
+        pt.setContentDate(DicomUtils.getLocalDate(attr.getString(Tag.ContentDate, "")));
         pt.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
         pt.setSeriesTime(DicomUtils.tmToLocalTime(attr.getString(Tag.SeriesTime, "")));
         pt.setAcquisitionTime(DicomUtils.tmToLocalTime(attr.getString(Tag.AcquisitionTime, "")));
@@ -1088,7 +1111,7 @@ public class Reader {
         pt.setPatientName(attr.getString(Tag.PatientName, ""));
         pt.setPatientID(attr.getString(Tag.PatientID, ""));
         pt.setIssuerOfPatientID(attr.getString(Tag.IssuerOfPatientID, ""));
-        pt.setPatientBirthDate(attr.getDate(Tag.PatientBirthDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        pt.setPatientBirthDate(DicomUtils.getLocalDate(attr.getString(Tag.PatientBirthDate, "")));
         pt.setPatientSex(attr.getString(Tag.PatientSex, ""));
         pt.setPatientAge(attr.getString(Tag.PatientAge, ""));
         pt.setPatientSize(attr.getDouble(Tag.PatientSize, 0.0));
@@ -1101,7 +1124,7 @@ public class Reader {
         pt.setDeviceSerialNumber(attr.getString(Tag.DeviceSerialNumber, ""));
         pt.setSoftwareVersions(attr.getString(Tag.SoftwareVersions, ""));
         pt.setCollimatorType(attr.getString(Tag.CollimatorType, ""));
-        pt.setDateOfLastCalibration(attr.getDate(Tag.DateOfLastCalibration).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        pt.setDateOfLastCalibration(DicomUtils.getLocalDate(attr.getString(Tag.DateOfLastCalibration, "")));
         pt.setTimeOfLastCalibration(DicomUtils.tmToLocalTime(attr.getString(Tag.TimeOfLastCalibration, "")));
         pt.setConvolutionKernel(attr.getString(Tag.ConvolutionKernel, ""));
         pt.setActualFrameDuration(attr.getInt(Tag.ActualFrameDuration, DicomUtils.UNDEFINED_U32));
@@ -1139,7 +1162,7 @@ public class Reader {
         pt.setRequestingService(attr.getString(Tag.RequestingService, ""));
         pt.setRequestedProcedureDescription(attr.getString(Tag.RequestedProcedureDescription, ""));
         pt.setCurrentPatientLocation(attr.getString(Tag.CurrentPatientLocation, ""));
-        pt.setPerformedProcedureStepStartDate(attr.getDate(Tag.PerformedProcedureStepStartDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        pt.setPerformedProcedureStepStartDate(DicomUtils.getLocalDate(attr.getString(Tag.PerformedProcedureStepStartDate, "")));
         pt.setPerformedProcedureStepStartTime(DicomUtils.tmToLocalTime(attr.getString(Tag.PerformedProcedureStepStartTime, "")));
         pt.getRequestAttributesSequence().clear();
         if (attr.contains(Tag.RequestAttributesSequence)) {
@@ -1223,13 +1246,13 @@ public class Reader {
             sr = new SpatialRegistration(optMeta.get());
         }
         sr.setSpecificCharacterSet(attr.getString(Tag.SpecificCharacterSet, ""));
-        sr.setInstanceCreationDate(attr.getDate(Tag.InstanceCreationDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        sr.setInstanceCreationDate(DicomUtils.getLocalDate(attr.getString(Tag.InstanceCreationDate, "")));
         sr.setInstanceCreationTime(DicomUtils.tmToLocalTime(attr.getString(Tag.InstanceCreationTime, "")));
         sr.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
         sr.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
-        sr.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        sr.setSeriesDate(attr.getDate(Tag.SeriesDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        sr.setContentDate(attr.getDate(Tag.ContentDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        sr.setStudyDate(DicomUtils.getLocalDate(attr.getString(Tag.StudyDate, "")));
+        sr.setSeriesDate(DicomUtils.getLocalDate(attr.getString(Tag.SeriesDate, "")));
+        sr.setContentDate(DicomUtils.getLocalDate(attr.getString(Tag.ContentDate, "")));
         sr.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
         sr.setSeriesTime(DicomUtils.tmToLocalTime(attr.getString(Tag.SeriesTime, "")));
         sr.setContentTime(DicomUtils.tmToLocalTime(attr.getString(Tag.ContentTime, "")));
@@ -1298,11 +1321,11 @@ public class Reader {
             ss = new RTStructureSet(optMeta.get());
         }
         ss.setSpecificCharacterSet(attr.getString(Tag.SpecificCharacterSet, ""));
-        ss.setInstanceCreationDate(attr.getDate(Tag.InstanceCreationDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        ss.setInstanceCreationDate(DicomUtils.getLocalDate(attr.getString(Tag.InstanceCreationDate, "")));
         ss.setInstanceCreationTime(DicomUtils.tmToLocalTime(attr.getString(Tag.InstanceCreationTime, "")));
         ss.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
         ss.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
-        ss.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        ss.setStudyDate(DicomUtils.getLocalDate(attr.getString(Tag.StudyDate, "")));
         ss.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
         ss.setAccessionNumber(attr.getString(Tag.AccessionNumber, ""));
         ss.setModality(modality(attr));
@@ -1317,7 +1340,7 @@ public class Reader {
         ss.setManufacturerModelName(attr.getString(Tag.ManufacturerModelName, ""));
         ss.setPatientName(attr.getString(Tag.PatientName, ""));
         ss.setPatientID(attr.getString(Tag.PatientID, ""));
-        ss.setPatientBirthDate(attr.getDate(Tag.PatientBirthDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        ss.setPatientBirthDate(DicomUtils.getLocalDate(attr.getString(Tag.PatientBirthDate, "")));
         ss.setPatientSex(attr.getString(Tag.PatientSex, ""));
         ss.setSoftwareVersions(attr.getString(Tag.SoftwareVersions, ""));
         ss.setStudyInstanceUID(attr.getString(Tag.StudyInstanceUID, ""));
@@ -1327,7 +1350,7 @@ public class Reader {
         ss.setFrameOfReferenceUID(attr.getString(Tag.FrameOfReferenceUID, ""));
         ss.setPositionReferenceIndicator(attr.getString(Tag.PositionReferenceIndicator, ""));
         ss.setStructureSetLabel(attr.getString(Tag.StructureSetLabel, ""));
-        ss.setStructureSetDate(attr.getDate(Tag.StructureSetDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        ss.setStructureSetDate(DicomUtils.getLocalDate(attr.getString(Tag.StructureSetDate, "")));
         ss.setStructureSetTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StructureSetTime, "")));
         if (attr.contains(Tag.ReferencedFrameOfReferenceSequence)) {
             Sequence seq = attr.getSequence(Tag.ReferencedFrameOfReferenceSequence);
@@ -1372,7 +1395,7 @@ public class Reader {
         } else {
             record = new RTBeamsTreatmentRecordStorage(optMeta.get());
         }
-        record.setInstanceCreationDate(attr.getDate(Tag.InstanceCreationDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        record.setInstanceCreationDate(DicomUtils.getLocalDate(attr.getString(Tag.InstanceCreationDate, "")));
         record.setInstanceCreationTime(DicomUtils.tmToLocalTime(attr.getString(Tag.InstanceCreationTime, "")));
         record.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
         if (!record.getSOPClassUID().equals(UID.RTBeamsTreatmentRecordStorage)) {
@@ -1380,7 +1403,7 @@ public class Reader {
             return Optional.empty();
         }
         record.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
-        record.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        record.setStudyDate(DicomUtils.getLocalDate(attr.getString(Tag.StudyDate, "")));
         record.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
         record.setAccessionNumber(attr.getString(Tag.AccessionNumber, ""));
         record.setModality(modality(attr));
@@ -1394,8 +1417,7 @@ public class Reader {
         record.setManufacturerModelName(attr.getString(Tag.ManufacturerModelName, ""));
         record.setPatientName(attr.getString(Tag.PatientName, ""));
         record.setPatientID(attr.getString(Tag.PatientID, ""));
-        if (!attr.getString(Tag.PatientBirthDate, "").isBlank())
-            record.setPatientBirthDate(attr.getDate(Tag.PatientBirthDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        record.setPatientBirthDate(DicomUtils.getLocalDate(attr.getString(Tag.PatientBirthDate, "")));
         record.setPatientSex(attr.getString(Tag.PatientSex, ""));
         record.setEthnicGroup(attr.getString(Tag.EthnicGroup, ""));
         record.setSoftwareVersions(attr.getString(Tag.SoftwareVersions, ""));
@@ -1411,7 +1433,52 @@ public class Reader {
                 optTmp.ifPresent(tmp -> record.getTreatmentSessionBeamSequence().add(tmp));
             }
         }
+        record.setTreatmentDate(DicomUtils.getLocalDate(attr.getString(Tag.TreatmentDate, "")));
+        record.setTreatmentTime(DicomUtils.tmToLocalTime(attr.getString(Tag.TreatmentTime, "")));
+        record.setNumberOfFractionsPlanned(attr.getInt(Tag.NumberOfFractionsPlanned, DicomUtils.UNDEFINED_I32));
+        record.setPrimaryDosimeterUnit(attr.getString(Tag.PrimaryDosimeterUnit, ""));
 
+        if (attr.contains(Tag.TreatmentMachineSequence)) {
+            Sequence seq = attr.getSequence(Tag.TreatmentMachineSequence);
+            for (Attributes value : seq) {
+                var optTmp = treatmentMachine(value);
+                optTmp.ifPresent(tmp -> record.getTreatmentMachineSequence().add(tmp));
+            }
+        }
+
+        if (attr.contains(Tag.ReferencedRTPlanSequence)) {
+            Sequence seq = attr.getSequence(Tag.ReferencedRTPlanSequence);
+            for (Attributes value : seq) {
+                var optTmp = referencedSOPClassInstance(value);
+                optTmp.ifPresent(tmp -> record.getReferencedRTPlanSequence().add(tmp));
+            }
+        }
         return Optional.of(record);
+    }
+
+
+    public static Optional<RTPlan> rtplan(Attributes meta, Attributes attr, ByteOrder order) throws IOException {
+        if (attr == null) return Optional.empty();
+        var optMeta = metaHeader(meta);
+        RTPlan plan;
+        if (optMeta.isEmpty()) {
+            plan = new RTPlan();
+        } else {
+            plan = new RTPlan(optMeta.get());
+        }
+
+        plan.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
+        if (!plan.getSOPClassUID().equals(UID.RTBeamsTreatmentRecordStorage)) {
+            log.error("Trying to read a DICOM file that is not a RTRECORD");
+            return Optional.empty();
+        }
+        plan.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
+        plan.setPatientName(attr.getString(Tag.PatientName, ""));
+        plan.setPatientID(attr.getString(Tag.PatientID, ""));
+        plan.setRTPlanLabel(attr.getString(Tag.RTPlanLabel, ""));
+        plan.setRTPlanName(attr.getString(Tag.RTPlanName, ""));
+        plan.setRTPlanDescription(attr.getString(Tag.RTPlanDescription, ""));
+
+        return Optional.of(plan);
     }
 }

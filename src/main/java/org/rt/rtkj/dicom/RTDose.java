@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class RTDose //implements DicomImage<Long>
@@ -20,12 +21,12 @@ public class RTDose //implements DicomImage<Long>
     private String implementationVersionName;
     // Main
     private String specificCharacterSet = "";
-    private LocalDate instanceCreationDate;
-    private LocalTime instanceCreationTime;
+    private Optional<LocalDate> instanceCreationDate;
+    private Optional<LocalTime> instanceCreationTime;
     private String sopClassUID;
     private String sopInstanceUID;
-    private LocalDate studyDate;
-    private LocalTime studyTime;
+    private Optional<LocalDate> studyDate;
+    private Optional<LocalTime> studyTime;
     private String accessionNumber;
     private Modality modality;
     private String manufacturer;
@@ -35,7 +36,7 @@ public class RTDose //implements DicomImage<Long>
     private String manufacturerModelName;
     private String patientName;
     private String patientID;
-    private LocalDate patientBirthDate;
+    private Optional<LocalDate> patientBirthDate;
     private String patientSex;
     private double sliceThicknes;
     private String deviceSerialNumber;

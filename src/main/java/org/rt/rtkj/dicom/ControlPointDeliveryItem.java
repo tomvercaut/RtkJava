@@ -6,17 +6,18 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class ControlPointDeliveryItem {
-    private LocalDate treatmentControlPointDate;
-    private LocalTime treatmentControlPointTime;
-    private String specifiedMeterset;
-    private String deliveredMeterset;
-    private String doseRateDelivered;
+    private Optional<LocalDate> treatmentControlPointDate;
+    private Optional<LocalTime> treatmentControlPointTime;
+    private double specifiedMeterset;
+    private double deliveredMeterset;
+    private double doseRateDelivered;
     private String nominalBeamEnergyUnit;
-    private String nominalBeamEnergy;
-    private String doseRateSet;
+    private double nominalBeamEnergy;
+    private double doseRateSet;
     private List<BeamLimitingDevicePositionItem> BeamLimitingDevicePositionSequence = new ArrayList<>();
     private double gantryAngle;
     private RotationDirection gantryRotationDirection;

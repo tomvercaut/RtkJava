@@ -15,7 +15,8 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RTDoseTest {
 
@@ -33,15 +34,15 @@ public class RTDoseTest {
         assertTrue(optRTdose.isPresent());
         var rtdose = optRTdose.get();
         assertEquals("ISO_IR 100", rtdose.getSpecificCharacterSet());
-        assertEquals(LocalDate.of(1901, 1, 1), rtdose.getInstanceCreationDate());
-        assertEquals(LocalTime.of(0, 0, 0), rtdose.getInstanceCreationTime());
+        assertEquals(LocalDate.of(1901, 1, 1), rtdose.getInstanceCreationDate().get());
+        assertEquals(LocalTime.of(0, 0, 0), rtdose.getInstanceCreationTime().get());
         assertEquals("manufacturer", rtdose.getManufacturer());
         assertEquals("physician", rtdose.getReferringPhysicianName());
         assertEquals("station", rtdose.getStationName());
         assertEquals("RT Dose", rtdose.getSeriesDescription());
         assertEquals("model", rtdose.getManufacturerModelName());
         assertEquals("boost^breast", rtdose.getPatientName());
-        assertNull(rtdose.getPatientBirthDate());
+        assertTrue(rtdose.getPatientBirthDate().isEmpty());
         assertEquals("123456", rtdose.getPatientID());
         assertEquals("O", rtdose.getPatientSex());
         assertEquals(0.0, rtdose.getSliceThicknes(), Precision.EPSILON);

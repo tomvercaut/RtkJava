@@ -31,12 +31,12 @@ public class RTStructureSetTest {
         var optSs = doj.getRtstruct();
         assertTrue(optSs.isPresent());
         var ss = optSs.get();
-        assertEquals(LocalDate.of(2019, 11, 19), ss.getInstanceCreationDate());
-        assertEquals(LocalTime.of(18, 2, 9), ss.getInstanceCreationTime());
+        assertEquals(LocalDate.of(2019, 11, 19), ss.getInstanceCreationDate().get());
+        assertEquals(LocalTime.of(18, 2, 9), ss.getInstanceCreationTime().get());
         assertEquals(UID.RTStructureSetStorage, ss.getSOPClassUID());
         assertEquals("1.2.752.243.1.1.20191119180209579.1200.70340", ss.getSOPInstanceUID());
-        assertEquals(LocalDate.of(2018, 10, 30), ss.getStudyDate());
-        assertEquals(LocalTime.of(18, 20, 11), ss.getStudyTime());
+        assertEquals(LocalDate.of(2018, 10, 30), ss.getStudyDate().get());
+        assertEquals(LocalTime.of(18, 20, 11), ss.getStudyTime().get());
         assertEquals("1585", ss.getAccessionNumber());
         assertEquals(Modality.RTSTRUCT, ss.getModality());
         assertEquals("", ss.getReferringPhysicianName());
@@ -45,7 +45,7 @@ public class RTStructureSetTest {
         assertEquals("RayStation", ss.getManufacturerModelName());
         assertTrue(ss.getPatientName().startsWith("carpet"));
         assertEquals("X021000", ss.getPatientID());
-        assertEquals(LocalDate.of(2000, 10, 2), ss.getPatientBirthDate());
+        assertEquals(LocalDate.of(2000, 10, 2), ss.getPatientBirthDate().get());
         assertEquals("M", ss.getPatientSex());
         assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891206.523047", ss.getStudyInstanceUID());
         assertEquals("1.2.752.243.1.1.20191119180209579.1200.70340.1", ss.getSeriesInstanceUID());
@@ -54,8 +54,8 @@ public class RTStructureSetTest {
         assertEquals("", ss.getFrameOfReferenceUID());
         assertEquals("", ss.getPositionReferenceIndicator());
         assertEquals("RS: Unapproved", ss.getStructureSetLabel());
-        assertEquals(LocalDate.of(2019, 11, 19), ss.getStructureSetDate());
-        assertEquals(LocalTime.of(18, 2, 9), ss.getStructureSetTime());
+        assertEquals(LocalDate.of(2019, 11, 19), ss.getStructureSetDate().get());
+        assertEquals(LocalTime.of(18, 2, 9), ss.getStructureSetTime().get());
 
         var referencedFrameOfReferenceSequence = ss.getReferencedFrameOfReferenceSequence();
         assertEquals(1, referencedFrameOfReferenceSequence.size());

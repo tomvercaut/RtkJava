@@ -8,18 +8,19 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class RTStructureSet extends MetaHeader {
     private String SpecificCharacterSet;
-    private LocalDate InstanceCreationDate;
-    private LocalTime InstanceCreationTime;
+    private Optional<LocalDate> InstanceCreationDate;
+    private Optional<LocalTime> InstanceCreationTime;
     private String SOPClassUID;
     private String SOPInstanceUID;
-    private LocalDate StudyDate;
-    private LocalTime StudyTime;
+    private Optional<LocalDate> StudyDate;
+    private Optional<LocalTime> StudyTime;
     private String AccessionNumber;
     private Modality Modality;
     private String Manufacturer;
@@ -29,7 +30,7 @@ public class RTStructureSet extends MetaHeader {
     private String ManufacturerModelName;
     private String PatientName;
     private String PatientID;
-    private LocalDate PatientBirthDate;
+    private Optional<LocalDate> PatientBirthDate;
     private String PatientSex;
     private String SoftwareVersions;
     private String StudyInstanceUID;
@@ -39,8 +40,8 @@ public class RTStructureSet extends MetaHeader {
     private String FrameOfReferenceUID;
     private String PositionReferenceIndicator;
     private String StructureSetLabel;
-    private LocalDate StructureSetDate;
-    private LocalTime StructureSetTime;
+    private Optional<LocalDate> StructureSetDate;
+    private Optional<LocalTime> StructureSetTime;
     private List<ReferencedFrameOfReferenceItem> referencedFrameOfReferenceSequence = new ArrayList<>();
     private List<StructureSetROIItem> structureSetROISequence = new ArrayList<>();
     private List<ROIContourItem> roiContourSequence = new ArrayList<>();

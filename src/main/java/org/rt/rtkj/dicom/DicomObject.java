@@ -23,6 +23,10 @@ public class DicomObject {
     private Optional<RTDose> rtdose;
     @Getter
     private Optional<SpatialRegistration> spatialRegistration;
+    @Getter
+    private Optional<RTBeamsTreatmentRecordStorage> rtBeamsTreatmentRecordStorage;
+    @Getter
+    private Optional<RTPlan> rtPlan;
 
     public DicomObject() {
         clear();
@@ -34,6 +38,8 @@ public class DicomObject {
         rtstruct = Optional.empty();
         rtdose = Optional.empty();
         spatialRegistration = Optional.empty();
+        rtBeamsTreatmentRecordStorage = Optional.empty();
+        rtPlan = Optional.empty();
         if (errors == null) errors = new ArrayList<>();
         errors.clear();
     }
@@ -63,6 +69,16 @@ public class DicomObject {
         if (sr != null) this.spatialRegistration = Optional.of(sr);
     }
 
+    public void set(RTBeamsTreatmentRecordStorage record) {
+        clear();
+        if (record != null) this.rtBeamsTreatmentRecordStorage = Optional.of(record);
+    }
+
+    public void set(RTPlan plan) {
+        clear();
+        if (plan != null) this.rtPlan = Optional.of(plan);
+    }
+
     public boolean hasCT() {
         return (ct != null) && ct.isPresent();
     }
@@ -81,6 +97,14 @@ public class DicomObject {
 
     public boolean hasSpatialRegistration() {
         return (spatialRegistration != null) && spatialRegistration.isPresent();
+    }
+
+    public boolean hasRTBeamsTreatmentRecordStorage() {
+        return (rtBeamsTreatmentRecordStorage != null) && rtBeamsTreatmentRecordStorage.isPresent();
+    }
+
+    public boolean hasRTPlan() {
+        return (rtPlan != null) && rtPlan.isPresent();
     }
 
     public void addError(String msg) {
