@@ -22,8 +22,13 @@ public class Image3D {
         sorted = false;
     }
 
+    public int size() {
+        return (images == null) ? 0 : images.size();
+    }
+
     public void sort() {
         images.sort(comparatorImage2DByImagePositionPatient);
+        sorted = true;
     }
 
     public String getFrameOfReferenceUID() {

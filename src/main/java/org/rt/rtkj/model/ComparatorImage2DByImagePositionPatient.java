@@ -15,6 +15,7 @@ public class ComparatorImage2DByImagePositionPatient implements Comparator<Image
         while (i >= 0) {
             int rv = Double.compare(ipp1[i], ipp2[i]);
             if (rv != 0) return rv;
+            --i;
         }
         return 0;
     }

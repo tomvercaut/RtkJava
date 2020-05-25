@@ -12,7 +12,7 @@ import java.util.List;
 public class Study {
     private String studyInstanceUID;
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.PROTECTED)
     @Setter(AccessLevel.NONE)
     private List<Serie> series;
 
@@ -30,6 +30,7 @@ public class Study {
     }
 
     public void add(Image2D image) {
+        if (series == null) series = new ArrayList<>();
         if (image == null || image.getSOPInstanceUID().isEmpty() ||
                 image.getStudyInstanceUID().isEmpty() || image.getSeriesInstanceUID().isEmpty())
             return;

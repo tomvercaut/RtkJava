@@ -7,16 +7,18 @@ import lombok.Setter;
 import org.apache.commons.math3.util.Precision;
 import org.rt.rtkj.dicom.Modality;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
 public class Serie {
     private String seriesInstanceUID;
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.PROTECTED)
     @Setter(AccessLevel.NONE)
     private List<Image3D> images;
 
     public void add(Image2D slice) {
+        if (images == null) images = new ArrayList<>();
         if (slice == null || slice.getSOPInstanceUID().isEmpty() ||
                 slice.getSeriesInstanceUID().isEmpty()) return;
         if (seriesInstanceUID.isEmpty() && images.isEmpty())

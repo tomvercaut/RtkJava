@@ -15,7 +15,7 @@ public class Patient {
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private List<String> patientIDs;
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.PROTECTED)
     @Setter(AccessLevel.NONE)
     private List<Study> studies;
 
@@ -40,5 +40,9 @@ public class Patient {
         Study study = new Study();
         study.add(image);
         studies.add(study);
+    }
+
+    public int sizeStudies() {
+        return (studies == null) ? 0 : studies.size();
     }
 }
