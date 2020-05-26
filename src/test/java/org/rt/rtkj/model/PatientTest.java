@@ -12,14 +12,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Log4j2
 class PatientTest {
@@ -54,7 +52,7 @@ class PatientTest {
         var lct = lct1;
         lct.addAll(lct2);
         lct.addAll(lct3);
-        Collections.shuffle(lct);
+//        Collections.shuffle(lct);
         lct.forEach(path -> {
             Optional<CT> opt_ct = Optional.empty();
             try {
@@ -78,19 +76,48 @@ class PatientTest {
         assertEquals(patient.getStudies().get(1).getSeries().get(0).getImages().size(), 1);
         assertEquals(patient.getStudies().get(2).getSeries().get(0).getImages().size(), 1);
 
-        List<Integer> tls = new ArrayList<>();
-        tls.addAll(ls);
         var n1 = patient.getStudies().get(0).getSeries().get(0).getImages().get(0).size();
         var n2 = patient.getStudies().get(1).getSeries().get(0).getImages().get(0).size();
         var n3 = patient.getStudies().get(2).getSeries().get(0).getImages().get(0).size();
-        log.info("n1 = " + n1);
-        log.info("n2 = " + n2);
-        log.info("n3 = " + n3);
-        assertTrue(tls.contains(n1));
-        tls.removeIf(integer -> integer == n1);
-        assertTrue(tls.contains(n2));
-        tls.removeIf(integer -> integer == n2);
-        assertTrue(tls.contains(n3));
-        tls.removeIf(integer -> integer == n3);
+        assertEquals(ls.get(0), n1);
+        assertEquals(ls.get(1), n2);
+        assertEquals(ls.get(2), n3);
+
+        var im3d1 = patient.getStudies().get(0).getSeries().get(0).getImages().get(0);
+        var im3d2 = patient.getStudies().get(1).getSeries().get(0).getImages().get(0);
+        var im3d3 = patient.getStudies().get(2).getSeries().get(0).getImages().get(0);
+
+        IntStream.range(0, ls.get(0)).forEach(index -> {
+            var image = im3d1.get(index);
+            var filename = lct1.get(index).getFileName().toString();
+            if (filename.startsWith("CT") && filename.endsWith(".dcm")) {
+                filename = filename.substring(2, filename.length() - 4);
+                assertEquals(filename, image.getSOPInstanceUID());
+            } else {
+                fail("Expected a filename that starts with CT and ends with .dcm");
+            }
+        });
+
+        IntStream.range(0, ls.get(1)).forEach(index -> {
+            var image = im3d2.get(index);
+            var filename = lct2.get(index).getFileName().toString();
+            if (filename.startsWith("CT") && filename.endsWith(".dcm")) {
+                filename = filename.substring(2, filename.length() - 4);
+                assertEquals(filename, image.getSOPInstanceUID());
+            } else {
+                fail("Expected a filename that starts with CT and ends with .dcm");
+            }
+        });
+
+        IntStream.range(0, ls.get(2)).forEach(index -> {
+            var image = im3d3.get(index);
+            var filename = lct3.get(index).getFileName().toString();
+            if (filename.startsWith("CT") && filename.endsWith(".dcm")) {
+                filename = filename.substring(2, filename.length() - 4);
+                assertEquals(filename, image.getSOPInstanceUID());
+            } else {
+                fail("Expected a filename that starts with CT and ends with .dcm");
+            }
+        });
     }
 }

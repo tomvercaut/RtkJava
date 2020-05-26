@@ -10,6 +10,7 @@ import org.rt.rtkj.utils.CollectionPrecision;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 @Log4j2
@@ -105,7 +106,85 @@ public class CT3d {
         return true;
     }
 
+    /**
+     * Number of CT slices in the 3D volume.
+     *
+     * @return Number of CT slices
+     */
     public int size() {
         return images.size();
+    }
+
+    /**
+     * True if no slices are present or if the image list is null.
+     *
+     * @return True if no slices are stored.
+     */
+    public boolean isEmpty() {
+        return (images == null) || images.isEmpty();
+    }
+
+    /**
+     * Get a CT slice at a given array index.
+     *
+     * @param index position in the array
+     * @return A CT slice at the requested array position, Optional.empty is returned otherwise
+     */
+    public Optional<CT> get(int index) {
+        if (images == null || index < 0 || index >= size()) return Optional.empty();
+        return Optional.of(images.get(index));
+    }
+
+    /**
+     * Get the image orientation patient array if all slices have the same image orientation patient.
+     *
+     * @return Image orientation patient if all are equal, Optional.empty is returned otherwise.
+     */
+    public Optional<double[]> getImageOrientation() {
+        int n = size();
+        Optional<double[]> opt_io = Optional.empty();
+        for (int i = 0; i < n; i++) {
+            var io = images.get(i).getImageOrientationPatient();
+            if (opt_io.isEmpty()) {
+                opt_io = Optional.of(io);
+            } else {
+                var ref_io = opt_io.get();
+                if (ref_io.length != io.length) {
+                    log.error("Image orientation patient array is not equal between slices.");
+                    return Optional.empty();
+                }
+                for (int j = 0; j < ref_io.length; j++) {
+                    if (!Precision.equals(ref_io[j], io[j])) {
+                        log.error(String.format("Image orientation is not equal across all slices. [%.10f <-> %.10f]", ref_io[j], io[j]));
+                        return Optional.empty();
+                    }
+                }
+            }
+        }
+        return opt_io;
+    }
+
+    /**
+     * Get the slice thickness of the CT slices if all slices have the same thickness.
+     *
+     * @return Uniform slice thickness if all are equal, Optional.empty is returned otherwise.
+     */
+    public Optional<Double> getUniformSliceThickness() {
+        double first = 0.0;
+        int n = size();
+        final String errMsg = "Unable to obtain uniform slice thickness.";
+        if (n == 0) {
+            log.error(errMsg);
+            return Optional.empty();
+        }
+        first = images.get(0).getSliceThickness();
+        for (int i = 1; i < n; i++) {
+            if (!Precision.equals(first, images.get(i).getSliceThickness())) {
+                log.warn("Not all slices have the same slice thickness.");
+                log.error(errMsg);
+                return Optional.empty();
+            }
+        }
+        return Optional.of(first);
     }
 }

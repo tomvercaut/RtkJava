@@ -22,6 +22,10 @@ public class Image3D {
         sorted = false;
     }
 
+    public Image2D get(int index) throws NullPointerException, IndexOutOfBoundsException {
+        return images.get(index);
+    }
+
     public int size() {
         return (images == null) ? 0 : images.size();
     }
@@ -86,4 +90,6 @@ public class Image3D {
         var image = images.get(depth);
         return image.getScaledValue(column, row);
     }
+
+    //TODO compute slice thickness
 }

@@ -62,4 +62,36 @@ public class DicomUtils {
         if (ld == null || lt == null) return null;
         return LocalDateTime.of(ld.getYear(), ld.getMonth(), ld.getDayOfMonth(), lt.getHour(), lt.getMinute(), lt.getSecond(), lt.getNano());
     }
+
+    public static DateTimeFormatter getDateFormatter() {
+        return DateTimeFormatter.BASIC_ISO_DATE;
+    }
+
+    public static DateTimeFormatter getTimeFormatter() {
+        return DateTimeFormatter.ofPattern("HHmmss");
+    }
+
+    /**
+     * Get the current date formatted as yyyyMMdd. Prepadding of digits is applied where needed.
+     *
+     * @return Formatted string with the current date.
+     */
+    public static String getLocalDateNow() {
+        var d = LocalDate.now();
+        return d.format(getDateFormatter());
+    }
+
+    /**
+     * Get the current local time formatted as HHmmss. Prepadding of digits is applied where needed.
+     *
+     * @return Formatted string with the current local time.
+     */
+    public static String getLocalTimeNow() {
+        var t = LocalTime.now();
+        return t.format(getTimeFormatter());
+    }
+
+    public static String getLocalDateTimeNow() {
+        return getLocalDateNow() + getLocalTimeNow();
+    }
 }

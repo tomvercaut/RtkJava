@@ -2,6 +2,9 @@ package org.rt.rtkj.dicom;
 
 import lombok.extern.log4j.Log4j2;
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
 import org.rt.rtkj.model.Image3D;
 
 import javax.imageio.ImageIO;
@@ -13,6 +16,8 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Optional;
 
@@ -70,6 +75,53 @@ public class Writer {
     }
 
     public Optional<Attributes> rtdose(CT3d volume, Image3D dose) {
-        return Optional.empty();
+        if (volume.isEmpty()) {
+            log.error("CT does not contain any slices.");
+            return Optional.empty();
+        }
+        var opt_ct = volume.get(0);
+        if (opt_ct.isEmpty()) {
+            log.error("No CT slice available in 3D volume.");
+            return Optional.empty();
+        }
+        var slice = opt_ct.get();
+
+
+        Attributes root = new Attributes();
+        root.setSpecificCharacterSet("ISO_IR 100");
+        root.setString(Tag.InstanceCreationDate, VR.DA, DicomUtils.getLocalDateNow());
+        root.setString(Tag.InstanceCreationTime, VR.TM, DicomUtils.getLocalTimeNow());
+        root.setString(Tag.SOPClassUID, VR.UI, UID.RTDoseStorage);
+        {
+            var sopInstanceUID = slice.getSOPInstanceUID();
+            int i = sopInstanceUID.lastIndexOf(".");
+            if (i != -1) {
+                sopInstanceUID = sopInstanceUID.substring(0, i + 1);
+            }
+            sopInstanceUID += DicomUtils.getLocalDateTimeNow();
+            root.setString(Tag.SOPInstanceUID, VR.UI, sopInstanceUID);
+        }
+        root.setString(Tag.StudyDate, VR.DA, slice.getStudyDate().format(DicomUtils.getDateFormatter()));
+        root.setString(Tag.StudyTime, VR.DA, slice.getStudyTime().format(DicomUtils.getTimeFormatter()));
+        root.setString(Tag.AccessionNumber, VR.SH, "");
+        root.setString(Tag.Modality, VR.CS, "RTDOSE");
+        root.setString(Tag.Manufacturer, VR.LO, "");
+        root.setString(Tag.ReferringPhysicianName, VR.PN, slice.getReferringPhysicianName());
+        try {
+            root.setString(Tag.StationName, VR.SH, InetAddress.getLocalHost().getHostName());
+        } catch (UnknownHostException e) {
+            root.setString(Tag.StationName, VR.SH, "unknown hostname");
+        }
+        root.setString(Tag.SeriesDescription, VR.LO, "");
+        root.setString(Tag.ManufacturerModelName, VR.LO, "");
+        root.setString(Tag.PatientName, VR.PN, slice.getPatientName());
+        root.setString(Tag.PatientID, VR.LO, slice.getPatientID());
+        if (slice.getPatientBirthDate() != null) {
+            root.setString(Tag.PatientBirthDate, VR.DA, slice.getPatientBirthDate().format(DicomUtils.getDateFormatter()));
+        }
+        root.setString(Tag.PatientSex, VR.CS, slice.getPatientSex());
+        // TODO insert slice thickness element
+
+        return Optional.of(root);
     }
 }
