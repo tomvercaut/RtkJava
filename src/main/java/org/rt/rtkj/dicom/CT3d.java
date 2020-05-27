@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Data
 @Log4j2
-public class CT3d {
+public class CT3d implements DicomImage3D {
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private List<CT> images = new ArrayList<>();
@@ -99,7 +99,15 @@ public class CT3d {
         if (ref.getBitsAllocated() != slice.getBitsAllocated()) return false;
         if (ref.getBitsStored() != slice.getBitsStored()) return false;
         if (ref.getHighBit() != slice.getHighBit()) return false;
-        if (ref.getPixelRepresentation() != slice.getPixelRepresentation()) return false;
+        if (ref.getPixelRepresentation().isEmpty()) {
+            log.error("Existing CT slice is expected to have a pixel representation.");
+            return false;
+        }
+        if (slice.getPixelRepresentation().isEmpty()) {
+            log.error("Trying to add a CT slice without a pixel representation.");
+            return false;
+        }
+        if (ref.getPixelRepresentation().get() != slice.getPixelRepresentation().get()) return false;
         if (!Precision.equals(ref.getRescaleIntercept(), slice.getRescaleIntercept(), Precision.EPSILON)) return false;
         if (!Precision.equals(ref.getRescaleSlope(), slice.getRescaleSlope(), Precision.EPSILON)) return false;
         images.add(slice);
@@ -186,5 +194,75 @@ public class CT3d {
             }
         }
         return Optional.of(first);
+    }
+
+    @Override
+    public Optional<String> getFrameOfReferenceUID() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getFrameOfReferenceUID());
+    }
+
+    @Override
+    public Optional<Modality> getModality() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getModality());
+    }
+
+    @Override
+    public Optional<PatientPosition> getPatientPosition() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getPatientPosition());
+    }
+
+    @Override
+    public Optional<double[]> getImagePositionPatient() {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<double[]> getImageOrientationPatient() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getImageOrientationPatient());
+    }
+
+    @Override
+    public Optional<Integer> getRows() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getRows());
+    }
+
+    @Override
+    public Optional<Integer> getColumns() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getColumns());
+    }
+
+    @Override
+    public Optional<double[]> getPixelSpacing() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getPixelSpacing());
+    }
+
+    @Override
+    public Optional<Integer> getBitsAllocated() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getBitsAllocated());
+    }
+
+    @Override
+    public Optional<Integer> getBitsStored() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getBitsStored());
+    }
+
+    @Override
+    public Optional<Integer> getHighBit() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getHighBit());
+    }
+
+    @Override
+    public Optional<String> getStudyInstanceUID() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getStudyInstanceUID());
+    }
+
+    @Override
+    public Optional<PixelRepresentation> getPixelRepresentation() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getPixelRepresentation();
+    }
+
+    @Override
+    public Optional<String> getSeriesInstanceUID() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getSeriesInstanceUID());
     }
 }

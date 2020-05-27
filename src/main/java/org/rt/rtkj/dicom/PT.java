@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 @NoArgsConstructor
@@ -125,4 +126,7 @@ public class PT extends MetaHeader implements DicomImage<Long> {
         super(meta);
     }
 
+    public Optional<PixelRepresentation> getPixelRepresentation() {
+        return Optional.ofNullable(pixelRepresentation);
+    }
 }

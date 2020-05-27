@@ -57,9 +57,9 @@ class CT3dTest {
             }
         });
 
-        IntStream.range(0, lct1.size()).forEach(i -> assertTrue(ct3d.add(lct1.get(i))));
+        IntStream.range(0, lct1.size()).forEach(i -> assertTrue(ct3d.add(lct1.get(i)), String.format("failed to add CT at index %d", i)));
 
-        IntStream.range(0, lct3.size()).forEach(i -> assertFalse(ct3d.add(lct3.get(i))));
+        IntStream.range(0, lct3.size()).forEach(i -> assertFalse(ct3d.add(lct3.get(i)), String.format("failed to add CT at index %d", i)));
         assertEquals(5, ct3d.size());
     }
 }

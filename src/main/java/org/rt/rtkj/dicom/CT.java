@@ -8,11 +8,12 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class CT extends MetaHeader implements DicomImage<Long> {
+public class CT extends MetaHeader implements DicomImage<Long>, HasImagePositionPatient {
     private String specificCharacterSet;
     private List<String> imageType;
     private String sOPClassUID;
@@ -103,5 +104,9 @@ public class CT extends MetaHeader implements DicomImage<Long> {
 
     public CT(MetaHeader meta) {
         super(meta);
+    }
+
+    public Optional<PixelRepresentation> getPixelRepresentation() {
+        return Optional.ofNullable(pixelRepresentation);
     }
 }

@@ -1,6 +1,7 @@
 package org.rt.rtkj.model;
 
 import lombok.Data;
+import org.rt.rtkj.dicom.ImagePositionPatientComparator;
 import org.rt.rtkj.dicom.Modality;
 import org.rt.rtkj.dicom.PatientPosition;
 import org.rt.rtkj.dicom.PixelRepresentation;
@@ -13,7 +14,7 @@ import java.util.Optional;
 public class Image3D {
     private List<Image2D> images;
     private boolean sorted = false;
-    ComparatorImage2DByImagePositionPatient comparatorImage2DByImagePositionPatient = new ComparatorImage2DByImagePositionPatient();
+    ImagePositionPatientComparator imagePositionPatientComparator = new ImagePositionPatientComparator();
 
     public void add(Image2D slice) {
         if (images == null) images = new ArrayList<>();
@@ -31,7 +32,7 @@ public class Image3D {
     }
 
     public void sort() {
-        images.sort(comparatorImage2DByImagePositionPatient);
+        images.sort(imagePositionPatientComparator);
         sorted = true;
     }
 
@@ -58,6 +59,12 @@ public class Image3D {
     public double[] getPixelSpacing() {
         if (images.isEmpty()) return null;
         return images.get(0).getPixelSpacing();
+    }
+
+    public Optional<double[]> getImagePositionPatient() {
+        if (images.isEmpty()) return Optional.empty();
+        if (!sorted) sort();
+        return Optional.of(images.get(0).getImagePositionPatient());
     }
 
     public double[] getImageOrientationPatient() {

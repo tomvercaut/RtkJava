@@ -1,11 +1,11 @@
-package org.rt.rtkj.model;
+package org.rt.rtkj.dicom;
 
 import java.util.Comparator;
 
-public class ComparatorImage2DByImagePositionPatient implements Comparator<Image2D> {
+public class ImagePositionPatientComparator implements Comparator<HasImagePositionPatient> {
 
     @Override
-    public int compare(Image2D o1, Image2D o2) {
+    public int compare(HasImagePositionPatient o1, HasImagePositionPatient o2) {
         var ipp1 = o1.getImagePositionPatient();
         var ipp2 = o2.getImagePositionPatient();
         assert (ipp1 != null);

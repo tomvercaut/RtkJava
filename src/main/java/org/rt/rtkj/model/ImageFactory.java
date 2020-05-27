@@ -47,7 +47,7 @@ public class ImageFactory {
             log.error("Missing or invalid pixel spacing");
             return Optional.empty();
         }
-        if (ct.getPixelRepresentation() == null || ct.getPixelRepresentation() == PixelRepresentation.NONE) {
+        if (ct.getPixelRepresentation().isEmpty() || ct.getPixelRepresentation().get() == PixelRepresentation.NONE) {
             log.error("Missing or invalid pixel representation");
             return Optional.empty();
         }
@@ -74,7 +74,7 @@ public class ImageFactory {
         image.setPixelSpacing(ct.getPixelSpacing());
         image.setImageOrientationPatient(ct.getImageOrientationPatient());
         image.setImagePositionPatient(ct.getImagePositionPatient());
-        image.setPixelRepresentation(ct.getPixelRepresentation());
+        image.setPixelRepresentation(ct.getPixelRepresentation().orElse(PixelRepresentation.NONE));
         image.setBitsAllocated(ct.getBitsAllocated());
         image.setRescaleIntercept(ct.getRescaleIntercept());
         image.setRescaleSlope(ct.getRescaleSlope());
@@ -134,7 +134,7 @@ public class ImageFactory {
             log.error("Missing or invalid pixel spacing");
             return Optional.empty();
         }
-        if (pt.getPixelRepresentation() == null || pt.getPixelRepresentation() == PixelRepresentation.NONE) {
+        if (pt.getPixelRepresentation().isEmpty() || pt.getPixelRepresentation().get() == PixelRepresentation.NONE) {
             log.error("Missing or invalid pixel representation");
             return Optional.empty();
         }
@@ -161,7 +161,7 @@ public class ImageFactory {
         image.setPixelSpacing(pt.getPixelSpacing());
         image.setImageOrientationPatient(pt.getImageOrientationPatient());
         image.setImagePositionPatient(pt.getImagePositionPatient());
-        image.setPixelRepresentation(pt.getPixelRepresentation());
+        image.setPixelRepresentation(pt.getPixelRepresentation().orElse(PixelRepresentation.NONE));
         image.setBitsAllocated(pt.getBitsAllocated());
         image.setRescaleIntercept(pt.getRescaleIntercept());
         image.setRescaleSlope(pt.getRescaleSlope());

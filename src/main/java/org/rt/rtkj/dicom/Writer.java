@@ -79,12 +79,12 @@ public class Writer {
             log.error("CT does not contain any slices.");
             return Optional.empty();
         }
-        var opt_ct = volume.get(0);
-        if (opt_ct.isEmpty()) {
+        var optCt = volume.get(0);
+        if (optCt.isEmpty()) {
             log.error("No CT slice available in 3D volume.");
             return Optional.empty();
         }
-        var slice = opt_ct.get();
+        var slice = optCt.get();
 
 
         Attributes root = new Attributes();
@@ -120,7 +120,39 @@ public class Writer {
             root.setString(Tag.PatientBirthDate, VR.DA, slice.getPatientBirthDate().format(DicomUtils.getDateFormatter()));
         }
         root.setString(Tag.PatientSex, VR.CS, slice.getPatientSex());
-        // TODO insert slice thickness element
+        root.setString(Tag.SliceThickness, VR.DS, "");
+        root.setString(Tag.DeviceSerialNumber, VR.LO, "0");
+        root.setString(Tag.SoftwareVersions, VR.LO, "0.0.1");
+
+        if (slice.getStudyInstanceUID().isBlank()) {
+            log.error("CT volume requires a study instance UID.");
+            return Optional.empty();
+        }
+        root.setString(Tag.StudyInstanceUID, VR.UI, slice.getStudyInstanceUID());
+        {
+            var optSeriesInstance = volume.getStudyInstanceUID();
+            if (optSeriesInstance.isEmpty()) {
+                log.error("CT volume requires a series instance UID.");
+                return Optional.empty();
+            }
+            root.setString(Tag.SeriesInstanceUID, VR.UI, optSeriesInstance.get());
+        }
+        root.setString(Tag.StudyID, VR.SH, slice.getStudyID());
+        root.setInt(Tag.SeriesNumber, VR.IS, slice.getSeriesNumber());
+        root.setString(Tag.InstanceNumber, VR.IS, "");
+        {
+            var optImagePositionPatient = dose.getImagePositionPatient();
+            if (optImagePositionPatient.isEmpty()) {
+                log.error("Image position patient in dose grid is empty.");
+                return Optional.empty();
+            }
+            root.setDouble(Tag.ImagePositionPatient, VR.DS, optImagePositionPatient.get());
+        }
+        if (volume.getFrameOfReferenceUID().isEmpty() || !volume.getFrameOfReferenceUID().get().equals(slice.getFrameOfReferenceUID())) {
+            log.error(String.format("Frame of reference UID in the CT [%s] and the dose grid [%s] is not equal.", volume.getFrameOfReferenceUID().orElse(""), dose.getFrameOfReferenceUID()));
+            return Optional.empty();
+        }
+        root.setString(Tag.FrameOfReferenceUID, VR.UI, slice.getFrameOfReferenceUID());
 
         return Optional.of(root);
     }

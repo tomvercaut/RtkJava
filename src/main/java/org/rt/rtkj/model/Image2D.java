@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.ejml.simple.SimpleMatrix;
+import org.rt.rtkj.dicom.HasImagePositionPatient;
 import org.rt.rtkj.dicom.Modality;
 import org.rt.rtkj.dicom.PatientPosition;
 import org.rt.rtkj.dicom.PixelRepresentation;
@@ -16,7 +17,7 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 
 @Data
-public class Image2D {
+public class Image2D implements HasImagePositionPatient {
     private String sOPInstanceUID;
     private String frameOfReferenceUID;
     private Modality modality;

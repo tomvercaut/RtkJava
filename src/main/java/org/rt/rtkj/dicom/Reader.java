@@ -810,7 +810,9 @@ public class Reader {
         int nbuf = buf.length;
         int bps = ct.getBitsAllocated() / 8;
         if (ct.getBitsAllocated() != 16 || bps != 2) throw new DicomException("Only 16bit CT pixeldata is supported");
-        ct.setPixelData(getPixelData(buf, 0, nbuf, bps, ct.getPixelRepresentation(), order));
+        var optPixelRepresentation = ct.getPixelRepresentation();
+        if (optPixelRepresentation.isEmpty()) throw new DicomException("CT requires a valid pixel representation");
+        ct.setPixelData(getPixelData(buf, 0, nbuf, bps, optPixelRepresentation.get(), order));
 //        for (int i = 0; i < nbuf; i += bps) {
 //            int tv = ByteUtils.bytesToShort(buf, i, order == ByteOrder.BIG_ENDIAN);
 //            ct.getPixelData().add(tv);
@@ -1111,7 +1113,9 @@ public class Reader {
         int bps = pt.getBitsAllocated() / 8;
         if ((pt.getBitsAllocated() != 16 || bps != 2) && (pt.getBitsAllocated() != 32 || bps != 4))
             throw new DicomException("Only 16 or 32 bit pixeldata is supported");
-        pt.setPixelData(getPixelData(buf, 0, nbuf, bps, pt.getPixelRepresentation(), order));
+        var optPixelRepresentation = pt.getPixelRepresentation();
+        if (optPixelRepresentation.isEmpty()) throw new DicomException("CT requires a valid pixel representation");
+        pt.setPixelData(getPixelData(buf, 0, nbuf, bps, optPixelRepresentation.get(), order));
 //        for (int i = 0; i < nbuf; i += bps) {
 //            var bb = ByteBuffer.wrap(buf, i, bps);
 //            pt.getPixelData().add(bb.getInt());

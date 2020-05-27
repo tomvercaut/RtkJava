@@ -1,5 +1,7 @@
 package org.rt.rtkj.dicom;
 
+import java.util.Optional;
+
 public interface HasPixelRepresentation {
-    PixelRepresentation getPixelRepresentation();
+    Optional<PixelRepresentation> getPixelRepresentation();
 }
