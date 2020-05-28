@@ -5,6 +5,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.io.DicomInputStream;
+import org.dcm4che3.io.DicomOutputStream;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -77,5 +78,29 @@ public class DicomFactory {
             list.add(doj);
         }
         return list;
+    }
+
+    public static void write(String pathname, RTDose dose) throws IOException {
+        File file = new File(pathname);
+        write(file, dose);
+    }
+
+    public static void write(Path path, RTDose dose) throws IOException {
+        write(path.toFile(), dose);
+    }
+
+    public static void write(File file, RTDose dose) throws IOException {
+        if (file == null || !file.canWrite()) {
+            return;
+        }
+        DicomOutputStream dos = new DicomOutputStream(file);
+        var optAttr = Writer.rtdose(dose);
+        final String errMsg = String.format("Unable to write RTDose file %s", file.toString());
+        if (optAttr.isEmpty()) {
+            log.error(errMsg);
+            return;
+        }
+
+        dos.writeDataset(null, optAttr.get());
     }
 }

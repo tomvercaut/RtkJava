@@ -2,10 +2,8 @@ package org.rt.rtkj.dicom;
 
 import lombok.extern.log4j.Log4j2;
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.UID;
-import org.dcm4che3.data.VR;
-import org.rt.rtkj.model.Image3D;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageTypeSpecifier;
@@ -16,10 +14,10 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 import static java.awt.image.DataBuffer.TYPE_USHORT;
 
@@ -74,86 +72,168 @@ public class Writer {
         writer.write(bi);
     }
 
-    public Optional<Attributes> rtdose(CT3d volume, Image3D dose) {
-        if (volume.isEmpty()) {
-            log.error("CT does not contain any slices.");
+    public static Optional<Attributes> rtdose(RTDose dose) {
+        var dict = ElementDictionary.getStandardElementDictionary();
+        if (dose.getModality() != Modality.RTDOSE) {
+            log.error("RTDose instance has an invalid modality: " + dose.getModality().toString());
             return Optional.empty();
         }
-        var optCt = volume.get(0);
-        if (optCt.isEmpty()) {
-            log.error("No CT slice available in 3D volume.");
-            return Optional.empty();
-        }
-        var slice = optCt.get();
-
 
         Attributes root = new Attributes();
-        root.setSpecificCharacterSet("ISO_IR 100");
-        root.setString(Tag.InstanceCreationDate, VR.DA, DicomUtils.getLocalDateNow());
-        root.setString(Tag.InstanceCreationTime, VR.TM, DicomUtils.getLocalTimeNow());
-        root.setString(Tag.SOPClassUID, VR.UI, UID.RTDoseStorage);
+        root.setString(Tag.SpecificCharacterSet, dict.vrOf(Tag.SpecificCharacterSet), dose.getSpecificCharacterSet());
+        root.setString(Tag.InstanceCreationDate, dict.vrOf(Tag.InstanceCreationDate), DicomUtils.getLocalDateNow());
+        root.setString(Tag.InstanceCreationTime, dict.vrOf(Tag.InstanceCreationTime), DicomUtils.getLocalTimeNow());
+        root.setString(Tag.SOPClassUID, dict.vrOf(Tag.SOPClassUID), dose.getSopClassUID());
+        root.setString(Tag.SOPInstanceUID, dict.vrOf(Tag.SOPInstanceUID), dose.getSopInstanceUID());
+        root.setString(Tag.StudyDate, dict.vrOf(Tag.StudyDate), dose.getStudyDate().format(DicomUtils.getDateFormatter()));
+        root.setString(Tag.StudyTime, dict.vrOf(Tag.StudyTime), dose.getStudyTime().format(DicomUtils.getTimeFormatter()));
+        root.setString(Tag.AccessionNumber, dict.vrOf(Tag.AccessionNumber), dose.getAccessionNumber());
+        root.setString(Tag.Modality, dict.vrOf(Tag.Modality), dose.getModality().toString());
+        root.setString(Tag.Manufacturer, dict.vrOf(Tag.Manufacturer), dose.getManufacturer());
+        root.setString(Tag.ReferringPhysicianName, dict.vrOf(Tag.ReferringPhysicianName), dose.getReferringPhysicianName());
+        root.setString(Tag.StationName, dict.vrOf(Tag.StationName), dose.getStationName());
+        root.setString(Tag.SeriesDescription, dict.vrOf(Tag.SeriesDescription), dose.getSeriesDescription());
+        root.setString(Tag.ManufacturerModelName, dict.vrOf(Tag.ManufacturerModelName), dose.getManufacturerModelName());
+        root.setString(Tag.PatientName, dict.vrOf(Tag.PatientName), dose.getPatientName());
+        root.setString(Tag.PatientID, dict.vrOf(Tag.PatientID), dose.getPatientID());
+        root.setString(Tag.PatientBirthDate, dict.vrOf(Tag.PatientBirthDate), dose.getPatientBirthDate().format(DicomUtils.getDateFormatter()));
+        root.setString(Tag.PatientSex, dict.vrOf(Tag.PatientSex), dose.getPatientSex());
+        root.setDouble(Tag.SliceThickness, dict.vrOf(Tag.SliceThickness), dose.getSliceThicknes());
+        root.setString(Tag.DeviceSerialNumber, dict.vrOf(Tag.DeviceSerialNumber), dose.getDeviceSerialNumber());
+        root.setString(Tag.SoftwareVersions, dict.vrOf(Tag.SoftwareVersions), dose.getSoftwareVersions());
+        root.setString(Tag.StudyInstanceUID, dict.vrOf(Tag.StudyInstanceUID), dose.getStudyInstanceUID());
+        root.setString(Tag.SeriesInstanceUID, dict.vrOf(Tag.SeriesInstanceUID), dose.getSeriesInstanceUID());
+        root.setString(Tag.StudyID, dict.vrOf(Tag.StudyID), dose.getStudyID());
+        root.setInt(Tag.SeriesNumber, dict.vrOf(Tag.SeriesNumber), dose.getSeriesNumber());
+        root.setInt(Tag.InstanceNumber, dict.vrOf(Tag.InstanceNumber), dose.getInstanceNumber());
+        root.setDouble(Tag.ImagePositionPatient, dict.vrOf(Tag.ImagePositionPatient), dose.getImagePositionPatient());
+        root.setDouble(Tag.ImageOrientationPatient, dict.vrOf(Tag.ImageOrientationPatient), dose.getImageOrientationPatient());
+        root.setString(Tag.FrameOfReferenceUID, dict.vrOf(Tag.FrameOfReferenceUID), dose.getFrameOfReferenceUID());
+        root.setString(Tag.PositionReferenceIndicator, dict.vrOf(Tag.PositionReferenceIndicator), dose.getPositionReferenceIndicator());
+        root.setInt(Tag.SamplesPerPixel, dict.vrOf(Tag.SamplesPerPixel), dose.getSamplesPerPixel());
+        root.setString(Tag.PhotometricInterpretation, dict.vrOf(Tag.PhotometricInterpretation), dose.getPhotometricInterpretation().toString());
+        root.setInt(Tag.NumberOfFrames, dict.vrOf(Tag.NumberOfFrames), dose.getNumberOfFrames());
+        root.setInt(Tag.FrameIncrementPointer, dict.vrOf(Tag.FrameIncrementPointer), dose.getFrameIncrementPointer());
+        root.setInt(Tag.Rows, dict.vrOf(Tag.Rows), dose.getRows());
+        root.setInt(Tag.Columns, dict.vrOf(Tag.Columns), dose.getColumns());
+        root.setDouble(Tag.PixelSpacing, dict.vrOf(Tag.PixelSpacing), dose.getPixelSpacing());
+        root.setInt(Tag.BitsAllocated, dict.vrOf(Tag.BitsAllocated), dose.getBitsAllocated());
+        root.setInt(Tag.BitsStored, dict.vrOf(Tag.BitsStored), dose.getBitsStored());
+        root.setInt(Tag.HighBit, dict.vrOf(Tag.HighBit), dose.getHighBit());
         {
-            var sopInstanceUID = slice.getSOPInstanceUID();
-            int i = sopInstanceUID.lastIndexOf(".");
-            if (i != -1) {
-                sopInstanceUID = sopInstanceUID.substring(0, i + 1);
+            var optPixelRep = toString(dose.getPixelRepresentation());
+            if (optPixelRep.isEmpty()) {
+                log.error("RTDose is missing the required pixel representation.");
+                return Optional.empty();
             }
-            sopInstanceUID += DicomUtils.getLocalDateTimeNow();
-            root.setString(Tag.SOPInstanceUID, VR.UI, sopInstanceUID);
+            root.setString(Tag.PixelRepresentation, dict.vrOf(Tag.PixelRepresentation), optPixelRep.get());
         }
-        root.setString(Tag.StudyDate, VR.DA, slice.getStudyDate().format(DicomUtils.getDateFormatter()));
-        root.setString(Tag.StudyTime, VR.DA, slice.getStudyTime().format(DicomUtils.getTimeFormatter()));
-        root.setString(Tag.AccessionNumber, VR.SH, "");
-        root.setString(Tag.Modality, VR.CS, "RTDOSE");
-        root.setString(Tag.Manufacturer, VR.LO, "");
-        root.setString(Tag.ReferringPhysicianName, VR.PN, slice.getReferringPhysicianName());
-        try {
-            root.setString(Tag.StationName, VR.SH, InetAddress.getLocalHost().getHostName());
-        } catch (UnknownHostException e) {
-            root.setString(Tag.StationName, VR.SH, "unknown hostname");
-        }
-        root.setString(Tag.SeriesDescription, VR.LO, "");
-        root.setString(Tag.ManufacturerModelName, VR.LO, "");
-        root.setString(Tag.PatientName, VR.PN, slice.getPatientName());
-        root.setString(Tag.PatientID, VR.LO, slice.getPatientID());
-        if (slice.getPatientBirthDate() != null) {
-            root.setString(Tag.PatientBirthDate, VR.DA, slice.getPatientBirthDate().format(DicomUtils.getDateFormatter()));
-        }
-        root.setString(Tag.PatientSex, VR.CS, slice.getPatientSex());
-        root.setString(Tag.SliceThickness, VR.DS, "");
-        root.setString(Tag.DeviceSerialNumber, VR.LO, "0");
-        root.setString(Tag.SoftwareVersions, VR.LO, "0.0.1");
+        root.setString(Tag.DoseUnits, dict.vrOf(Tag.DoseUnits), dose.getDoseUnits());
+        root.setString(Tag.DoseType, dict.vrOf(Tag.DoseType), dose.getDoseType());
+        root.setString(Tag.DoseSummationType, dict.vrOf(Tag.DoseSummationType), dose.getDoseSummationType());
+        root.setDouble(Tag.GridFrameOffsetVector, dict.vrOf(Tag.GridFrameOffsetVector), dose.getGridFrameOffsetVector());
+        root.setDouble(Tag.DoseGridScaling, dict.vrOf(Tag.DoseGridScaling), dose.getDoseGridScaling());
+        root.setString(Tag.TissueHeterogeneityCorrection, dict.vrOf(Tag.TissueHeterogeneityCorrection), dose.getTissueHeterogeneityCorrection());
 
-        if (slice.getStudyInstanceUID().isBlank()) {
-            log.error("CT volume requires a study instance UID.");
-            return Optional.empty();
-        }
-        root.setString(Tag.StudyInstanceUID, VR.UI, slice.getStudyInstanceUID());
-        {
-            var optSeriesInstance = volume.getStudyInstanceUID();
-            if (optSeriesInstance.isEmpty()) {
-                log.error("CT volume requires a series instance UID.");
-                return Optional.empty();
+        if (dose.getDvhSequence() != null && !dose.getDvhSequence().isEmpty()) {
+            if (!addSequence(root, Tag.DVHSequence, dose.getDvhSequence(), dict, Writer::dvh)) {
+                log.error("Unable to read DVHSequence");
             }
-            root.setString(Tag.SeriesInstanceUID, VR.UI, optSeriesInstance.get());
         }
-        root.setString(Tag.StudyID, VR.SH, slice.getStudyID());
-        root.setInt(Tag.SeriesNumber, VR.IS, slice.getSeriesNumber());
-        root.setString(Tag.InstanceNumber, VR.IS, "");
-        {
-            var optImagePositionPatient = dose.getImagePositionPatient();
-            if (optImagePositionPatient.isEmpty()) {
-                log.error("Image position patient in dose grid is empty.");
-                return Optional.empty();
+
+        if (dose.getReferencedRTPlanSequence() != null && !dose.getReferencedRTPlanSequence().isEmpty()) {
+            if (!addSequence(root, Tag.ReferencedRTPlanSequence, dose.getReferencedRTPlanSequence(), dict, Writer::referencedSOPClassInstance)) {
+                log.error("Unable to read ReferencedRTPlanSequence");
             }
-            root.setDouble(Tag.ImagePositionPatient, VR.DS, optImagePositionPatient.get());
         }
-        if (volume.getFrameOfReferenceUID().isEmpty() || !volume.getFrameOfReferenceUID().get().equals(slice.getFrameOfReferenceUID())) {
-            log.error(String.format("Frame of reference UID in the CT [%s] and the dose grid [%s] is not equal.", volume.getFrameOfReferenceUID().orElse(""), dose.getFrameOfReferenceUID()));
-            return Optional.empty();
+
+        if (dose.getReferencedStructureSetSequence() != null && !dose.getReferencedStructureSetSequence().isEmpty()) {
+            if (!addSequence(root, Tag.ReferencedStructureSetSequence, dose.getReferencedStructureSetSequence(), dict, Writer::referencedSOPClassInstance)) {
+                log.error("Unable to read ReferencedStructureSetSequence");
+            }
         }
-        root.setString(Tag.FrameOfReferenceUID, VR.UI, slice.getFrameOfReferenceUID());
+
+        //TODO write pixel data
 
         return Optional.of(root);
+    }
+
+    private static <T> boolean addSequence(Attributes parent, int seqTag, List<T> items, ElementDictionary dict, BiFunction<T, ElementDictionary, Optional<Attributes>> function) {
+        if (parent == null || items == null || dict == null) {
+            if (parent == null) log.error("Parent of the sequence can't be null.");
+            if (items == null) log.error("List of sequence items can't be null.");
+            if (dict == null) log.error("DICOM dictionary can't be null.");
+            return false;
+        }
+        int n = items.size();
+        var sequence = parent.newSequence(seqTag, items.size());
+        for (int i = 0; i < n; i++) {
+            var optItem = function.apply(items.get(i), dict);
+            if (optItem.isEmpty()) {
+                log.error("Sequence item is empty");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Optional<Attributes> dvh(DvhItem item, ElementDictionary dict) {
+        if (item == null || dict == null) return Optional.empty();
+        Attributes attr = new Attributes();
+        attr.setString(Tag.DVHType, dict.vrOf(Tag.DVHType), item.getDvhType());
+        attr.setString(Tag.DoseUnits, dict.vrOf(Tag.DoseUnits), item.getDoseUnits());
+        attr.setString(Tag.DoseType, dict.vrOf(Tag.DoseType), item.getDoseType());
+        attr.setDouble(Tag.DVHDoseScaling, dict.vrOf(Tag.DVHDoseScaling), item.getDvhDoseScaling());
+        attr.setString(Tag.DVHVolumeUnits, dict.vrOf(Tag.DVHVolumeUnits), item.getDvhVolumeUnits());
+        attr.setDouble(Tag.DVHData, dict.vrOf(Tag.DVHData), item.getDvhData());
+        if (item.getDvhReferencedROISequence() != null && !item.getDvhReferencedROISequence().isEmpty()) {
+            int n = item.getDvhReferencedROISequence().size();
+            var dvhReferencedROISequence = attr.newSequence(Tag.DVHReferencedROISequence, n);
+            for (int i = 0; i < n; i++) {
+                var optDvhReferencedROIItem = dvhReferencedROI(item.getDvhReferencedROISequence().get(i), dict);
+                if (optDvhReferencedROIItem.isEmpty()) {
+                    log.error("Dvh referenced ROI item is empty");
+                    return Optional.empty();
+                }
+                dvhReferencedROISequence.add(optDvhReferencedROIItem.get());
+            }
+        }
+        attr.setInt(Tag.DVHNumberOfBins, dict.vrOf(Tag.DVHNumberOfBins), item.getDvhNumberOfBins());
+        attr.setDouble(Tag.DVHMinimumDose, dict.vrOf(Tag.DVHMinimumDose), item.getDvhMinimumDose());
+        attr.setDouble(Tag.DVHMaximumDose, dict.vrOf(Tag.DVHMaximumDose), item.getDvhMaximumDose());
+        attr.setDouble(Tag.DVHMeanDose, dict.vrOf(Tag.DVHMeanDose), item.getDvhMeanDose());
+        return Optional.of(attr);
+    }
+
+    private static Optional<Attributes> dvhReferencedROI(DVHReferencedROIItem item, ElementDictionary dict) {
+        if (item == null || dict == null) return Optional.empty();
+        Attributes attr = new Attributes();
+        attr.setString(Tag.DVHROIContributionType, dict.vrOf(Tag.DVHROIContributionType), item.getDvhROIContributionType());
+        attr.setInt(Tag.ReferencedROINumber, dict.vrOf(Tag.ReferencedROINumber), item.getReferencedROINumber());
+        return Optional.of(attr);
+    }
+
+    private static Optional<Attributes> referencedSOPClassInstance(ReferencedSOPClassInstanceItem item, ElementDictionary dict) {
+        if (item == null || dict == null) return Optional.empty();
+        Attributes attr = new Attributes();
+        attr.setString(Tag.ReferencedSOPClassUID, dict.vrOf(Tag.ReferencedSOPClassUID), item.getReferencedSOPClassUID());
+        attr.setString(Tag.ReferencedSOPInstanceUID, dict.vrOf(Tag.ReferencedSOPInstanceUID), item.getReferencedSOPInstanceUID());
+        return Optional.of(attr);
+    }
+
+    private static Optional<String> toString(PixelRepresentation pixelRepresentation) {
+        final String errMsg = "Invalid pixel representation.";
+        switch (pixelRepresentation) {
+            case NONE:
+                log.error(errMsg);
+                return Optional.empty();
+            case UNSIGNED:
+                return Optional.of("0");
+            case TWO_COMPLEMENT:
+                return Optional.of("1");
+        }
+        log.error(errMsg);
+        return Optional.empty();
+
     }
 }
