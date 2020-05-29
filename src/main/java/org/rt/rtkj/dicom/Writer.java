@@ -4,6 +4,7 @@ import lombok.extern.log4j.Log4j2;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageTypeSpecifier;
@@ -14,6 +15,8 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +34,7 @@ public class Writer {
         File outputFile = new File(filename);
         ImageTypeSpecifier specifier = ImageTypeSpecifier.createGrayscale(16, TYPE_USHORT, false);
         Iterator<ImageWriter> writers = ImageIO.getImageWriters(specifier, "tiff");
-        ;
+
         ImageWriter writer = null;
         while (writers.hasNext()) {
             writer = writers.next();
@@ -96,7 +99,9 @@ public class Writer {
         root.setString(Tag.ManufacturerModelName, dict.vrOf(Tag.ManufacturerModelName), dose.getManufacturerModelName());
         root.setString(Tag.PatientName, dict.vrOf(Tag.PatientName), dose.getPatientName());
         root.setString(Tag.PatientID, dict.vrOf(Tag.PatientID), dose.getPatientID());
-        root.setString(Tag.PatientBirthDate, dict.vrOf(Tag.PatientBirthDate), dose.getPatientBirthDate().format(DicomUtils.getDateFormatter()));
+        if (dose.getPatientBirthDate() != null) {
+            root.setString(Tag.PatientBirthDate, dict.vrOf(Tag.PatientBirthDate), dose.getPatientBirthDate().format(DicomUtils.getDateFormatter()));
+        }
         root.setString(Tag.PatientSex, dict.vrOf(Tag.PatientSex), dose.getPatientSex());
         root.setDouble(Tag.SliceThickness, dict.vrOf(Tag.SliceThickness), dose.getSliceThicknes());
         root.setString(Tag.DeviceSerialNumber, dict.vrOf(Tag.DeviceSerialNumber), dose.getDeviceSerialNumber());
@@ -153,7 +158,60 @@ public class Writer {
             }
         }
 
-        //TODO write pixel data
+        // dose.getPixelData()
+        // Checks based on info found in C.8.8.3.4
+        if (dose.getPhotometricInterpretation() != PhotometricInterpretation.MONOCHROME2) {
+            log.error("The photometrix interpretation for RTDOSE file must be MONOCHROME2");
+            return Optional.empty();
+        }
+        if (dose.getBitsAllocated() != 16 && dose.getBitsAllocated() != 32) {
+            log.error("The number of bits allocated must be either 16 or 32");
+            return Optional.empty();
+        }
+        if (dose.getBitsStored() != dose.getBitsAllocated()) {
+            log.error("The number of bits stored but be equal to the number of bits allocated.");
+            return Optional.empty();
+        }
+        if (dose.getPixelRepresentation() != PixelRepresentation.UNSIGNED) {
+            log.error("Supported pixel representation for RTDOSE pixel data is unsigned integer values. Not the two's complement integer representation.");
+            return Optional.empty();
+        }
+
+        // Check if the byteorder of the system is Little endian. If not, the following code will be incorrect.
+        // The byte buffer is written for little endian DICOM streams. Big endian DICOM streams are no long supported
+        // by the DICOM standard.
+        if (ByteOrder.nativeOrder() != ByteOrder.LITTLE_ENDIAN) {
+            log.error("The code that write the bytebuffer for the pixel data is written for little endian DICOM streams and assumes that the system is also little endian.");
+            return Optional.empty();
+        }
+
+        ByteBuffer pb = null;
+        int bs = dose.getBitsAllocated();
+        int npixels = dose.getNumberOfFrames() * dose.getRows() * dose.getColumns();
+        if (bs == 16) pb = ByteBuffer.allocate(npixels * 2);
+        if (bs == 32) pb = ByteBuffer.allocate(npixels * 4);
+
+        assert pb != null;
+        pb.order(ByteOrder.LITTLE_ENDIAN);
+        int k = 0;
+        for (int i = 0; i < npixels; i++) {
+            var val = dose.getPixelData().get(i);
+            if (bs == 16) {
+                pb.put(k++, (byte) ((val) & 0xFF));
+                pb.put(k++, (byte) ((val >> 8) & 0xFF));
+            } else {
+                pb.put(k++, (byte) ((val) & 0xFF));
+                pb.put(k++, (byte) ((val >> 8) & 0xFF));
+                pb.put(k++, (byte) ((val >> 16) & 0xFF));
+                pb.put(k++, (byte) ((val >> 24) & 0xFF));
+            }
+        }
+        if (k != pb.capacity()) {
+            log.error(String.format("Index in the byte buffer after filling the buffer should be equal to it's " +
+                    "capacity. No remaining bytes should be left. Capacity: %d", pb.capacity()));
+            return Optional.empty();
+        }
+        root.setBytes(Tag.PixelData, VR.OW, pb.array());
 
         return Optional.of(root);
     }
@@ -167,11 +225,13 @@ public class Writer {
         }
         int n = items.size();
         var sequence = parent.newSequence(seqTag, items.size());
-        for (int i = 0; i < n; i++) {
-            var optItem = function.apply(items.get(i), dict);
+        for (T item : items) {
+            var optItem = function.apply(item, dict);
             if (optItem.isEmpty()) {
                 log.error("Sequence item is empty");
                 return false;
+            } else {
+                sequence.add(optItem.get());
             }
         }
         return true;

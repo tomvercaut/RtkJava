@@ -48,23 +48,30 @@ public class DicomFactory {
         }
 
         String sopClassUID = dataset.getString(Tag.SOPClassUID);
-        if (sopClassUID.equals(UID.CTImageStorage)) {
-            var ct = Reader.ct(meta, dataset, bo);
-            ct.ifPresent(dicomObject::set);
-        } else if (sopClassUID.equals(UID.PositronEmissionTomographyImageStorage)) {
-            var pt = Reader.pt(meta, dataset, bo);
-            pt.ifPresent(dicomObject::set);
-        } else if (sopClassUID.equals(UID.RTStructureSetStorage)) {
-            var ss = Reader.structureSet(meta, dataset, bo);
-            ss.ifPresent(dicomObject::set);
-        } else if (sopClassUID.equals(UID.RTDoseStorage)) {
-            var rtd = Reader.rtDose(meta, dataset, bo);
-            rtd.ifPresent(dicomObject::set);
-        } else if (sopClassUID.equals(UID.SpatialRegistrationStorage)) {
-            var sr = Reader.spatialRegistration(meta, dataset, bo);
-            sr.ifPresent(dicomObject::set);
-        } else {
-            log.error(String.format("Trying to read an unsupported DICOM file [SOPClassUID: %s]", sopClassUID));
+        switch (sopClassUID) {
+            case UID.CTImageStorage:
+                var ct = Reader.ct(meta, dataset, bo);
+                ct.ifPresent(dicomObject::set);
+                break;
+            case UID.PositronEmissionTomographyImageStorage:
+                var pt = Reader.pt(meta, dataset, bo);
+                pt.ifPresent(dicomObject::set);
+                break;
+            case UID.RTStructureSetStorage:
+                var ss = Reader.structureSet(meta, dataset, bo);
+                ss.ifPresent(dicomObject::set);
+                break;
+            case UID.RTDoseStorage:
+                var rtd = Reader.rtDose(meta, dataset, bo);
+                rtd.ifPresent(dicomObject::set);
+                break;
+            case UID.SpatialRegistrationStorage:
+                var sr = Reader.spatialRegistration(meta, dataset, bo);
+                sr.ifPresent(dicomObject::set);
+                break;
+            default:
+                log.error(String.format("Trying to read an unsupported DICOM file [SOPClassUID: %s]", sopClassUID));
+                break;
         }
         dicomObject.setPathname(file.getAbsolutePath());
         return dicomObject;
@@ -80,27 +87,29 @@ public class DicomFactory {
         return list;
     }
 
-    public static void write(String pathname, RTDose dose) throws IOException {
+    public static boolean write(String pathname, RTDose dose) throws IOException {
         File file = new File(pathname);
-        write(file, dose);
+        return write(file, dose);
     }
 
-    public static void write(Path path, RTDose dose) throws IOException {
-        write(path.toFile(), dose);
+    public static boolean write(Path path, RTDose dose) throws IOException {
+        return write(path.toFile(), dose);
     }
 
-    public static void write(File file, RTDose dose) throws IOException {
-        if (file == null || !file.canWrite()) {
-            return;
+    public static boolean write(File file, RTDose dose) throws IOException {
+        if (file == null) {
+            return false;
         }
         DicomOutputStream dos = new DicomOutputStream(file);
         var optAttr = Writer.rtdose(dose);
         final String errMsg = String.format("Unable to write RTDose file %s", file.toString());
         if (optAttr.isEmpty()) {
             log.error(errMsg);
-            return;
+            return false;
         }
 
         dos.writeDataset(null, optAttr.get());
+        dos.close();
+        return true;
     }
 }

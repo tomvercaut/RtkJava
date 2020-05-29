@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 public class ResourceFactory {
 
     private static volatile ResourceFactory instance;
-    private static Object mutex = new Object();
+    private static final Object mutex = new Object();
 
     public static ResourceFactory getInstance() {
         ResourceFactory localInstance = instance;
@@ -27,5 +27,9 @@ public class ResourceFactory {
 
     public Path getDicomPath() {
         return Paths.get(getPath().toAbsolutePath().toString(), "dicom");
+    }
+
+    public static String getTmpDir() {
+        return System.getProperty("java.io.tmpdir");
     }
 }
