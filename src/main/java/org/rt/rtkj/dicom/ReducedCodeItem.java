@@ -4,18 +4,20 @@ import lombok.Data;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 
+import java.util.Optional;
+
 @Data
 public class ReducedCodeItem {
-    private String codeValue;
-    private String codingSchemeDesignator;
-    private String codeMeaning;
+    private Optional<String> codeValue = Optional.empty();
+    private Optional<String> codingSchemeDesignator = Optional.empty();
+    private Optional<String> codeMeaning = Optional.empty();
 
-    static ReducedCodeItem build(Attributes attr) {
+    static Optional<ReducedCodeItem> build(Attributes attr) {
         ReducedCodeItem item = new ReducedCodeItem();
-        if (attr == null) return item;
-        item.codeValue = attr.getString(Tag.CodeValue, "");
-        item.codingSchemeDesignator = attr.getString(Tag.CodingSchemeDesignator, "");
-        item.codeMeaning = attr.getString(Tag.CodeMeaning, "");
-        return item;
+        if (attr == null) return Optional.empty();
+        item.codeValue = Optional.ofNullable(attr.getString(Tag.CodeValue));
+        item.codingSchemeDesignator = Optional.ofNullable(attr.getString(Tag.CodingSchemeDesignator));
+        item.codeMeaning = Optional.ofNullable(attr.getString(Tag.CodeMeaning));
+        return Optional.of(item);
     }
 }

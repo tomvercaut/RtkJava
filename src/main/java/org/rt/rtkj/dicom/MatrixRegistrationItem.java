@@ -4,9 +4,10 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class MatrixRegistrationItem {
-    private List<MatrixItem> matrixSequence = new ArrayList<>();
-    private List<RegistrationTypeCodeItem> registrationTypeCodeSequence = new ArrayList<>();
+    private Optional<List<MatrixItem>> matrixSequence = Optional.empty();
+    private Optional<List<RegistrationTypeCodeItem>> registrationTypeCodeSequence = Optional.empty();
 }

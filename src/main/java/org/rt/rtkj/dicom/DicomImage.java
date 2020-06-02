@@ -1,33 +1,34 @@
 package org.rt.rtkj.dicom;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface DicomImage<T> extends HasPixelRepresentation {
-    String getFrameOfReferenceUID();
+    Optional<String> getFrameOfReferenceUID();
 
-    Modality getModality();
+    Optional<Modality> getModality();
 
-    PatientPosition getPatientPosition();
+    Optional<PatientPosition> getPatientPosition();
 
-    double[] getImagePositionPatient();
+    Optional<Double[]> getImagePositionPatient();
 
-    double[] getImageOrientationPatient();
+    Optional<Double[]> getImageOrientationPatient();
 
-    int getRows();
+    Optional<Integer> getRows();
 
-    int getColumns();
+    Optional<Integer> getColumns();
 
-    double[] getPixelSpacing();
+    Optional<Double[]> getPixelSpacing();
 
-    int getBitsAllocated();
+    Optional<Integer> getBitsAllocated();
 
-    int getBitsStored();
+    Optional<Integer> getBitsStored();
 
-    int getHighBit();
+    Optional<Integer> getHighBit();
 
-    double getRescaleIntercept();
+    Optional<Double> getRescaleIntercept();
 
-    double getRescaleSlope();
+    Optional<Double> getRescaleSlope();
 
-    List<T> getPixelData();
+    Optional<List<T>> getPixelData();
 }

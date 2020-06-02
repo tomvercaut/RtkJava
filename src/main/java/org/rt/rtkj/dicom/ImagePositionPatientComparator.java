@@ -6,10 +6,15 @@ public class ImagePositionPatientComparator implements Comparator<HasImagePositi
 
     @Override
     public int compare(HasImagePositionPatient o1, HasImagePositionPatient o2) {
-        var ipp1 = o1.getImagePositionPatient();
-        var ipp2 = o2.getImagePositionPatient();
-        assert (ipp1 != null);
-        assert (ipp2 != null);
+        var optIpp1 = o1.getImagePositionPatient();
+        var optIpp2 = o2.getImagePositionPatient();
+        assert (optIpp1 != null);
+        assert (optIpp2 != null);
+        if (optIpp1.isEmpty() && optIpp2.isEmpty()) return 0;
+        if (!optIpp1.isEmpty() && optIpp2.isEmpty()) return Integer.compare(1, 0);
+        if (optIpp1.isEmpty() && !optIpp2.isEmpty()) return Integer.compare(0, 1);
+        var ipp1 = optIpp1.get();
+        var ipp2 = optIpp2.get();
         assert (ipp1.length != ipp2.length);
         int i = ipp1.length - 1;
         while (i >= 0) {

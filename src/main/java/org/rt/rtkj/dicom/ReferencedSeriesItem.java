@@ -4,9 +4,10 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class ReferencedSeriesItem {
-    private List<ReferencedSOPClassInstanceItem> referencedInstanceSequence = new ArrayList<>();
-    private String seriesInstanceUID;
+    private Optional<List<ReferencedSOPClassInstanceItem>> referencedInstanceSequence = Optional.empty();
+    private Optional<String> seriesInstanceUID = Optional.empty();
 }

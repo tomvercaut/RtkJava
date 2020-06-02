@@ -22,12 +22,12 @@ public class Reader {
     private static Optional<CodeItem> codeItem(Attributes attr) {
         if (attr == null) return Optional.empty();
         CodeItem item = new CodeItem();
-        item.setCodeValue(attr.getString(Tag.CodeValue, ""));
-        item.setCodingSchemeDesignator(attr.getString(Tag.CodingSchemeDesignator, ""));
-        item.setCodeMeaning(attr.getString(Tag.CodeMeaning, ""));
-        item.setMappingResource(attr.getString(Tag.MappingResource, ""));
-        item.setContextGroupVersion(DicomUtils.getLocalDateTime(attr.getString(Tag.ContextGroupVersion, "")));
-        item.setContextIdentifier(attr.getString(Tag.ContextIdentifier, ""));
+        item.setCodeValue(Optional.ofNullable(attr.getString(Tag.CodeValue)));
+        item.setCodingSchemeDesignator(Optional.ofNullable(attr.getString(Tag.CodingSchemeDesignator)));
+        item.setCodeMeaning(Optional.ofNullable(attr.getString(Tag.CodeMeaning)));
+        item.setMappingResource(Optional.ofNullable(attr.getString(Tag.MappingResource)));
+        item.setContextGroupVersion(Optional.ofNullable(DicomUtils.getLocalDateTime(attr.getString(Tag.ContextGroupVersion))));
+        item.setContextIdentifier(Optional.ofNullable(attr.getString(Tag.ContextIdentifier)));
         return Optional.of(item);
     }
 

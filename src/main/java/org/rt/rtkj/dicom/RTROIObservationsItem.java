@@ -4,14 +4,15 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class RTROIObservationsItem {
-    private int observationNumber;
-    private int referencedROINumber;
-    private String rOIObservationLabel;
-    private String rTROIInterpretedType;
-    private String rOIInterpreter;
-    private List<ROIPhysicalPropertiesItem> rOIPhysicalPropertiesSequence = new ArrayList<>();
-    private String materialID;
+    private Optional<Integer> observationNumber;
+    private Optional<Integer> referencedROINumber;
+    private Optional<String> rOIObservationLabel;
+    private Optional<String> rTROIInterpretedType;
+    private Optional<String> rOIInterpreter;
+    private Optional<List<ROIPhysicalPropertiesItem>> rOIPhysicalPropertiesSequence;
+    private Optional<String> materialID;
 }

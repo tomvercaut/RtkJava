@@ -4,12 +4,13 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class ContourItem {
-    private List<ReferencedSOPClassInstanceItem> contourImageSequence = new ArrayList<>();
-    private String contourGeometricType;
-    private int numberOfContourPoints;
-    private int contourNumber;
-    private List<Double> contourData = new ArrayList<>();
+    private Optional<List<ReferencedSOPClassInstanceItem>> contourImageSequence = Optional.empty();
+    private Optional<String> contourGeometricType = Optional.empty();
+    private Optional<Integer> numberOfContourPoints = Optional.empty();
+    private Optional<Integer> contourNumber = Optional.empty();
+    private Optional<List<Double>> contourData = Optional.empty();
 }

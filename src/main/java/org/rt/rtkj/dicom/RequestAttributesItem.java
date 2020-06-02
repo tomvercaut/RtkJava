@@ -4,14 +4,15 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class RequestAttributesItem {
-    private String accessionNumber;
-    private List<ReferencedSOPClassInstanceItem> referencedStudySequence = new ArrayList<>();
-    private String studyInstanceUID;
-    private String requestedProcedureDescription;
-    private List<ReducedCodeItem> requestedProcedureCodeSequence = new ArrayList<>();
-    private String scheduledProcedureStepID;
-    private String requestedProcedureID;
+    private Optional<String> accessionNumber = Optional.empty();
+    private Optional<List<ReferencedSOPClassInstanceItem>> referencedStudySequence = Optional.empty();
+    private Optional<String> studyInstanceUID = Optional.empty();
+    private Optional<String> requestedProcedureDescription = Optional.empty();
+    private Optional<List<ReducedCodeItem>> requestedProcedureCodeSequence = Optional.empty();
+    private Optional<String> scheduledProcedureStepID = Optional.empty();
+    private Optional<String> requestedProcedureID = Optional.empty();
 }

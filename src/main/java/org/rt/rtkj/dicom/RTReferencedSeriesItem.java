@@ -4,9 +4,10 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class RTReferencedSeriesItem {
-    private String seriesInstanceUID;
-    private List<ReferencedSOPClassInstanceItem> contourImageSequence = new ArrayList<>();
+    private Optional<String> seriesInstanceUID = Optional.empty();
+    private Optional<List<ReferencedSOPClassInstanceItem>> contourImageSequence = Optional.empty();
 }

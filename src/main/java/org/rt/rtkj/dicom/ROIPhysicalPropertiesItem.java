@@ -4,10 +4,11 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class ROIPhysicalPropertiesItem {
-    private String rOIPhysicalProperty;
-    private double rOIPhysicalPropertyValue;
-    private List<ROIElementalCompositionItem> rOIElementalCompositionSequence = new ArrayList<>();
+    private Optional<String> rOIPhysicalProperty = Optional.empty();
+    private Optional<Double> rOIPhysicalPropertyValue = Optional.empty();
+    private Optional<List<ROIElementalCompositionItem>> rOIElementalCompositionSequence = Optional.empty();
 }

@@ -2,10 +2,12 @@ package org.rt.rtkj.dicom;
 
 import lombok.Data;
 
+import java.util.Optional;
+
 @Data
 public class StructureSetROIItem {
-    private int rOINumber;
-    private String referencedFrameOfReferenceUID;
-    private String rOIName;
-    private String rOIGenerationAlgorithm;
+    private Optional<Integer> rOINumber = Optional.empty();
+    private Optional<String> referencedFrameOfReferenceUID = Optional.empty();
+    private Optional<String> rOIName = Optional.empty();
+    private Optional<String> rOIGenerationAlgorithm = Optional.empty();
 }

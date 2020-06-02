@@ -2,8 +2,10 @@ package org.rt.rtkj.dicom;
 
 import lombok.Data;
 
+import java.util.Optional;
+
 @Data
 public class MatrixItem {
-    private TransformationMatrixType frameOfReferenceTransformationMatrixType;
-    private double[] frameOfReferenceTransformationMatrix;
+    private Optional<TransformationMatrixType> frameOfReferenceTransformationMatrixType = Optional.empty();
+    private Optional<Double[]> frameOfReferenceTransformationMatrix = Optional.empty();
 }

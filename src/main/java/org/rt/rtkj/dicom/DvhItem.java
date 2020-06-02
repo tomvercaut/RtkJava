@@ -2,20 +2,20 @@ package org.rt.rtkj.dicom;
 
 import lombok.Data;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class DvhItem {
-    private String dvhType;
-    private String doseUnits;
-    private String doseType;
-    private double dvhDoseScaling;
-    private String dvhVolumeUnits;
-    private double[] dvhData;
-    private List<DVHReferencedROIItem> dvhReferencedROISequence = new ArrayList<>();
-    private int dvhNumberOfBins;
-    private double dvhMinimumDose;
-    private double dvhMaximumDose;
-    private double dvhMeanDose;
+    private Optional<String> dvhType = Optional.empty();
+    private Optional<String> doseUnits = Optional.empty();
+    private Optional<String> doseType = Optional.empty();
+    private Optional<Double> dvhDoseScaling = Optional.empty();
+    private Optional<String> dvhVolumeUnits = Optional.empty();
+    private Optional<Double[]> dvhData = Optional.empty();
+    private Optional<List<DVHReferencedROIItem>> dvhReferencedROISequence = Optional.empty();
+    private Optional<Integer> dvhNumberOfBins = Optional.empty();
+    private Optional<Double> dvhMinimumDose = Optional.empty();
+    private Optional<Double> dvhMaximumDose = Optional.empty();
+    private Optional<Double> dvhMeanDose = Optional.empty();
 }
