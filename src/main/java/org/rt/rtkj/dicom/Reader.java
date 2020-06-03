@@ -10,48 +10,182 @@ import org.rt.rtkj.utils.ByteTools;
 
 import java.io.IOException;
 import java.nio.ByteOrder;
-import java.time.ZoneId;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Log4j2
 public class Reader {
+
+    /**
+     * Read a sequence from attributes by the corresponding DICOM tag.
+     *
+     * @param attr     attributes containing the sequence.
+     * @param seqTag   DICOM tag of the sequence
+     * @param function a function interface that has an sequence item attributes as input and returns an optional value T.
+     * @param <T>      type representing the sequence item
+     * @return If the sequence is found and contains values a list of sequence items is returned. If the sequence is not found or the attribute is null, an empty optional is returned.
+     */
+    private static <T> Optional<List<T>> readSequence(Attributes attr, int seqTag, Function<Attributes, Optional<T>> function) {
+        if (attr == null || !attr.contains(seqTag)) return Optional.empty();
+        Sequence seq = attr.getSequence(seqTag);
+        Optional<List<T>> optList = Optional.empty();
+        for (Attributes value : seq) {
+            var optTmp = function.apply(value);
+            if (optTmp.isPresent()) {
+                var tmp = optTmp.get();
+                if (optList.isEmpty()) optList = Optional.of(new ArrayList<>());
+                optList.get().add(tmp);
+            }
+        }
+        return optList;
+    }
+
+    /**
+     * Read an optional String from attributes by it's corresponding DICOM tag.
+     *
+     * @param attr attributes optionally containing the DICOM tag
+     * @param tag  DICOM tag
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     */
+    private static Optional<String> readString(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+        return Optional.ofNullable(attr.getString(tag));
+    }
+
+    /**
+     * Read an optional integer from attributes by it's corresponding DICOM tag.
+     *
+     * @param attr attributes optionally containing the DICOM tag
+     * @param tag  DICOM tag
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     */
+    private static Optional<Integer> readInt(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+        var val = attr.getInt(tag, DicomUtils.UNDEFINED_I32);
+        if (val == DicomUtils.UNDEFINED_I32) return Optional.empty();
+        return Optional.of(val);
+    }
+
+    /**
+     * Read an optional double from attributes by it's corresponding DICOM tag.
+     *
+     * @param attr attributes optionally containing the DICOM tag
+     * @param tag  DICOM tag
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     */
+    private static Optional<Double> readDouble(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+        var val = attr.getDouble(tag, DicomUtils.UNDEFINED_DOUBLE);
+        if (val == DicomUtils.UNDEFINED_DOUBLE) return Optional.empty();
+        return Optional.of(val);
+    }
+
+    /**
+     * Read an optional float from attributes by it's corresponding DICOM tag.
+     *
+     * @param attr attributes optionally containing the DICOM tag
+     * @param tag  DICOM tag
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     */
+    private static Optional<Float> readFloat(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+        var val = attr.getFloat(tag, DicomUtils.UNDEFINED_FLOAT);
+        if (val == DicomUtils.UNDEFINED_FLOAT) return Optional.empty();
+        return Optional.of(val);
+    }
+
+    /**
+     * Read an optional array of doubles from attributes by it's corresponding DICOM tag.
+     *
+     * @param attr attributes optionally containing the DICOM tag
+     * @param tag  DICOM tag
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     */
+    private static Optional<Double[]> readDoubles(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+        var val = attr.getDoubles(tag);
+        if (val == null) return Optional.empty();
+        return Optional.of((Double[]) Arrays.stream(val).boxed().toArray());
+    }
+
+    /**
+     * Read an optional list of doubles from attributes by it's corresponding DICOM tag.
+     *
+     * @param attr attributes optionally containing the DICOM tag
+     * @param tag  DICOM tag
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     */
+    private static Optional<List<Double>> readListDoubles(Attributes attr, int tag) {
+        var optArray = readDoubles(attr, tag);
+        if (optArray.isEmpty()) return Optional.empty();
+        return Optional.of(Arrays.asList(optArray.get()));
+    }
+
+    /**
+     * Read an optional array of integers from attributes by it's corresponding DICOM tag.
+     *
+     * @param attr attributes optionally containing the DICOM tag
+     * @param tag  DICOM tag
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     */
+    private static Optional<Integer[]> readInts(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+        var val = attr.getInts(tag);
+        if (val == null) return Optional.empty();
+        return Optional.of((Integer[]) Arrays.stream(val).boxed().toArray());
+    }
+
+    /**
+     * Read an optional Date from attributes by it's corresponding DICOM tag.
+     *
+     * @param attr attributes optionally containing the DICOM tag
+     * @param tag  DICOM tag
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     */
+    private static Optional<LocalDate> readDate(Attributes attr, int tag) {
+        var optString = readString(attr, tag);
+        return DicomUtils.getLocalDateFromString(optString);
+    }
+
     private static Optional<CodeItem> codeItem(Attributes attr) {
         if (attr == null) return Optional.empty();
         CodeItem item = new CodeItem();
-        item.setCodeValue(Optional.ofNullable(attr.getString(Tag.CodeValue)));
-        item.setCodingSchemeDesignator(Optional.ofNullable(attr.getString(Tag.CodingSchemeDesignator)));
-        item.setCodeMeaning(Optional.ofNullable(attr.getString(Tag.CodeMeaning)));
-        item.setMappingResource(Optional.ofNullable(attr.getString(Tag.MappingResource)));
+        item.setCodeValue(readString(attr, Tag.CodeValue));
+        item.setCodingSchemeDesignator(readString(attr, Tag.CodingSchemeDesignator));
+        item.setCodeMeaning(readString(attr, Tag.CodeMeaning));
+        item.setMappingResource(readString(attr, Tag.MappingResource));
         item.setContextGroupVersion(Optional.ofNullable(DicomUtils.getLocalDateTime(attr.getString(Tag.ContextGroupVersion))));
-        item.setContextIdentifier(Optional.ofNullable(attr.getString(Tag.ContextIdentifier)));
+        item.setContextIdentifier(readString(attr, Tag.ContextIdentifier));
         return Optional.of(item);
     }
 
     private static Optional<ReferencedSOPClassInstanceItem> referencedSOPClassInstance(Attributes attr) {
         if (attr == null) return Optional.empty();
         ReferencedSOPClassInstanceItem item = new ReferencedSOPClassInstanceItem();
-        item.setReferencedSOPClassUID(attr.getString(Tag.ReferencedSOPClassUID, ""));
-        item.setReferencedSOPInstanceUID(attr.getString(Tag.ReferencedSOPInstanceUID, ""));
+        item.setReferencedSOPClassUID(readString(attr, Tag.ReferencedSOPClassUID));
+        item.setReferencedSOPInstanceUID(readString(attr, Tag.ReferencedSOPInstanceUID));
         return Optional.of(item);
     }
 
     private static Optional<DVHReferencedROIItem> dvhReferencedROI(Attributes attributes) {
         if (attributes == null) return Optional.empty();
         DVHReferencedROIItem item = new DVHReferencedROIItem();
-        item.setDvhROIContributionType(attributes.getString(Tag.DVHROIContributionType, ""));
-        item.setReferencedROINumber(attributes.getInt(Tag.ReferencedROINumber, DicomUtils.UNDEFINED_U32));
+        item.setDvhROIContributionType(Optional.ofNullable(attributes.getString(Tag.DVHROIContributionType)));
+        if (attributes.containsValue(Tag.ReferencedROINumber))
+            item.setReferencedROINumber(readInt(attributes, Tag.ReferencedROINumber));
         return Optional.of(item);
     }
 
     private static Optional<EnergyWindowRangeItem> energyWindowRange(Attributes attr) {
         if (attr == null) return Optional.empty();
         EnergyWindowRangeItem item = new EnergyWindowRangeItem();
-        item.setEnergyWindowLowerLimit(attr.getDouble(Tag.EnergyWindowLowerLimit, 0.0));
-        item.setEnergyWindowUpperLimit(attr.getDouble(Tag.EnergyWindowUpperLimit, 0.0));
+        item.setEnergyWindowLowerLimit(readDouble(attr, Tag.EnergyWindowLowerLimit));
+        item.setEnergyWindowUpperLimit(readDouble(attr, Tag.EnergyWindowUpperLimit));
         return Optional.of(item);
     }
 
@@ -60,80 +194,63 @@ public class Reader {
         Optional<CodeItem> tmpCodeItem = codeItem(attr);
         if (tmpCodeItem.isEmpty()) return Optional.empty();
         PatientOrientationCodeItem item = (PatientOrientationCodeItem) tmpCodeItem.get();
-        if (attr.contains(Tag.PatientOrientationModifierCodeSequence)) {
-            Sequence seq = attr.getSequence(Tag.PatientOrientationModifierCodeSequence);
-            for (Attributes value : seq) {
-                var optCode = codeItem(value);
-                optCode.ifPresent(code -> item.getPatientOrientationModifierCodeSequence().add(code));
-            }
-        }
+        item.setPatientOrientationModifierCodeSequence(readSequence(attr, Tag.PatientOrientationModifierCodeSequence, Reader::codeItem));
         return Optional.of(item);
     }
 
     private static Optional<ReducedCodeItem> reducedCode(Attributes attr) {
         if (attr == null) return Optional.empty();
         ReducedCodeItem item = new ReducedCodeItem();
-        item.setCodeValue(attr.getString(Tag.CodeValue, ""));
-        item.setCodingSchemeDesignator(attr.getString(Tag.CodingSchemeDesignator, ""));
-        item.setCodeMeaning(attr.getString(Tag.CodeMeaning, ""));
+        item.setCodeValue(readString(attr, Tag.CodeValue));
+        item.setCodingSchemeDesignator(readString(attr, Tag.CodingSchemeDesignator));
+        item.setCodeMeaning(readString(attr, Tag.CodeMeaning));
         return Optional.of(item);
     }
 
     private static Optional<RequestAttributesItem> requestAttributes(Attributes attr) {
         if (attr == null) return Optional.empty();
         RequestAttributesItem item = new RequestAttributesItem();
-        item.setAccessionNumber(attr.getString(Tag.AccessionNumber, ""));
-        if (attr.contains(Tag.ReferencedStudySequence)) {
-            Sequence seq = attr.getSequence(Tag.ReferencedStudySequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedSOPClassInstance(value);
-                optTmp.ifPresent(tmp -> item.getReferencedStudySequence().add(tmp));
-            }
-            ;
-        }
-        item.setStudyInstanceUID(attr.getString(Tag.StudyInstanceUID, ""));
-        item.setRequestedProcedureDescription(attr.getString(Tag.RequestedProcedureDescription, ""));
-        if (attr.contains(Tag.RequestedProcedureCodeSequence)) {
-            Sequence seq = attr.getSequence(Tag.RequestedProcedureCodeSequence);
-            for (Attributes value : seq) {
-                var optTmp = reducedCode(value);
-                optTmp.ifPresent(tmp -> item.getRequestedProcedureCodeSequence().add(tmp));
-            }
-        }
-        item.setScheduledProcedureStepID(attr.getString(Tag.ScheduledProcedureStepID, ""));
-        item.setRequestedProcedureID(attr.getString(Tag.RequestedProcedureID, ""));
+        item.setAccessionNumber(readString(attr, Tag.AccessionNumber));
+        item.setReferencedStudySequence(readSequence(attr, Tag.ReferencedStudySequence, Reader::referencedSOPClassInstance));
+        item.setStudyInstanceUID(readString(attr, Tag.StudyInstanceUID));
+        item.setRequestedProcedureDescription(readString(attr, Tag.RequestedProcedureDescription));
+        item.setRequestedProcedureCodeSequence(readSequence(attr, Tag.RequestedProcedureCodeSequence, Reader::reducedCode));
+        item.setScheduledProcedureStepID(readString(attr, Tag.ScheduledProcedureStepID));
+        item.setRequestedProcedureID(readString(attr, Tag.RequestedProcedureID));
         return Optional.of(item);
     }
 
     private static Optional<ReferencedPatientItem> referencedPatient(Attributes attr) {
         if (attr == null) return Optional.empty();
         ReferencedPatientItem item = new ReferencedPatientItem();
-        item.setStudyInstanceUID(attr.getString(Tag.StudyInstanceUID, ""));
-        item.setSeriesInstanceUID(attr.getString(Tag.SeriesInstanceUID, ""));
-        if (attr.contains(Tag.PurposeOfReferenceCodeSequence)) {
-            Sequence seq = attr.getSequence(Tag.PurposeOfReferenceCodeSequence);
-            for (Attributes value : seq) {
-                var optCode = codeItem(value);
-                optCode.ifPresent(code -> item.getPurposeOfReferenceCodeSequence().add(code));
-            }
-        }
+        item.setStudyInstanceUID(readString(attr, Tag.StudyInstanceUID));
+        item.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
+        item.setPurposeOfReferenceCodeSequence(readSequence(attr, Tag.PurposeOfReferenceCodeSequence, Reader::codeItem));
         return Optional.of(item);
     }
 
     private static Optional<RadiopharmaceuticalInformationItem> radiopharmaceuticalInformation(Attributes attr) {
         if (attr == null) return Optional.empty();
         RadiopharmaceuticalInformationItem item = new RadiopharmaceuticalInformationItem();
-        item.setRadiopharmaceutical(attr.getString(Tag.Radiopharmaceutical, ""));
-        item.setRadiopharmaceuticalStartTime(DicomUtils.tmToLocalTime(attr.getString(Tag.RadiopharmaceuticalStartTime, "")));
-        item.setRadionuclideTotalDose(attr.getDouble(Tag.RadionuclideTotalDose, 0.0));
-        item.setRadionuclideHalfLife(attr.getDouble(Tag.RadionuclideHalfLife, 0.0));
-        item.setRadionuclidePositronFraction(attr.getDouble(Tag.RadionuclidePositronFraction, 0.0));
-        item.setRadiopharmaceuticalStartDateTime(DicomUtils.getLocalDateTime(attr.getString(Tag.RadiopharmaceuticalStartDateTime)));
+        item.setRadiopharmaceutical(readString(attr, Tag.Radiopharmaceutical));
+        item.setRadiopharmaceuticalStartTime(DicomUtils.tmToLocalTime(readString(attr, Tag.RadiopharmaceuticalStartTime)));
+        if (attr.containsValue(Tag.RadionuclideTotalDose))
+            item.setRadionuclideTotalDose(readDouble(attr, Tag.RadionuclideTotalDose));
+        if (attr.containsValue(Tag.RadionuclideHalfLife))
+            item.setRadionuclideHalfLife(readDouble(attr, Tag.RadionuclideHalfLife));
+        if (attr.containsValue(Tag.RadionuclidePositronFraction))
+            item.setRadionuclidePositronFraction(readDouble(attr, Tag.RadionuclidePositronFraction));
+        if (attr.containsValue(Tag.RadiopharmaceuticalStartDateTime))
+            item.setRadiopharmaceuticalStartDateTime(DicomUtils.getLocalDateTime(readString(attr, Tag.RadiopharmaceuticalStartDateTime)));
         if (attr.contains(Tag.RadionuclideCodeSequence)) {
             Sequence seq = attr.getSequence(Tag.RadionuclideCodeSequence);
             for (Attributes value : seq) {
                 var optTmp = codeItem(value);
-                optTmp.ifPresent(tmp -> item.getRadionuclideCodeSequence().add(tmp));
+                optTmp.ifPresent(tmp -> {
+                    if (item.getRadionuclideCodeSequence().isEmpty())
+                        item.setRadionuclideCodeSequence(Optional.of(new ArrayList<>()));
+                    item.getRadionuclideCodeSequence().get().add(tmp);
+                });
             }
         }
         return Optional.of(item);
@@ -146,88 +263,64 @@ public class Reader {
             Sequence seq = attr.getSequence(Tag.ReferencedSeriesSequence);
             for (Attributes value : seq) {
                 var optTmp = referencedSeries(value);
-                optTmp.ifPresent(tmp -> item.getReferencedSeriesSequence().add(tmp));
+                optTmp.ifPresent(tmp -> {
+                    if (item.getReferencedSeriesSequence().isEmpty())
+                        item.setReferencedSeriesSequence(Optional.of(new ArrayList<>()));
+                    item.getReferencedSeriesSequence().get().add(tmp);
+                });
             }
         }
-        item.setStudyInstanceUID(attr.getString(Tag.StudyInstanceUID, ""));
+        item.setStudyInstanceUID(readString(attr, Tag.StudyInstanceUID));
         return Optional.of(item);
     }
 
     private static Optional<ReferencedSeriesItem> referencedSeries(Attributes attr) {
         if (attr == null) return Optional.empty();
         ReferencedSeriesItem item = new ReferencedSeriesItem();
-        if (attr.contains(Tag.ReferencedInstanceSequence)) {
-            Sequence seq = attr.getSequence(Tag.ReferencedInstanceSequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedSOPClassInstance(value);
-                optTmp.ifPresent(tmp -> item.getReferencedInstanceSequence().add(tmp));
-            }
-        }
-        item.setSeriesInstanceUID(attr.getString(Tag.SeriesInstanceUID, ""));
+        item.setReferencedInstanceSequence(readSequence(attr, Tag.ReferencedInstanceSequence, Reader::referencedSOPClassInstance));
+        item.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
         return Optional.of(item);
     }
 
     private static Optional<RegistrationItem> registration(Attributes attr) {
         if (attr == null) return Optional.empty();
         RegistrationItem item = new RegistrationItem();
-
-        if (attr.contains(Tag.ReferencedImageSequence)) {
-            Sequence seq = attr.getSequence(Tag.ReferencedImageSequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedSOPClassInstance(value);
-                optTmp.ifPresent(tmp -> item.getReferencedImageSequence().add(tmp));
-            }
-        }
-        item.setFrameOfReferenceUID(attr.getString(Tag.FrameOfReferenceUID, ""));
-
-
-        if (attr.contains(Tag.MatrixRegistrationSequence)) {
-            Sequence seq = attr.getSequence(Tag.MatrixRegistrationSequence);
-            for (Attributes value : seq) {
-                var optTmp = matrixRegistration(value);
-                optTmp.ifPresent(tmp -> item.getMatrixRegistrationSequence().add(tmp));
-            }
-        }
-
+        item.setReferencedImageSequence(readSequence(attr, Tag.ReferencedImageSequence, Reader::referencedSOPClassInstance));
+        item.setFrameOfReferenceUID(readString(attr, Tag.FrameOfReferenceUID));
+        item.setMatrixRegistrationSequence(readSequence(attr, Tag.MatrixRegistrationSequence, Reader::matrixRegistration));
         return Optional.of(item);
     }
 
     private static Optional<MatrixRegistrationItem> matrixRegistration(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new MatrixRegistrationItem();
-        if (attr.contains(Tag.MatrixSequence)) {
-            Sequence seq = attr.getSequence(Tag.MatrixSequence);
-            for (Attributes value : seq) {
-                var optTmp = matrix(value);
-                optTmp.ifPresent(tmp -> item.getMatrixSequence().add(tmp));
-            }
-        }
+        item.setMatrixSequence(readSequence(attr, Tag.MatrixSequence, Reader::matrix));
         return Optional.of(item);
     }
 
-    private static TransformationMatrixType frameOfReferenceTransformationMatrixType(Attributes attr) {
-        if (attr == null) return TransformationMatrixType.NONE;
-        if (attr.contains(Tag.FrameOfReferenceTransformationMatrixType)) {
+    private static Optional<TransformationMatrixType> frameOfReferenceTransformationMatrixType(Attributes attr) {
+        if (attr == null) return Optional.empty();
+        if (attr.containsValue(Tag.FrameOfReferenceTransformationMatrixType)) {
             var s = attr.getString(Tag.FrameOfReferenceTransformationMatrixType);
             switch (s) {
                 case "RIGID":
-                    return TransformationMatrixType.RIGID;
+                    return Optional.of(TransformationMatrixType.RIGID);
                 case "RIGID_SCALE":
-                    return TransformationMatrixType.RIGID_SCALE;
+                    return Optional.of(TransformationMatrixType.RIGID_SCALE);
                 case "AFFINE":
-                    return TransformationMatrixType.AFFINE;
+                    return Optional.of(TransformationMatrixType.AFFINE);
                 default:
-                    return TransformationMatrixType.NONE;
+                    return Optional.of(TransformationMatrixType.NONE);
             }
         }
-        return TransformationMatrixType.NONE;
+        return Optional.empty();
     }
 
     private static Optional<MatrixItem> matrix(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new MatrixItem();
         item.setFrameOfReferenceTransformationMatrixType(frameOfReferenceTransformationMatrixType(attr));
-        item.setFrameOfReferenceTransformationMatrix(attr.getDoubles(Tag.FrameOfReferenceTransformationMatrix));
+        item.setFrameOfReferenceTransformationMatrix(readDoubles(attr, Tag.FrameOfReferenceTransformationMatrix));
         return Optional.of(item);
     }
 
@@ -238,14 +331,8 @@ public class Reader {
     private static Optional<ReferencedFrameOfReferenceItem> referencedFrameOfReference(Attributes attr) {
         if (attr == null) return Optional.empty();
         ReferencedFrameOfReferenceItem item = new ReferencedFrameOfReferenceItem();
-        item.setFrameOfReferenceUID(attr.getString(Tag.FrameOfReferenceUID, ""));
-        if (attr.contains(Tag.RTReferencedStudySequence)) {
-            Sequence seq = attr.getSequence(Tag.RTReferencedStudySequence);
-            for (Attributes value : seq) {
-                var optTmp = rtReferencedStudy(value);
-                optTmp.ifPresent(tmp -> item.getRtReferencedStudySequence().add(tmp));
-            }
-        }
+        item.setFrameOfReferenceUID(readString(attr, Tag.FrameOfReferenceUID));
+        item.setRtReferencedStudySequence(readSequence(attr, Tag.RTReferencedStudySequence, Reader::rtReferencedStudy));
         return Optional.of(item);
     }
 
@@ -258,69 +345,45 @@ public class Reader {
         } else {
             item = new RTReferencedStudyItem(optReferencedSOPClassInstance.get());
         }
-        if (attr.contains(Tag.RTReferencedSeriesSequence)) {
-            Sequence seq = attr.getSequence(Tag.RTReferencedSeriesSequence);
-            for (Attributes value : seq) {
-                var optTmp = rtReferencedSeriesItem(value);
-                optTmp.ifPresent(tmp -> item.getRtReferencedSeriesSequence().add(tmp));
-            }
-        }
+        item.setRtReferencedSeriesSequence(readSequence(attr, Tag.RTReferencedSeriesSequence, Reader::rtReferencedSeriesItem));
         return Optional.of(item);
     }
 
     private static Optional<RTReferencedSeriesItem> rtReferencedSeriesItem(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new RTReferencedSeriesItem();
-        item.setSeriesInstanceUID(attr.getString(Tag.SeriesInstanceUID, ""));
-        if (attr.contains(Tag.ContourImageSequence)) {
-            Sequence seq = attr.getSequence(Tag.ContourImageSequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedSOPClassInstance(value);
-                optTmp.ifPresent(tmp -> item.getContourImageSequence().add(tmp));
-            }
-        }
+        item.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
+        item.setContourImageSequence(readSequence(attr, Tag.ContourImageSequence, Reader::referencedSOPClassInstance));
         return Optional.of(item);
     }
 
     private static Optional<ROIContourItem> roiContour(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new ROIContourItem();
-        item.setROIDisplayColor(attr.getInts(Tag.ROIDisplayColor));
-        if (attr.contains(Tag.ContourSequence)) {
-            Sequence seq = attr.getSequence(Tag.ContourSequence);
-            for (Attributes value : seq) {
-                var optTmp = contour(value);
-                optTmp.ifPresent(tmp -> item.getContourSequence().add(tmp));
-            }
-        }
-        item.setReferencedROINumber(attr.getInt(Tag.ReferencedROINumber, DicomUtils.UNDEFINED_U32));
+        item.setROIDisplayColor(readInts(attr, Tag.ROIDisplayColor));
+        item.setContourSequence(readSequence(attr, Tag.ContourSequence, Reader::contour));
+        item.setReferencedROINumber(readInt(attr, Tag.ReferencedROINumber));
         return Optional.of(item);
     }
 
     private static Optional<ContourItem> contour(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new ContourItem();
-        if (attr.contains(Tag.ContourImageSequence)) {
-            Sequence seq = attr.getSequence(Tag.ContourImageSequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedSOPClassInstance(value);
-                optTmp.ifPresent(tmp -> item.getContourImageSequence().add(tmp));
-            }
-        }
-        item.setContourGeometricType(attr.getString(Tag.ContourGeometricType, ""));
-        item.setNumberOfContourPoints(attr.getInt(Tag.NumberOfContourPoints, DicomUtils.UNDEFINED_U32));
-        item.setContourNumber(attr.getInt(Tag.ContourNumber, DicomUtils.UNDEFINED_U32));
-        item.setContourData(Arrays.stream(attr.getDoubles(Tag.ContourData)).boxed().collect(Collectors.toList()));
+        item.setContourImageSequence(readSequence(attr, Tag.ContourImageSequence, Reader::referencedSOPClassInstance));
+        item.setContourGeometricType(readString(attr, Tag.ContourGeometricType));
+        item.setNumberOfContourPoints(readInt(attr, Tag.NumberOfContourPoints));
+        item.setContourNumber(readInt(attr, Tag.ContourNumber));
+        item.setContourData(readListDoubles(attr, Tag.ContourData));
         return Optional.of(item);
     }
 
     private static Optional<StructureSetROIItem> structureSetROI(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new StructureSetROIItem();
-        item.setROINumber(attr.getInt(Tag.ROINumber, DicomUtils.UNDEFINED_U32));
-        item.setReferencedFrameOfReferenceUID(attr.getString(Tag.ReferencedFrameOfReferenceUID, ""));
-        item.setROIName(attr.getString(Tag.ROIName, ""));
-        item.setROIGenerationAlgorithm(attr.getString(Tag.ROIGenerationAlgorithm, ""));
+        item.setROINumber(readInt(attr, Tag.ROINumber));
+        item.setReferencedFrameOfReferenceUID(readString(attr, Tag.ReferencedFrameOfReferenceUID));
+        item.setROIName(readString(attr, Tag.ROIName));
+        item.setROIGenerationAlgorithm(readString(attr, Tag.ROIGenerationAlgorithm));
         return Optional.of(item);
     }
 
@@ -328,11 +391,11 @@ public class Reader {
         if (attr == null) return Optional.empty();
         var item = new RTROIObservationsItem();
 
-        item.setObservationNumber(attr.getInt(Tag.ObservationNumber, DicomUtils.UNDEFINED_U32));
-        item.setReferencedROINumber(attr.getInt(Tag.ReferencedROINumber, DicomUtils.UNDEFINED_U32));
-        item.setROIObservationLabel(attr.getString(Tag.ROIObservationLabel, ""));
-        item.setRTROIInterpretedType(attr.getString(Tag.RTROIInterpretedType, ""));
-        item.setROIInterpreter(attr.getString(Tag.ROIInterpreter, ""));
+        item.setObservationNumber(readInt(attr, Tag.ObservationNumber));
+        item.setReferencedROINumber(readInt(attr, Tag.ReferencedROINumber));
+        item.setROIObservationLabel(readString(attr, Tag.ROIObservationLabel));
+        item.setRTROIInterpretedType(readString(attr, Tag.RTROIInterpretedType));
+        item.setROIInterpreter(readString(attr, Tag.ROIInterpreter));
 
         if (attr.contains(Tag.ROIPhysicalPropertiesSequence)) {
             Sequence seq = attr.getSequence(Tag.ROIPhysicalPropertiesSequence);
@@ -341,15 +404,15 @@ public class Reader {
                 optTmp.ifPresent(tmp -> item.getROIPhysicalPropertiesSequence().add(tmp));
             }
         }
-        item.setMaterialID(attr.getString(Tag.MaterialID, ""));
+        item.setMaterialID(readString(attr, Tag.MaterialID));
         return Optional.of(item);
     }
 
     private static Optional<ROIPhysicalPropertiesItem> roiPhysicalProperties(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new ROIPhysicalPropertiesItem();
-        item.setROIPhysicalProperty(attr.getString(Tag.ROIPhysicalProperty, ""));
-        item.setROIPhysicalPropertyValue(attr.getDouble(Tag.ROIPhysicalPropertyValue, DicomUtils.UNDEFINED_DOUBLE));
+        item.setROIPhysicalProperty(readString(attr, Tag.ROIPhysicalProperty));
+        item.setROIPhysicalPropertyValue(readDouble(attr, Tag.ROIPhysicalPropertyValue));
         if (attr.contains(Tag.ROIElementalCompositionSequence)) {
             Sequence seq = attr.getSequence(Tag.ROIElementalCompositionSequence);
             for (Attributes value : seq) {
@@ -363,8 +426,8 @@ public class Reader {
     private static Optional<ROIElementalCompositionItem> roiElementalComposition(Attributes attr) {
         if (attr == null) return Optional.empty();
         var item = new ROIElementalCompositionItem();
-        item.setRoiElementalCompositionAtomicNumber(attr.getInt(Tag.ROIElementalCompositionAtomicNumber, DicomUtils.UNDEFINED_U32));
-        item.setRoiElementalCompositionAtomicMassFraction(attr.getDouble(Tag.ROIElementalCompositionAtomicMassFraction, DicomUtils.UNDEFINED_DOUBLE));
+        item.setRoiElementalCompositionAtomicNumber(readInt(attr, Tag.ROIElementalCompositionAtomicNumber));
+        item.setRoiElementalCompositionAtomicMassFraction(readDouble(attr, Tag.ROIElementalCompositionAtomicMassFraction));
         return Optional.of(item);
     }
 
@@ -662,13 +725,13 @@ public class Reader {
     private static Optional<DvhItem> dvh(Attributes attr) throws IOException {
         if (attr == null) return Optional.empty();
         DvhItem item = new DvhItem();
-        item.setDvhType(attr.getString(Tag.DVHType, ""));
-        item.setDoseUnits(attr.getString(Tag.DoseUnits, ""));
-        item.setDoseType(attr.getString(Tag.DoseType, ""));
-        item.setDvhDoseScaling(attr.getDouble(Tag.DVHDoseScaling, 0.0));
-        item.setDvhVolumeUnits(attr.getString(Tag.DVHVolumeUnits, ""));
-        item.setDvhNumberOfBins(attr.getInt(Tag.DVHNumberOfBins, DicomUtils.UNDEFINED_U32));
-        item.setDvhData(attr.getDoubles(Tag.DVHData));
+        item.setDvhType(readString(attr, Tag.DVHType));
+        item.setDoseUnits(readString(attr, Tag.DoseUnits));
+        item.setDoseType(readString(attr, Tag.DoseType));
+        item.setDvhDoseScaling(readDouble(attr, Tag.DVHDoseScaling));
+        item.setDvhVolumeUnits(readString(attr, Tag.DVHVolumeUnits));
+        item.setDvhNumberOfBins(readInt(attr, Tag.DVHNumberOfBins));
+        item.setDvhData(readDoubles(attr, Tag.DVHData));
         item.getDvhReferencedROISequence().clear();
         if (attr.contains(Tag.DVHReferencedROISequence)) {
             Sequence seq = attr.getSequence(Tag.DVHReferencedROISequence);
@@ -677,9 +740,9 @@ public class Reader {
                 optTmp.ifPresent(tmp -> item.getDvhReferencedROISequence().add(tmp));
             }
         }
-        item.setDvhMinimumDose(attr.getDouble(Tag.DVHMinimumDose, DicomUtils.UNDEFINED_DOUBLE));
-        item.setDvhMaximumDose(attr.getDouble(Tag.DVHMaximumDose, DicomUtils.UNDEFINED_DOUBLE));
-        item.setDvhMeanDose(attr.getDouble(Tag.DVHMeanDose, DicomUtils.UNDEFINED_DOUBLE));
+        item.setDvhMinimumDose(readDouble(attr, Tag.DVHMinimumDose));
+        item.setDvhMaximumDose(readDouble(attr, Tag.DVHMaximumDose));
+        item.setDvhMeanDose(readDouble(attr, Tag.DVHMeanDose));
         return Optional.of(item);
     }
 
@@ -694,28 +757,28 @@ public class Reader {
         } else {
             ct = new CT(optMeta.get());
         }
-        ct.setSpecificCharacterSet(attr.getString(Tag.SpecificCharacterSet, ""));
-        ct.setImageType(Arrays.stream(attr.getString(Tag.ImageType, "").split("\\\\")).collect(Collectors.toList()));
-        ct.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
-        ct.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
-        ct.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setSeriesDate(attr.getDate(Tag.SeriesDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setAcquisitionDate(attr.getDate(Tag.AcquisitionDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setContentDate(attr.getDate(Tag.ContentDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
-        ct.setSeriesTime(DicomUtils.tmToLocalTime(attr.getString(Tag.SeriesTime, "")));
-        ct.setAcquisitionTime(DicomUtils.tmToLocalTime(attr.getString(Tag.AcquisitionTime, "")));
-        ct.setContentTime(DicomUtils.tmToLocalTime(attr.getString(Tag.ContentTime, "")));
-        ct.setAccessionNumber(attr.getString(Tag.AccessionNumber, ""));
+        ct.setSpecificCharacterSet(readString(attr, Tag.SpecificCharacterSet));
+        ct.setImageType(Arrays.stream(readString(attr, Tag.ImageType).split("\\\\")).collect(Collectors.toList()));
+        ct.setSOPClassUID(readString(attr, Tag.SOPClassUID));
+        ct.setSOPInstanceUID(readString(attr, Tag.SOPInstanceUID));
+        ct.setStudyDate(readDate(attr, Tag.StudyDate));
+        ct.setSeriesDate(readDate(attr, Tag.SeriesDate));
+        ct.setAcquisitionDate(readDate(attr, Tag.AcquisitionDate));
+        ct.setContentDate(readDate(attr, Tag.ContentDate));
+        ct.setStudyTime(DicomUtils.tmToLocalTime(readString(attr, Tag.StudyTime)));
+        ct.setSeriesTime(DicomUtils.tmToLocalTime(readString(attr, Tag.SeriesTime)));
+        ct.setAcquisitionTime(DicomUtils.tmToLocalTime(readString(attr, Tag.AcquisitionTime)));
+        ct.setContentTime(DicomUtils.tmToLocalTime(readString(attr, Tag.ContentTime)));
+        ct.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         ct.setModality(modality(attr));
         if (ct.getModality() != Modality.CT) {
             log.error("Trying to read a DICOM file that is not a CT");
             return Optional.empty();
         }
-        ct.setManufacturer(attr.getString(Tag.Manufacturer, ""));
-        ct.setInstitutionName(attr.getString(Tag.InstitutionName, ""));
-        ct.setReferringPhysicianName(attr.getString(Tag.ReferringPhysicianName, ""));
-        ct.setStationName(attr.getString(Tag.StationName, ""));
+        ct.setManufacturer(readString(attr, Tag.Manufacturer));
+        ct.setInstitutionName(readString(attr, Tag.InstitutionName));
+        ct.setReferringPhysicianName(readString(attr, Tag.ReferringPhysicianName));
+        ct.setStationName(readString(attr, Tag.StationName));
         ct.getProcedureCodeSequence().clear();
         if (attr.contains(Tag.ProcedureCodeSequence)) {
             Sequence seq = attr.getSequence(Tag.ProcedureCodeSequence);
@@ -724,9 +787,9 @@ public class Reader {
                 optCode.ifPresent(code -> ct.getProcedureCodeSequence().add(code));
             }
         }
-        ct.setSeriesDescription(attr.getString(Tag.SeriesDescription, ""));
-        ct.setInstitutionalDepartmentName(attr.getString(Tag.InstitutionalDepartmentName, ""));
-        ct.setManufacturerModelName(attr.getString(Tag.ManufacturerModelName, ""));
+        ct.setSeriesDescription(readString(attr, Tag.SeriesDescription));
+        ct.setInstitutionalDepartmentName(readString(attr, Tag.InstitutionalDepartmentName));
+        ct.setManufacturerModelName(readString(attr, Tag.ManufacturerModelName));
         ct.getReferencedStudySequence().clear();
         if (attr.contains(Tag.ReferencedStudySequence)) {
             Sequence seq = attr.getSequence(Tag.ReferencedStudySequence);
@@ -735,68 +798,68 @@ public class Reader {
                 optTmp.ifPresent(tmp -> ct.getReferencedStudySequence().add(tmp));
             }
         }
-        ct.setPatientName(attr.getString(Tag.PatientName, ""));
-        ct.setPatientID(attr.getString(Tag.PatientID, ""));
-        ct.setPatientBirthDate(attr.getDate(Tag.PatientBirthDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setPatientSex(attr.getString(Tag.PatientSex, ""));
-        ct.setPatientAge(attr.getString(Tag.PatientAge, ""));
-        ct.setPatientIdentityRemoved(attr.getString(Tag.PatientIdentityRemoved, ""));
-        ct.setDeidentificationMethod(attr.getString(Tag.DeidentificationMethod, ""));
-        ct.setBodyPartExamined(attr.getString(Tag.BodyPartExamined, ""));
-        ct.setScanOptions(attr.getString(Tag.ScanOptions, ""));
-        ct.setSliceThickness(attr.getDouble(Tag.SliceThickness, 0.0));
-        ct.setKVP(attr.getDouble(Tag.KVP, 0.0));
-        ct.setDataCollectionDiameter(attr.getDouble(Tag.DataCollectionDiameter, 0.0));
-        ct.setDeviceSerialNumber(attr.getString(Tag.DeviceSerialNumber, ""));
-        ct.setSoftwareVersions(attr.getString(Tag.SoftwareVersions, ""));
-        ct.setProtocolName(attr.getString(Tag.ProtocolName, ""));
-        ct.setReconstructionDiameter(attr.getDouble(Tag.ReconstructionDiameter, 0.0));
-        ct.setGantryDetectorTilt(attr.getDouble(Tag.GantryDetectorTilt, 0.0));
-        ct.setTableHeight(attr.getDouble(Tag.TableHeight, 0.0));
-        ct.setRotationDirection(attr.getString(Tag.RotationDirection, ""));
-        ct.setExposureTime(attr.getInt(Tag.ExposureTime, DicomUtils.UNDEFINED_U32));
-        ct.setXRayTubeCurrent(attr.getInt(Tag.XRayTubeCurrent, DicomUtils.UNDEFINED_U32));
-        ct.setExposure(attr.getInt(Tag.Exposure, DicomUtils.UNDEFINED_U32));
-        ct.setGeneratorPower(attr.getInt(Tag.GeneratorPower, DicomUtils.UNDEFINED_U32));
-        ct.setFocalSpots(attr.getDoubles(Tag.FocalSpots));
-        ct.setConvolutionKernel(attr.getString(Tag.ConvolutionKernel, ""));
+        ct.setPatientName(readString(attr, Tag.PatientName));
+        ct.setPatientID(readString(attr, Tag.PatientID));
+        ct.setPatientBirthDate(readDate(attr, Tag.PatientBirthDate));
+        ct.setPatientSex(readString(attr, Tag.PatientSex));
+        ct.setPatientAge(readString(attr, Tag.PatientAge));
+        ct.setPatientIdentityRemoved(readString(attr, Tag.PatientIdentityRemoved));
+        ct.setDeidentificationMethod(readString(attr, Tag.DeidentificationMethod));
+        ct.setBodyPartExamined(readString(attr, Tag.BodyPartExamined));
+        ct.setScanOptions(readString(attr, Tag.ScanOptions));
+        ct.setSliceThickness(readDouble(attr, Tag.SliceThickness));
+        ct.setKVP(readDouble(attr, Tag.KVP));
+        ct.setDataCollectionDiameter(readDouble(attr, Tag.DataCollectionDiameter));
+        ct.setDeviceSerialNumber(readString(attr, Tag.DeviceSerialNumber));
+        ct.setSoftwareVersions(readString(attr, Tag.SoftwareVersions));
+        ct.setProtocolName(readString(attr, Tag.ProtocolName));
+        ct.setReconstructionDiameter(readDouble(attr, Tag.ReconstructionDiameter));
+        ct.setGantryDetectorTilt(readDouble(attr, Tag.GantryDetectorTilt));
+        ct.setTableHeight(readDouble(attr, Tag.TableHeight));
+        ct.setRotationDirection(readString(attr, Tag.RotationDirection));
+        ct.setExposureTime(readInt(attr, Tag.ExposureTime));
+        ct.setXRayTubeCurrent(readInt(attr, Tag.XRayTubeCurrent));
+        ct.setExposure(readInt(attr, Tag.Exposure));
+        ct.setGeneratorPower(readInt(attr, Tag.GeneratorPower));
+        ct.setFocalSpots(readDoubles(attr, Tag.FocalSpots));
+        ct.setConvolutionKernel(readString(attr, Tag.ConvolutionKernel));
         ct.setPatientPosition(patientPosition(attr));
-        ct.setExposureModulationType(attr.getString(Tag.ExposureModulationType, ""));
-        ct.setEstimatedDoseSaving(attr.getDouble(Tag.EstimatedDoseSaving, 0.0));
-        ct.setCTDIvol(attr.getDouble(Tag.CTDIvol, 0.0));
-        ct.setStudyInstanceUID(attr.getString(Tag.StudyInstanceUID, ""));
-        ct.setSeriesInstanceUID(attr.getString(Tag.SeriesInstanceUID, ""));
-        ct.setStudyID(attr.getString(Tag.StudyID, ""));
-        ct.setSeriesNumber(attr.getInt(Tag.SeriesNumber, DicomUtils.UNDEFINED_U32));
-        ct.setAcquisitionNumber(attr.getInt(Tag.AcquisitionNumber, DicomUtils.UNDEFINED_U32));
-        ct.setInstanceNumber(attr.getInt(Tag.InstanceNumber, DicomUtils.UNDEFINED_U32));
-        ct.setPatientOrientation(attr.getString(Tag.PatientOrientation, ""));
-        ct.setImagePositionPatient(attr.getDoubles(Tag.ImagePositionPatient));
-        ct.setImageOrientationPatient(attr.getDoubles(Tag.ImageOrientationPatient));
-        ct.setFrameOfReferenceUID(attr.getString(Tag.FrameOfReferenceUID, ""));
-        ct.setPositionReferenceIndicator(attr.getString(Tag.PositionReferenceIndicator, ""));
-        ct.setSliceLocation(attr.getDouble(Tag.SliceLocation, 0.0));
-        ct.setImageComments(attr.getString(Tag.ImageComments, ""));
-        ct.setSamplesPerPixel(attr.getInt(Tag.SamplesPerPixel, DicomUtils.UNDEFINED_U32));
+        ct.setExposureModulationType(readString(attr, Tag.ExposureModulationType));
+        ct.setEstimatedDoseSaving(readDouble(attr, Tag.EstimatedDoseSaving));
+        ct.setCTDIvol(readDouble(attr, Tag.CTDIvol));
+        ct.setStudyInstanceUID(readString(attr, Tag.StudyInstanceUID));
+        ct.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
+        ct.setStudyID(readString(attr, Tag.StudyID));
+        ct.setSeriesNumber(readInt(attr, Tag.SeriesNumber));
+        ct.setAcquisitionNumber(readInt(attr, Tag.AcquisitionNumber));
+        ct.setInstanceNumber(readInt(attr, Tag.InstanceNumber));
+        ct.setPatientOrientation(readString(attr, Tag.PatientOrientation));
+        ct.setImagePositionPatient(readDoubles(attr, Tag.ImagePositionPatient));
+        ct.setImageOrientationPatient(readDoubles(attr, Tag.ImageOrientationPatient));
+        ct.setFrameOfReferenceUID(readString(attr, Tag.FrameOfReferenceUID));
+        ct.setPositionReferenceIndicator(readString(attr, Tag.PositionReferenceIndicator));
+        ct.setSliceLocation(readDouble(attr, Tag.SliceLocation));
+        ct.setImageComments(readString(attr, Tag.ImageComments));
+        ct.setSamplesPerPixel(readInt(attr, Tag.SamplesPerPixel));
         ct.setPhotometricInterpretation(photometricInterpretation(attr));
-        ct.setRows(attr.getInt(Tag.Rows, DicomUtils.UNDEFINED_U32));
-        ct.setColumns(attr.getInt(Tag.Columns, DicomUtils.UNDEFINED_U32));
-        ct.setPixelSpacing(attr.getDoubles(Tag.PixelSpacing));
-        ct.setBitsAllocated(attr.getInt(Tag.BitsAllocated, DicomUtils.UNDEFINED_U32));
-        ct.setBitsStored(attr.getInt(Tag.BitsStored, DicomUtils.UNDEFINED_U32));
-        ct.setHighBit(attr.getInt(Tag.HighBit, DicomUtils.UNDEFINED_U32));
+        ct.setRows(readInt(attr, Tag.Rows));
+        ct.setColumns(readInt(attr, Tag.Columns));
+        ct.setPixelSpacing(readDoubles(attr, Tag.PixelSpacing));
+        ct.setBitsAllocated(readInt(attr, Tag.BitsAllocated));
+        ct.setBitsStored(readInt(attr, Tag.BitsStored));
+        ct.setHighBit(readInt(attr, Tag.HighBit));
         ct.setPixelRepresentation(pixelRepresentation(attr));
-        ct.setWindowCenter(attr.getDouble(Tag.WindowCenter, 0.0));
-        ct.setWindowWidth(attr.getDouble(Tag.WindowWidth, 0.0));
-        ct.setRescaleIntercept(attr.getDouble(Tag.RescaleIntercept, 0.0));
-        ct.setRescaleSlope(attr.getDouble(Tag.RescaleSlope, 0.0));
-        ct.setScheduledProcedureStepStartDate(attr.getDate(Tag.ScheduledProcedureStepStartDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setScheduledProcedureStepStartTime(DicomUtils.tmToLocalTime(attr.getString(Tag.ScheduledProcedureStepStartTime, "")));
-        ct.setScheduledProcedureStepEndDate(attr.getDate(Tag.ScheduledProcedureStepEndDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setScheduledProcedureStepEndTime(DicomUtils.tmToLocalTime(attr.getString(Tag.ScheduledProcedureStepEndTime, "")));
-        ct.setPerformedProcedureStepStartDate(attr.getDate(Tag.PerformedProcedureStepStartDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ct.setPerformedProcedureStepStartTime(DicomUtils.tmToLocalTime(attr.getString(Tag.PerformedProcedureStepStartTime, "")));
-        ct.setPerformedProcedureStepID(attr.getString(Tag.PerformedProcedureStepID, ""));
+        ct.setWindowCenter(readDouble(attr, Tag.WindowCenter));
+        ct.setWindowWidth(readDouble(attr, Tag.WindowWidth));
+        ct.setRescaleIntercept(readDouble(attr, Tag.RescaleIntercept));
+        ct.setRescaleSlope(readDouble(attr, Tag.RescaleSlope));
+        ct.setScheduledProcedureStepStartDate(readDate(attr, Tag.ScheduledProcedureStepStartDate));
+        ct.setScheduledProcedureStepStartTime(DicomUtils.tmToLocalTime(readString(attr, Tag.ScheduledProcedureStepStartTime)));
+        ct.setScheduledProcedureStepEndDate(readDate(attr, Tag.ScheduledProcedureStepEndDate));
+        ct.setScheduledProcedureStepEndTime(DicomUtils.tmToLocalTime(readString(attr, Tag.ScheduledProcedureStepEndTime)));
+        ct.setPerformedProcedureStepStartDate(readDate(attr, Tag.PerformedProcedureStepStartDate));
+        ct.setPerformedProcedureStepStartTime(DicomUtils.tmToLocalTime(readString(attr, Tag.PerformedProcedureStepStartTime)));
+        ct.setPerformedProcedureStepID(readString(attr, Tag.PerformedProcedureStepID));
         ct.getPerformedProtocolCodeSequence().clear();
         if (attr.contains(Tag.PerformedProtocolCodeSequence)) {
             Sequence seq = attr.getSequence(Tag.PerformedProtocolCodeSequence);
@@ -832,61 +895,61 @@ public class Reader {
             rtdose.setImplementationClassUID(meta.getString(Tag.ImplementationClassUID, ""));
             rtdose.setImplementationVersionName(meta.getString(Tag.ImplementationVersionName, ""));
         }
-        rtdose.setSpecificCharacterSet(attr.getString(Tag.SpecificCharacterSet, ""));
-        rtdose.setInstanceCreationDate(attr.getDate(Tag.InstanceCreationDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        rtdose.setInstanceCreationTime(DicomUtils.tmToLocalTime(attr.getString(Tag.InstanceCreationTime, "")));
-        rtdose.setSopClassUID(attr.getString(Tag.SOPClassUID, ""));
+        rtdose.setSpecificCharacterSet(readString(attr, Tag.SpecificCharacterSet));
+        rtdose.setInstanceCreationDate(readDate(attr, Tag.InstanceCreationDate));
+        rtdose.setInstanceCreationTime(DicomUtils.tmToLocalTime(readString(attr, Tag.InstanceCreationTime)));
+        rtdose.setSopClassUID(readString(attr, Tag.SOPClassUID));
         if (!rtdose.getSopClassUID().equals(UID.RTDoseStorage)) return Optional.empty();
         rtdose.setSopInstanceUID(attr.getString(Tag.SOPInstanceUID));
-        rtdose.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        rtdose.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
-        rtdose.setAccessionNumber(attr.getString(Tag.AccessionNumber, ""));
+        rtdose.setStudyDate(readDate(attr, Tag.StudyDate));
+        rtdose.setStudyTime(DicomUtils.tmToLocalTime(readString(attr, Tag.StudyTime)));
+        rtdose.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         rtdose.setModality(modality(attr));
         if (!rtdose.getModality().equals(Modality.RTDOSE)) {
             log.error("Trying to read a DICOM file that is not a RTDOSE");
             return Optional.empty();
         }
-        rtdose.setManufacturer(attr.getString(Tag.Manufacturer, ""));
-        rtdose.setReferringPhysicianName(attr.getString(Tag.ReferringPhysicianName, ""));
-        rtdose.setStationName(attr.getString(Tag.StationName, ""));
-        rtdose.setSeriesDescription(attr.getString(Tag.SeriesDescription, ""));
-        rtdose.setManufacturerModelName(attr.getString(Tag.ManufacturerModelName, ""));
-        rtdose.setPatientName(attr.getString(Tag.PatientName, ""));
-        rtdose.setPatientID(attr.getString(Tag.PatientID, ""));
+        rtdose.setManufacturer(readString(attr, Tag.Manufacturer));
+        rtdose.setReferringPhysicianName(readString(attr, Tag.ReferringPhysicianName));
+        rtdose.setStationName(readString(attr, Tag.StationName));
+        rtdose.setSeriesDescription(readString(attr, Tag.SeriesDescription));
+        rtdose.setManufacturerModelName(readString(attr, Tag.ManufacturerModelName));
+        rtdose.setPatientName(readString(attr, Tag.PatientName));
+        rtdose.setPatientID(readString(attr, Tag.PatientID));
         if (attr.contains(Tag.PatientBirthDate))
             rtdose.setPatientBirthDate(DicomUtils.getLocalDate(attr.getDate(Tag.PatientBirthDate)));
         else
             rtdose.setPatientBirthDate(null);
-        rtdose.setPatientSex(attr.getString(Tag.PatientSex, ""));
-        rtdose.setSliceThicknes(attr.getDouble(Tag.SliceThickness, 0.0));
-        rtdose.setDeviceSerialNumber(attr.getString(Tag.DeviceSerialNumber, ""));
-        rtdose.setSoftwareVersions(attr.getString(Tag.SoftwareVersions, ""));
-        rtdose.setSeriesInstanceUID(attr.getString(Tag.SeriesInstanceUID, ""));
-        rtdose.setStudyInstanceUID(attr.getString(Tag.StudyInstanceUID, ""));
-        rtdose.setStudyID(attr.getString(Tag.StudyID, ""));
-        rtdose.setSeriesNumber(attr.getInt(Tag.SeriesNumber, DicomUtils.UNDEFINED_I32));
-        rtdose.setInstanceNumber(attr.getInt(Tag.InstanceNumber, DicomUtils.UNDEFINED_I32));
-        rtdose.setImagePositionPatient(attr.getDoubles(Tag.ImagePositionPatient));
-        rtdose.setImageOrientationPatient(attr.getDoubles(Tag.ImageOrientationPatient));
-        rtdose.setFrameOfReferenceUID(attr.getString(Tag.FrameOfReferenceUID, ""));
-        rtdose.setPositionReferenceIndicator(attr.getString(Tag.PositionReferenceIndicator, ""));
-        rtdose.setSamplesPerPixel(attr.getInt(Tag.SamplesPerPixel, DicomUtils.UNDEFINED_U32));
+        rtdose.setPatientSex(readString(attr, Tag.PatientSex));
+        rtdose.setSliceThicknes(readDouble(attr, Tag.SliceThickness));
+        rtdose.setDeviceSerialNumber(readString(attr, Tag.DeviceSerialNumber));
+        rtdose.setSoftwareVersions(readString(attr, Tag.SoftwareVersions));
+        rtdose.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
+        rtdose.setStudyInstanceUID(readString(attr, Tag.StudyInstanceUID));
+        rtdose.setStudyID(readString(attr, Tag.StudyID));
+        rtdose.setSeriesNumber(readInt(attr, Tag.SeriesNumber));
+        rtdose.setInstanceNumber(readInt(attr, Tag.InstanceNumber));
+        rtdose.setImagePositionPatient(readDoubles(attr, Tag.ImagePositionPatient));
+        rtdose.setImageOrientationPatient(readDoubles(attr, Tag.ImageOrientationPatient));
+        rtdose.setFrameOfReferenceUID(readString(attr, Tag.FrameOfReferenceUID));
+        rtdose.setPositionReferenceIndicator(readString(attr, Tag.PositionReferenceIndicator));
+        rtdose.setSamplesPerPixel(readInt(attr, Tag.SamplesPerPixel));
         rtdose.setPhotometricInterpretation(photometricInterpretation(attr));
-        rtdose.setNumberOfFrames(attr.getInt(Tag.NumberOfFrames, DicomUtils.UNDEFINED_I32));
-        rtdose.setFrameIncrementPointer(attr.getInt(Tag.FrameIncrementPointer, 0));
-        rtdose.setRows(attr.getInt(Tag.Rows, DicomUtils.UNDEFINED_U32));
-        rtdose.setColumns(attr.getInt(Tag.Columns, DicomUtils.UNDEFINED_U32));
-        rtdose.setPixelSpacing(attr.getDoubles(Tag.PixelSpacing));
-        rtdose.setBitsAllocated(attr.getInt(Tag.BitsAllocated, DicomUtils.UNDEFINED_U32));
-        rtdose.setBitsStored(attr.getInt(Tag.BitsStored, DicomUtils.UNDEFINED_U32));
-        rtdose.setHighBit(attr.getInt(Tag.HighBit, DicomUtils.UNDEFINED_U32));
+        rtdose.setNumberOfFrames(readInt(attr, Tag.NumberOfFrames));
+        rtdose.setFrameIncrementPointer(readInt(attr, Tag.FrameIncrementPointer));
+        rtdose.setRows(readInt(attr, Tag.Rows));
+        rtdose.setColumns(readInt(attr, Tag.Columns));
+        rtdose.setPixelSpacing(readDoubles(attr, Tag.PixelSpacing));
+        rtdose.setBitsAllocated(readInt(attr, Tag.BitsAllocated));
+        rtdose.setBitsStored(readInt(attr, Tag.BitsStored));
+        rtdose.setHighBit(readInt(attr, Tag.HighBit));
         rtdose.setPixelRepresentation(pixelRepresentation(attr));
-        rtdose.setDoseUnits(attr.getString(Tag.DoseUnits, ""));
-        rtdose.setDoseType(attr.getString(Tag.DoseType, ""));
-        rtdose.setDoseSummationType(attr.getString(Tag.DoseSummationType, ""));
-        rtdose.setGridFrameOffsetVector(attr.getDoubles(Tag.GridFrameOffsetVector));
-        rtdose.setDoseGridScaling(attr.getDouble(Tag.DoseGridScaling, 0.0));
-        rtdose.setTissueHeterogeneityCorrection(attr.getString(Tag.TissueHeterogeneityCorrection, ""));
+        rtdose.setDoseUnits(readString(attr, Tag.DoseUnits));
+        rtdose.setDoseType(readString(attr, Tag.DoseType));
+        rtdose.setDoseSummationType(readString(attr, Tag.DoseSummationType));
+        rtdose.setGridFrameOffsetVector(readDoubles(attr, Tag.GridFrameOffsetVector));
+        rtdose.setDoseGridScaling(readDouble(attr, Tag.DoseGridScaling));
+        rtdose.setTissueHeterogeneityCorrection(readString(attr, Tag.TissueHeterogeneityCorrection));
         rtdose.getDvhSequence().clear();
         if (attr.contains(Tag.DVHSequence)) {
             Sequence seq = attr.getSequence(Tag.DVHSequence);
@@ -948,36 +1011,36 @@ public class Reader {
         } else {
             pt = new PT(optMeta.get());
         }
-        pt.setSpecificCharacterSet(attr.getString(Tag.SpecificCharacterSet, ""));
-        pt.setImageType(attr.getString(Tag.ImageType, ""));
-        pt.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
-        pt.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
-        pt.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        pt.setSeriesDate(attr.getDate(Tag.SeriesDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        pt.setAcquisitionDate(attr.getDate(Tag.AcquisitionDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        pt.setContentDate(attr.getDate(Tag.ContentDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        pt.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
-        pt.setSeriesTime(DicomUtils.tmToLocalTime(attr.getString(Tag.SeriesTime, "")));
-        pt.setAcquisitionTime(DicomUtils.tmToLocalTime(attr.getString(Tag.AcquisitionTime, "")));
-        pt.setContentTime(DicomUtils.tmToLocalTime(attr.getString(Tag.ContentTime, "")));
-        pt.setAccessionNumber(attr.getString(Tag.AccessionNumber, ""));
+        pt.setSpecificCharacterSet(readString(attr, Tag.SpecificCharacterSet));
+        pt.setImageType(readString(attr, Tag.ImageType));
+        pt.setSOPClassUID(readString(attr, Tag.SOPClassUID));
+        pt.setSOPInstanceUID(readString(attr, Tag.SOPInstanceUID));
+        pt.setStudyDate(readDate(attr, Tag.StudyDate));
+        pt.setSeriesDate(readDate(attr, Tag.SeriesDate));
+        pt.setAcquisitionDate(readDate(attr, Tag.AcquisitionDate));
+        pt.setContentDate(readDate(attr, Tag.ContentDate));
+        pt.setStudyTime(DicomUtils.tmToLocalTime(readString(attr, Tag.StudyTime)));
+        pt.setSeriesTime(DicomUtils.tmToLocalTime(readString(attr, Tag.SeriesTime)));
+        pt.setAcquisitionTime(DicomUtils.tmToLocalTime(readString(attr, Tag.AcquisitionTime)));
+        pt.setContentTime(DicomUtils.tmToLocalTime(readString(attr, Tag.ContentTime)));
+        pt.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         pt.setModality(modality(attr));
         if (pt.getModality() != Modality.PT) {
             log.error("Trying to read a DICOM file that is not a PT");
             return Optional.empty();
         }
-        pt.setManufacturer(attr.getString(Tag.Manufacturer, ""));
-        pt.setInstitutionName(attr.getString(Tag.InstitutionName, ""));
-        pt.setInstitutionAddress(attr.getString(Tag.InstitutionAddress, ""));
-        pt.setReferringPhysicianName(attr.getString(Tag.ReferringPhysicianName, ""));
-        pt.setStationName(attr.getString(Tag.StationName, ""));
-        pt.setStudyDescription(attr.getString(Tag.StudyDescription, ""));
-        pt.setSeriesDescription(attr.getString(Tag.SeriesDescription, ""));
-        pt.setInstitutionalDepartmentName(attr.getString(Tag.InstitutionalDepartmentName, ""));
-        pt.setPhysiciansOfRecord(attr.getString(Tag.PhysiciansOfRecord, ""));
-        pt.setPerformingPhysicianName(attr.getString(Tag.PerformingPhysicianName, ""));
-        pt.setOperatorsName(attr.getString(Tag.OperatorsName, ""));
-        pt.setManufacturerModelName(attr.getString(Tag.ManufacturerModelName, ""));
+        pt.setManufacturer(readString(attr, Tag.Manufacturer));
+        pt.setInstitutionName(readString(attr, Tag.InstitutionName));
+        pt.setInstitutionAddress(readString(attr, Tag.InstitutionAddress));
+        pt.setReferringPhysicianName(readString(attr, Tag.ReferringPhysicianName));
+        pt.setStationName(readString(attr, Tag.StationName));
+        pt.setStudyDescription(readString(attr, Tag.StudyDescription));
+        pt.setSeriesDescription(readString(attr, Tag.SeriesDescription));
+        pt.setInstitutionalDepartmentName(readString(attr, Tag.InstitutionalDepartmentName));
+        pt.setPhysiciansOfRecord(readString(attr, Tag.PhysiciansOfRecord));
+        pt.setPerformingPhysicianName(readString(attr, Tag.PerformingPhysicianName));
+        pt.setOperatorsName(readString(attr, Tag.OperatorsName));
+        pt.setManufacturerModelName(readString(attr, Tag.ManufacturerModelName));
         pt.getReferencedPatientSequence().clear();
         if (attr.contains(Tag.ReferencedPatientSequence)) {
             Sequence seq = attr.getSequence(Tag.ReferencedPatientSequence);
@@ -994,62 +1057,62 @@ public class Reader {
                 optTmp.ifPresent(tmp -> pt.getPurposeOfReferenceCodeSequence().add(tmp));
             }
         }
-        pt.setPatientName(attr.getString(Tag.PatientName, ""));
-        pt.setPatientID(attr.getString(Tag.PatientID, ""));
-        pt.setIssuerOfPatientID(attr.getString(Tag.IssuerOfPatientID, ""));
-        pt.setPatientBirthDate(attr.getDate(Tag.PatientBirthDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        pt.setPatientSex(attr.getString(Tag.PatientSex, ""));
-        pt.setPatientAge(attr.getString(Tag.PatientAge, ""));
-        pt.setPatientSize(attr.getDouble(Tag.PatientSize, 0.0));
-        pt.setPatientWeight(attr.getDouble(Tag.PatientWeight, 0.0));
-        pt.setPatientAddress(attr.getString(Tag.PatientAddress, ""));
-        pt.setBranchOfService(attr.getString(Tag.BranchOfService, ""));
-        pt.setPregnancyStatus(attr.getString(Tag.PregnancyStatus, ""));
-        pt.setBodyPartExamined(attr.getString(Tag.BodyPartExamined, ""));
-        pt.setSliceThickness(attr.getDouble(Tag.SliceThickness, 0.0));
-        pt.setDeviceSerialNumber(attr.getString(Tag.DeviceSerialNumber, ""));
-        pt.setSoftwareVersions(attr.getString(Tag.SoftwareVersions, ""));
-        pt.setCollimatorType(attr.getString(Tag.CollimatorType, ""));
-        pt.setDateOfLastCalibration(attr.getDate(Tag.DateOfLastCalibration).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        pt.setTimeOfLastCalibration(DicomUtils.tmToLocalTime(attr.getString(Tag.TimeOfLastCalibration, "")));
-        pt.setConvolutionKernel(attr.getString(Tag.ConvolutionKernel, ""));
-        pt.setActualFrameDuration(attr.getInt(Tag.ActualFrameDuration, DicomUtils.UNDEFINED_U32));
+        pt.setPatientName(readString(attr, Tag.PatientName));
+        pt.setPatientID(readString(attr, Tag.PatientID));
+        pt.setIssuerOfPatientID(readString(attr, Tag.IssuerOfPatientID));
+        pt.setPatientBirthDate(readDate(attr, Tag.PatientBirthDate));
+        pt.setPatientSex(readString(attr, Tag.PatientSex));
+        pt.setPatientAge(readString(attr, Tag.PatientAge));
+        pt.setPatientSize(readDouble(attr, Tag.PatientSize));
+        pt.setPatientWeight(readDouble(attr, Tag.PatientWeight));
+        pt.setPatientAddress(readString(attr, Tag.PatientAddress));
+        pt.setBranchOfService(readString(attr, Tag.BranchOfService));
+        pt.setPregnancyStatus(readString(attr, Tag.PregnancyStatus));
+        pt.setBodyPartExamined(readString(attr, Tag.BodyPartExamined));
+        pt.setSliceThickness(readDouble(attr, Tag.SliceThickness));
+        pt.setDeviceSerialNumber(readString(attr, Tag.DeviceSerialNumber));
+        pt.setSoftwareVersions(readString(attr, Tag.SoftwareVersions));
+        pt.setCollimatorType(readString(attr, Tag.CollimatorType));
+        pt.setDateOfLastCalibration(readDate(attr, Tag.DateOfLastCalibration));
+        pt.setTimeOfLastCalibration(DicomUtils.tmToLocalTime(readString(attr, Tag.TimeOfLastCalibration)));
+        pt.setConvolutionKernel(readString(attr, Tag.ConvolutionKernel));
+        pt.setActualFrameDuration(readInt(attr, Tag.ActualFrameDuration));
         pt.setPatientPosition(patientPosition(attr));
-        pt.setStudyInstanceUID(attr.getString(Tag.StudyInstanceUID, ""));
-        pt.setSeriesInstanceUID(attr.getString(Tag.SeriesInstanceUID, ""));
-        pt.setStudyID(attr.getString(Tag.StudyID, ""));
-        pt.setSeriesNumber(attr.getInt(Tag.SeriesNumber, DicomUtils.UNDEFINED_U32));
-        pt.setAcquisitionNumber(attr.getInt(Tag.AcquisitionNumber, DicomUtils.UNDEFINED_U32));
-        pt.setInstanceNumber(attr.getInt(Tag.InstanceNumber, DicomUtils.UNDEFINED_U32));
-        pt.setImagePositionPatient(attr.getDoubles(Tag.ImagePositionPatient));
-        pt.setImageOrientationPatient(attr.getDoubles(Tag.ImageOrientationPatient));
-        pt.setFrameOfReferenceUID(attr.getString(Tag.FrameOfReferenceUID, ""));
-        pt.setPositionReferenceIndicator(attr.getString(Tag.PositionReferenceIndicator, ""));
-        pt.setSliceLocation(attr.getDouble(Tag.SliceLocation, 0.0));
-        pt.setImageComments(attr.getString(Tag.ImageComments, ""));
-        pt.setSamplesPerPixel(attr.getInt(Tag.SamplesPerPixel, DicomUtils.UNDEFINED_U32));
+        pt.setStudyInstanceUID(readString(attr, Tag.StudyInstanceUID));
+        pt.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
+        pt.setStudyID(readString(attr, Tag.StudyID));
+        pt.setSeriesNumber(readInt(attr, Tag.SeriesNumber));
+        pt.setAcquisitionNumber(readInt(attr, Tag.AcquisitionNumber));
+        pt.setInstanceNumber(readInt(attr, Tag.InstanceNumber));
+        pt.setImagePositionPatient(readDoubles(attr, Tag.ImagePositionPatient));
+        pt.setImageOrientationPatient(readDoubles(attr, Tag.ImageOrientationPatient));
+        pt.setFrameOfReferenceUID(readString(attr, Tag.FrameOfReferenceUID));
+        pt.setPositionReferenceIndicator(readString(attr, Tag.PositionReferenceIndicator));
+        pt.setSliceLocation(readDouble(attr, Tag.SliceLocation));
+        pt.setImageComments(readString(attr, Tag.ImageComments));
+        pt.setSamplesPerPixel(readInt(attr, Tag.SamplesPerPixel));
         pt.setPhotometricInterpretation(photometricInterpretation(attr));
-        pt.setRows(attr.getInt(Tag.Rows, DicomUtils.UNDEFINED_U32));
-        pt.setColumns(attr.getInt(Tag.Columns, DicomUtils.UNDEFINED_U32));
-        pt.setPixelSpacing(attr.getDoubles(Tag.PixelSpacing));
-        pt.setCorrectedImage(Arrays.stream(attr.getString(Tag.CorrectedImage, "").split("\\\\")).collect(Collectors.toList()));
-        pt.setBitsAllocated(attr.getInt(Tag.BitsAllocated, DicomUtils.UNDEFINED_U32));
-        pt.setBitsStored(attr.getInt(Tag.BitsStored, DicomUtils.UNDEFINED_U32));
-        pt.setHighBit(attr.getInt(Tag.HighBit, DicomUtils.UNDEFINED_U32));
+        pt.setRows(readInt(attr, Tag.Rows));
+        pt.setColumns(readInt(attr, Tag.Columns));
+        pt.setPixelSpacing(readDoubles(attr, Tag.PixelSpacing));
+        pt.setCorrectedImage(Arrays.stream(readString(attr, Tag.CorrectedImage).split("\\\\")).collect(Collectors.toList()));
+        pt.setBitsAllocated(readInt(attr, Tag.BitsAllocated));
+        pt.setBitsStored(readInt(attr, Tag.BitsStored));
+        pt.setHighBit(readInt(attr, Tag.HighBit));
         pt.setPixelRepresentation(pixelRepresentation(attr));
-        pt.setSmallestImagePixelValue(attr.getInt(Tag.SmallestImagePixelValue, DicomUtils.UNDEFINED_U32));
-        pt.setLargestImagePixelValue(attr.getInt(Tag.LargestImagePixelValue, DicomUtils.UNDEFINED_U32));
-        pt.setWindowCenter(attr.getDouble(Tag.WindowCenter, 0.0));
-        pt.setWindowWidth(attr.getDouble(Tag.WindowWidth, 0.0));
-        pt.setRescaleIntercept(attr.getDouble(Tag.RescaleIntercept, 0.0));
-        pt.setRescaleSlope(attr.getDouble(Tag.RescaleSlope, 0.0));
-        pt.setRescaleType(attr.getString(Tag.RescaleType, ""));
-        pt.setRequestingPhysician(attr.getString(Tag.RequestingPhysician, ""));
-        pt.setRequestingService(attr.getString(Tag.RequestingService, ""));
-        pt.setRequestedProcedureDescription(attr.getString(Tag.RequestedProcedureDescription, ""));
-        pt.setCurrentPatientLocation(attr.getString(Tag.CurrentPatientLocation, ""));
-        pt.setPerformedProcedureStepStartDate(attr.getDate(Tag.PerformedProcedureStepStartDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        pt.setPerformedProcedureStepStartTime(DicomUtils.tmToLocalTime(attr.getString(Tag.PerformedProcedureStepStartTime, "")));
+        pt.setSmallestImagePixelValue(readInt(attr, Tag.SmallestImagePixelValue));
+        pt.setLargestImagePixelValue(readInt(attr, Tag.LargestImagePixelValue));
+        pt.setWindowCenter(readDouble(attr, Tag.WindowCenter));
+        pt.setWindowWidth(readDouble(attr, Tag.WindowWidth));
+        pt.setRescaleIntercept(readDouble(attr, Tag.RescaleIntercept));
+        pt.setRescaleSlope(readDouble(attr, Tag.RescaleSlope));
+        pt.setRescaleType(readString(attr, Tag.RescaleType));
+        pt.setRequestingPhysician(readString(attr, Tag.RequestingPhysician));
+        pt.setRequestingService(readString(attr, Tag.RequestingService));
+        pt.setRequestedProcedureDescription(readString(attr, Tag.RequestedProcedureDescription));
+        pt.setCurrentPatientLocation(readString(attr, Tag.CurrentPatientLocation));
+        pt.setPerformedProcedureStepStartDate(readDate(attr, Tag.PerformedProcedureStepStartDate));
+        pt.setPerformedProcedureStepStartTime(DicomUtils.tmToLocalTime(readString(attr, Tag.PerformedProcedureStepStartTime)));
         pt.getRequestAttributesSequence().clear();
         if (attr.contains(Tag.RequestAttributesSequence)) {
             Sequence seq = attr.getSequence(Tag.RequestAttributesSequence);
@@ -1058,7 +1121,7 @@ public class Reader {
                 optTmp.ifPresent(tmp -> pt.getRequestAttributesSequence().add(tmp));
             }
         }
-        pt.setRequestedProcedureID(attr.getString(Tag.RequestedProcedureID, ""));
+        pt.setRequestedProcedureID(readString(attr, Tag.RequestedProcedureID));
         pt.getEnergyWindowRangeSequence().clear();
         if (attr.contains(Tag.EnergyWindowRangeSequence)) {
             Sequence seq = attr.getSequence(Tag.EnergyWindowRangeSequence);
@@ -1075,7 +1138,7 @@ public class Reader {
                 optTmp.ifPresent(tmp -> pt.getRadiopharmaceuticalInformationSequence().add(tmp));
             }
         }
-        pt.setNumberOfSlices(attr.getInt(Tag.NumberOfSlices, DicomUtils.UNDEFINED_U32));
+        pt.setNumberOfSlices(readInt(attr, Tag.NumberOfSlices));
         pt.getPatientOrientationCodeSequence().clear();
         if (attr.contains(Tag.PatientOrientationCodeSequence)) {
             Sequence seq = attr.getSequence(Tag.PatientOrientationCodeSequence);
@@ -1092,21 +1155,21 @@ public class Reader {
                 optTmp.ifPresent(tmp -> pt.getPatientGantryRelationshipCodeSequence().add(tmp));
             }
         }
-        pt.setSeriesType(attr.getString(Tag.SeriesType, ""));
-        pt.setUnits(attr.getString(Tag.Units, ""));
-        pt.setCountsSource(attr.getString(Tag.CountsSource, ""));
-        pt.setRandomsCorrectionMethod(attr.getString(Tag.RandomsCorrectionMethod, ""));
-        pt.setAttenuationCorrectionMethod(attr.getString(Tag.AttenuationCorrectionMethod, ""));
-        pt.setDecayCorrection(attr.getString(Tag.DecayCorrection, ""));
-        pt.setReconstructionMethod(attr.getString(Tag.ReconstructionMethod, ""));
-        pt.setScatterCorrectionMethod(attr.getString(Tag.ScatterCorrectionMethod, ""));
-        pt.setAxialAcceptance(attr.getDouble(Tag.AxialAcceptance, 0.0));
-        pt.setAxialMash(attr.getInts(Tag.AxialMash));
-        pt.setFrameReferenceTime(attr.getDouble(Tag.FrameReferenceTime, 0.0));
-        pt.setDecayFactor(attr.getDouble(Tag.DecayFactor, 0.0));
-        pt.setDoseCalibrationFactor(attr.getDouble(Tag.DoseCalibrationFactor, 0.0));
-        pt.setScatterFractionFactor(attr.getDouble(Tag.ScatterFractionFactor, 0.0));
-        pt.setImageIndex(attr.getInt(Tag.ImageIndex, DicomUtils.UNDEFINED_U32));
+        pt.setSeriesType(readString(attr, Tag.SeriesType));
+        pt.setUnits(readString(attr, Tag.Units));
+        pt.setCountsSource(readString(attr, Tag.CountsSource));
+        pt.setRandomsCorrectionMethod(readString(attr, Tag.RandomsCorrectionMethod));
+        pt.setAttenuationCorrectionMethod(readString(attr, Tag.AttenuationCorrectionMethod));
+        pt.setDecayCorrection(readString(attr, Tag.DecayCorrection));
+        pt.setReconstructionMethod(readString(attr, Tag.ReconstructionMethod));
+        pt.setScatterCorrectionMethod(readString(attr, Tag.ScatterCorrectionMethod));
+        pt.setAxialAcceptance(readDouble(attr, Tag.AxialAcceptance));
+        pt.setAxialMash(readInts(attr, Tag.AxialMash));
+        pt.setFrameReferenceTime(readDouble(attr, Tag.FrameReferenceTime));
+        pt.setDecayFactor(readDouble(attr, Tag.DecayFactor));
+        pt.setDoseCalibrationFactor(readDouble(attr, Tag.DoseCalibrationFactor));
+        pt.setScatterFractionFactor(readDouble(attr, Tag.ScatterFractionFactor));
+        pt.setImageIndex(readInt(attr, Tag.ImageIndex));
 
         byte[] buf = attr.getBytes(Tag.PixelData);
         int nbuf = buf.length;
@@ -1133,27 +1196,27 @@ public class Reader {
         } else {
             sr = new SpatialRegistration(optMeta.get());
         }
-        sr.setSpecificCharacterSet(attr.getString(Tag.SpecificCharacterSet, ""));
-        sr.setInstanceCreationDate(attr.getDate(Tag.InstanceCreationDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        sr.setInstanceCreationTime(DicomUtils.tmToLocalTime(attr.getString(Tag.InstanceCreationTime, "")));
-        sr.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
-        sr.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
-        sr.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        sr.setSeriesDate(attr.getDate(Tag.SeriesDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        sr.setContentDate(attr.getDate(Tag.ContentDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        sr.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
-        sr.setSeriesTime(DicomUtils.tmToLocalTime(attr.getString(Tag.SeriesTime, "")));
-        sr.setContentTime(DicomUtils.tmToLocalTime(attr.getString(Tag.ContentTime, "")));
-        sr.setAccessionNumber(attr.getString(Tag.AccessionNumber, ""));
+        sr.setSpecificCharacterSet(readString(attr, Tag.SpecificCharacterSet));
+        sr.setInstanceCreationDate(readDate(attr, Tag.InstanceCreationDate));
+        sr.setInstanceCreationTime(DicomUtils.tmToLocalTime(readString(attr, Tag.InstanceCreationTime)));
+        sr.setSOPClassUID(readString(attr, Tag.SOPClassUID));
+        sr.setSOPInstanceUID(readString(attr, Tag.SOPInstanceUID));
+        sr.setStudyDate(readDate(attr, Tag.StudyDate));
+        sr.setSeriesDate(readDate(attr, Tag.SeriesDate));
+        sr.setContentDate(readDate(attr, Tag.ContentDate));
+        sr.setStudyTime(DicomUtils.tmToLocalTime(readString(attr, Tag.StudyTime)));
+        sr.setSeriesTime(DicomUtils.tmToLocalTime(readString(attr, Tag.SeriesTime)));
+        sr.setContentTime(DicomUtils.tmToLocalTime(readString(attr, Tag.ContentTime)));
+        sr.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         sr.setModality(modality(attr));
         if (sr.getModality() != Modality.REG) {
             log.error("Trying to read a DICOM file that is not a SR");
             return Optional.empty();
         }
-        sr.setManufacturer(attr.getString(Tag.Manufacturer, ""));
-        sr.setReferringPhysicianName(attr.getString(Tag.ReferringPhysicianName, ""));
-        sr.setSeriesDescription(attr.getString(Tag.SeriesDescription, ""));
-        sr.setManufacturerModelName(attr.getString(Tag.ManufacturerModelName, ""));
+        sr.setManufacturer(readString(attr, Tag.Manufacturer));
+        sr.setReferringPhysicianName(readString(attr, Tag.ReferringPhysicianName));
+        sr.setSeriesDescription(readString(attr, Tag.SeriesDescription));
+        sr.setManufacturerModelName(readString(attr, Tag.ManufacturerModelName));
 
         sr.getReferencedSeriesSequence().clear();
         if (attr.contains(Tag.ReferencedSeriesSequence)) {
@@ -1173,21 +1236,21 @@ public class Reader {
             }
         }
 
-        sr.setPatientName(attr.getString(Tag.PatientName, ""));
-        sr.setPatientID(attr.getString(Tag.PatientID, ""));
-        sr.setPatientBirthDate(attr.getString(Tag.PatientBirthDate, ""));
-        sr.setPatientSex(attr.getString(Tag.PatientSex, ""));
-        sr.setSoftwareVersions(attr.getString(Tag.SoftwareVersions, ""));
-        sr.setStudyInstanceUID(attr.getString(Tag.StudyInstanceUID, ""));
-        sr.setSeriesInstanceUID(attr.getString(Tag.SeriesInstanceUID, ""));
-        sr.setStudyID(attr.getString(Tag.StudyID, ""));
-        sr.setSeriesNumber(attr.getInt(Tag.SeriesNumber, DicomUtils.UNDEFINED_U32));
-        sr.setInstanceNumber(attr.getInt(Tag.InstanceNumber, DicomUtils.UNDEFINED_U32));
-        sr.setFrameOfReferenceUID(attr.getString(Tag.FrameOfReferenceUID, ""));
-        sr.setPositionReferenceIndicator(attr.getString(Tag.PositionReferenceIndicator, ""));
-        sr.setContentLabel(attr.getString(Tag.ContentLabel, ""));
-        sr.setContentDescription(attr.getString(Tag.ContentDescription, ""));
-        sr.setContentCreatorName(attr.getString(Tag.ContentCreatorName, ""));
+        sr.setPatientName(readString(attr, Tag.PatientName));
+        sr.setPatientID(readString(attr, Tag.PatientID));
+        sr.setPatientBirthDate(readString(attr, Tag.PatientBirthDate));
+        sr.setPatientSex(readString(attr, Tag.PatientSex));
+        sr.setSoftwareVersions(readString(attr, Tag.SoftwareVersions));
+        sr.setStudyInstanceUID(readString(attr, Tag.StudyInstanceUID));
+        sr.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
+        sr.setStudyID(readString(attr, Tag.StudyID));
+        sr.setSeriesNumber(readInt(attr, Tag.SeriesNumber));
+        sr.setInstanceNumber(readInt(attr, Tag.InstanceNumber));
+        sr.setFrameOfReferenceUID(readString(attr, Tag.FrameOfReferenceUID));
+        sr.setPositionReferenceIndicator(readString(attr, Tag.PositionReferenceIndicator));
+        sr.setContentLabel(readString(attr, Tag.ContentLabel));
+        sr.setContentDescription(readString(attr, Tag.ContentDescription));
+        sr.setContentCreatorName(readString(attr, Tag.ContentCreatorName));
         sr.getRegistrationSequence().clear();
         if (attr.contains(Tag.RegistrationSequence)) {
             Sequence seq = attr.getSequence(Tag.RegistrationSequence);
@@ -1208,38 +1271,38 @@ public class Reader {
         } else {
             ss = new RTStructureSet(optMeta.get());
         }
-        ss.setSpecificCharacterSet(attr.getString(Tag.SpecificCharacterSet, ""));
-        ss.setInstanceCreationDate(attr.getDate(Tag.InstanceCreationDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ss.setInstanceCreationTime(DicomUtils.tmToLocalTime(attr.getString(Tag.InstanceCreationTime, "")));
-        ss.setSOPClassUID(attr.getString(Tag.SOPClassUID, ""));
-        ss.setSOPInstanceUID(attr.getString(Tag.SOPInstanceUID, ""));
-        ss.setStudyDate(attr.getDate(Tag.StudyDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ss.setStudyTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StudyTime, "")));
-        ss.setAccessionNumber(attr.getString(Tag.AccessionNumber, ""));
+        ss.setSpecificCharacterSet(readString(attr, Tag.SpecificCharacterSet));
+        ss.setInstanceCreationDate(readDate(attr, Tag.InstanceCreationDate));
+        ss.setInstanceCreationTime(DicomUtils.tmToLocalTime(readString(attr, Tag.InstanceCreationTime)));
+        ss.setSOPClassUID(readString(attr, Tag.SOPClassUID));
+        ss.setSOPInstanceUID(readString(attr, Tag.SOPInstanceUID));
+        ss.setStudyDate(readDate(attr, Tag.StudyDate));
+        ss.setStudyTime(DicomUtils.tmToLocalTime(readString(attr, Tag.StudyTime)));
+        ss.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         ss.setModality(modality(attr));
         if (ss.getModality() != Modality.RTSTRUCT) {
             log.error("Trying to read a DICOM file that is not a RTSTRUCT");
             return Optional.empty();
         }
-        ss.setManufacturer(attr.getString(Tag.Manufacturer, ""));
-        ss.setReferringPhysicianName(attr.getString(Tag.ReferringPhysicianName, ""));
-        ss.setSeriesDescription(attr.getString(Tag.SeriesDescription, ""));
-        ss.setOperatorsName(attr.getString(Tag.OperatorsName, ""));
-        ss.setManufacturerModelName(attr.getString(Tag.ManufacturerModelName, ""));
-        ss.setPatientName(attr.getString(Tag.PatientName, ""));
-        ss.setPatientID(attr.getString(Tag.PatientID, ""));
-        ss.setPatientBirthDate(attr.getDate(Tag.PatientBirthDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ss.setPatientSex(attr.getString(Tag.PatientSex, ""));
-        ss.setSoftwareVersions(attr.getString(Tag.SoftwareVersions, ""));
-        ss.setStudyInstanceUID(attr.getString(Tag.StudyInstanceUID, ""));
-        ss.setSeriesInstanceUID(attr.getString(Tag.SeriesInstanceUID, ""));
-        ss.setStudyID(attr.getString(Tag.StudyID, ""));
-        ss.setSeriesNumber(attr.getInt(Tag.SeriesNumber, DicomUtils.UNDEFINED_U32));
-        ss.setFrameOfReferenceUID(attr.getString(Tag.FrameOfReferenceUID, ""));
-        ss.setPositionReferenceIndicator(attr.getString(Tag.PositionReferenceIndicator, ""));
-        ss.setStructureSetLabel(attr.getString(Tag.StructureSetLabel, ""));
-        ss.setStructureSetDate(attr.getDate(Tag.StructureSetDate).toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        ss.setStructureSetTime(DicomUtils.tmToLocalTime(attr.getString(Tag.StructureSetTime, "")));
+        ss.setManufacturer(readString(attr, Tag.Manufacturer));
+        ss.setReferringPhysicianName(readString(attr, Tag.ReferringPhysicianName));
+        ss.setSeriesDescription(readString(attr, Tag.SeriesDescription));
+        ss.setOperatorsName(readString(attr, Tag.OperatorsName));
+        ss.setManufacturerModelName(readString(attr, Tag.ManufacturerModelName));
+        ss.setPatientName(readString(attr, Tag.PatientName));
+        ss.setPatientID(readString(attr, Tag.PatientID));
+        ss.setPatientBirthDate(readDate(attr, Tag.PatientBirthDate));
+        ss.setPatientSex(readString(attr, Tag.PatientSex));
+        ss.setSoftwareVersions(readString(attr, Tag.SoftwareVersions));
+        ss.setStudyInstanceUID(readString(attr, Tag.StudyInstanceUID));
+        ss.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
+        ss.setStudyID(readString(attr, Tag.StudyID));
+        ss.setSeriesNumber(readInt(attr, Tag.SeriesNumber));
+        ss.setFrameOfReferenceUID(readString(attr, Tag.FrameOfReferenceUID));
+        ss.setPositionReferenceIndicator(readString(attr, Tag.PositionReferenceIndicator));
+        ss.setStructureSetLabel(readString(attr, Tag.StructureSetLabel));
+        ss.setStructureSetDate(readDate(attr, Tag.StructureSetDate));
+        ss.setStructureSetTime(DicomUtils.tmToLocalTime(readString(attr, Tag.StructureSetTime)));
         if (attr.contains(Tag.ReferencedFrameOfReferenceSequence)) {
             Sequence seq = attr.getSequence(Tag.ReferencedFrameOfReferenceSequence);
             for (Attributes value : seq) {
@@ -1270,7 +1333,7 @@ public class Reader {
                 optTmp.ifPresent(tmp -> ss.getRtROIObservationsSequence().add(tmp));
             }
         }
-        ss.setApprovalStatus(attr.getString(Tag.ApprovalStatus, ""));
+        ss.setApprovalStatus(readString(attr, Tag.ApprovalStatus));
         return Optional.of(ss);
     }
 }

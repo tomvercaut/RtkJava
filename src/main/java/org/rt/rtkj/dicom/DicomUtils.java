@@ -6,12 +6,19 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Optional;
 
 public class DicomUtils {
 
     public static final int UNDEFINED_I32 = -2 ^ 31;
     public static final int UNDEFINED_U32 = -2 ^ 31;
     public static final double UNDEFINED_DOUBLE = Double.MAX_VALUE;
+    public static final float UNDEFINED_FLOAT = Float.MAX_VALUE;
+
+    public static Optional<LocalTime> tmToLocalTime(Optional<String> s) {
+        if (s.isEmpty() || s.get().isBlank()) return Optional.empty();
+        return Optional.ofNullable(tmToLocalTime(s.get()));
+    }
 
     public static LocalTime tmToLocalTime(String s) {
         int n = s.length();
@@ -33,6 +40,11 @@ public class DicomUtils {
         return LocalTime.of(hour, minute, second, milli * 1000);
     }
 
+    public static Optional<LocalDate> getLocalDateFromString(Optional<String> s) {
+        if (s.isEmpty() || s.get().isBlank()) return Optional.empty();
+        return Optional.ofNullable(getLocalDate(s.get()));
+    }
+
     public static LocalDate getLocalDate(String s) {
         int n = s.length();
         if (n == 0) return LocalDate.now();
@@ -45,12 +57,22 @@ public class DicomUtils {
         return LocalDate.of(year, month, day);
     }
 
-    public static LocalDate getLocalDate(Date date) {
+    public static Optional<LocalDate> dateToLocalDate(Optional<Date> s) {
+        if (s.isEmpty()) return Optional.empty();
+        return Optional.ofNullable(dateToLocalDate(s.get()));
+    }
+
+    public static LocalDate dateToLocalDate(Date date) {
         if (date == null) return null;
         var instant = date.toInstant();
         var zoneDt = instant.atZone(ZoneId.systemDefault());
         var ld = zoneDt.toLocalDate();
         return ld;
+    }
+
+    public static Optional<LocalDateTime> getLocalDateTime(Optional<String> s) {
+        if (s.isEmpty() || s.get().isBlank()) return Optional.empty();
+        return Optional.ofNullable(getLocalDateTime(s.get()));
     }
 
     public static LocalDateTime getLocalDateTime(String s) {
