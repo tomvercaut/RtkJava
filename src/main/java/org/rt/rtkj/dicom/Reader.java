@@ -58,6 +58,23 @@ public class Reader {
     }
 
     /**
+     * Read an optional List of Strings from attributes by it's corresponding DICOM tag.
+     *
+     * @param attr attributes optionally containing the DICOM tag
+     * @param tag  DICOM tag
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     */
+    private static Optional<List<String>> readListString(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+        var optS = readString(attr, tag);
+        if (optS.isEmpty() || optS.get().isBlank()) return Optional.empty();
+        var s = optS.get();
+        var arrayS = s.split("\\\\");
+        if (arrayS.length == 0) return Optional.empty();
+        return Optional.of(List.of(arrayS));
+    }
+
+    /**
      * Read an optional integer from attributes by it's corresponding DICOM tag.
      *
      * @param attr attributes optionally containing the DICOM tag
@@ -150,6 +167,30 @@ public class Reader {
     private static Optional<LocalDate> readDate(Attributes attr, int tag) {
         var optString = readString(attr, tag);
         return DicomUtils.getLocalDateFromString(optString);
+    }
+
+    /**
+     * Read an optional array of bytes from attributes by it's corresponding DICOM tag.
+     *
+     * @param attr attributes optionally containing the DICOM tag
+     * @param tag  DICOM tag
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     */
+    private static Optional<Byte[]> readBytes(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+        try {
+            var bytes = attr.getBytes(tag);
+            if (bytes == null) return Optional.empty();
+            var n = bytes.length;
+            Byte[] bb = new Byte[n];
+            for (int i = 0; i < n; i++) {
+                bb[i] = bytes[i];
+            }
+            return Optional.of(bb);
+        } catch (IOException e) {
+            log.error(e);
+        }
+        return Optional.empty();
     }
 
     private static Optional<CodeItem> codeItem(Attributes attr) {
@@ -396,14 +437,7 @@ public class Reader {
         item.setROIObservationLabel(readString(attr, Tag.ROIObservationLabel));
         item.setRTROIInterpretedType(readString(attr, Tag.RTROIInterpretedType));
         item.setROIInterpreter(readString(attr, Tag.ROIInterpreter));
-
-        if (attr.contains(Tag.ROIPhysicalPropertiesSequence)) {
-            Sequence seq = attr.getSequence(Tag.ROIPhysicalPropertiesSequence);
-            for (Attributes value : seq) {
-                var optTmp = roiPhysicalProperties(value);
-                optTmp.ifPresent(tmp -> item.getROIPhysicalPropertiesSequence().add(tmp));
-            }
-        }
+        item.setROIPhysicalPropertiesSequence(readSequence(attr, Tag.ROIPhysicalPropertiesSequence, Reader::roiPhysicalProperties));
         item.setMaterialID(readString(attr, Tag.MaterialID));
         return Optional.of(item);
     }
@@ -413,13 +447,7 @@ public class Reader {
         var item = new ROIPhysicalPropertiesItem();
         item.setROIPhysicalProperty(readString(attr, Tag.ROIPhysicalProperty));
         item.setROIPhysicalPropertyValue(readDouble(attr, Tag.ROIPhysicalPropertyValue));
-        if (attr.contains(Tag.ROIElementalCompositionSequence)) {
-            Sequence seq = attr.getSequence(Tag.ROIElementalCompositionSequence);
-            for (Attributes value : seq) {
-                var optTmp = roiElementalComposition(value);
-                optTmp.ifPresent(tmp -> item.getROIElementalCompositionSequence().add(tmp));
-            }
-        }
+        item.setROIElementalCompositionSequence(readSequence(attr, Tag.ROIElementalCompositionSequence, Reader::roiElementalComposition));
         return Optional.of(item);
     }
 
@@ -431,222 +459,224 @@ public class Reader {
         return Optional.of(item);
     }
 
-    private static PixelRepresentation pixelRepresentation(Attributes attr) {
-        if (attr == null) return PixelRepresentation.NONE;
+    private static Optional<PixelRepresentation> pixelRepresentation(Attributes attr) {
+        if (attr == null) return Optional.empty();
         int val = attr.getInt(Tag.PixelRepresentation, DicomUtils.UNDEFINED_U32);
-        if (val == 0) return PixelRepresentation.UNSIGNED;
-        else if (val == 1) return PixelRepresentation.TWO_COMPLEMENT;
-        return PixelRepresentation.NONE;
+        if (val == 0) return Optional.of(PixelRepresentation.UNSIGNED);
+        else if (val == 1) return Optional.of(PixelRepresentation.TWO_COMPLEMENT);
+        return Optional.of(PixelRepresentation.NONE);
     }
 
-    private static PatientPosition patientPosition(Attributes attr) {
-        if (attr == null) return PatientPosition.UNKOWN;
+    private static Optional<PatientPosition> patientPosition(Attributes attr) {
+        if (attr == null) return Optional.empty();
         var pp = attr.getString(Tag.PatientPosition, "");
-        if (pp.equals("HFS")) return PatientPosition.HFS;
-        if (pp.equals("FFS")) return PatientPosition.HFS;
-        if (pp.equals("HFP")) return PatientPosition.HFS;
-        if (pp.equals("FFP")) return PatientPosition.HFS;
+        if (pp.equals("HFS")) return Optional.of(PatientPosition.HFS);
+        if (pp.equals("FFS")) return Optional.of(PatientPosition.FFS);
+        if (pp.equals("HFP")) return Optional.of(PatientPosition.HFP);
+        if (pp.equals("FFP")) return Optional.of(PatientPosition.FFP);
         log.error("Unsupported patient position: " + pp);
-        return PatientPosition.UNKOWN;
+        return Optional.of(PatientPosition.UNKOWN);
     }
 
-    private static PhotometricInterpretation photometricInterpretation(Attributes attr) {
-        if (attr == null) return PhotometricInterpretation.UNKOWN;
+    private static Optional<PhotometricInterpretation> photometricInterpretation(Attributes attr) {
+        if (attr == null) return Optional.empty();
         var val = attr.getString(Tag.PhotometricInterpretation, "");
         switch (val) {
             case "MONOCHROME1":
-                return PhotometricInterpretation.MONOCHROME1;
+                return Optional.of(PhotometricInterpretation.MONOCHROME1);
             case "MONOCHROME2":
-                return PhotometricInterpretation.MONOCHROME2;
+                return Optional.of(PhotometricInterpretation.MONOCHROME2);
             case "PALETTE COLOR":
-                return PhotometricInterpretation.PALETTE_COLOR;
+                return Optional.of(PhotometricInterpretation.PALETTE_COLOR);
             case "RGB":
-                return PhotometricInterpretation.RGB;
+                return Optional.of(PhotometricInterpretation.RGB);
             case "HSV":
-                return PhotometricInterpretation.RETIRED_HSV;
+                return Optional.of(PhotometricInterpretation.RETIRED_HSV);
             case "ARGB":
-                return PhotometricInterpretation.RETIRED_ARGB;
+                return Optional.of(PhotometricInterpretation.RETIRED_ARGB);
             case "CMYK":
-                return PhotometricInterpretation.RETIRED_CMYK;
+                return Optional.of(PhotometricInterpretation.RETIRED_CMYK);
             case "FULL":
-                return PhotometricInterpretation.RETIRED_YBR_FULL;
+                return Optional.of(PhotometricInterpretation.RETIRED_YBR_FULL);
             case "YBR_FULL_422":
-                return PhotometricInterpretation.YBR_FULL_422;
+                return Optional.of(PhotometricInterpretation.YBR_FULL_422);
             case "YBR_PARTIAL_422":
-                return PhotometricInterpretation.YBR_PARTIAL_422;
+                return Optional.of(PhotometricInterpretation.YBR_PARTIAL_422);
             case "YBR_PARTIAL_420":
-                return PhotometricInterpretation.YBR_PARTIAL_420;
+                return Optional.of(PhotometricInterpretation.YBR_PARTIAL_420);
             default:
-                return PhotometricInterpretation.UNKOWN;
+                return Optional.of(PhotometricInterpretation.UNKOWN);
         }
     }
 
-    private static Modality modality(Attributes attr) {
-        if (attr == null) return Modality.UNKNOWN;
-        var val = attr.getString(Tag.Modality, "");
+    private static Optional<Modality> modality(Attributes attr) {
+        if (attr == null) return Optional.empty();
+        var optVal = readString(attr, Tag.Modality);
+        if (optVal.isEmpty()) return Optional.empty();
+        var val = optVal.get();
         switch (val) {
             case "AR":
-                return Modality.AR;
+                return Optional.of(Modality.AR);
             case "AS":
-                return Modality.RETIRED_AS;
+                return Optional.of(Modality.RETIRED_AS);
             case "ASMT":
-                return Modality.ASMT;
+                return Optional.of(Modality.ASMT);
             case "AU":
-                return Modality.AU;
+                return Optional.of(Modality.AU);
             case "BDUS":
-                return Modality.BDUS;
+                return Optional.of(Modality.BDUS);
             case "BI":
-                return Modality.BI;
+                return Optional.of(Modality.BI);
             case "BMD":
-                return Modality.BMD;
+                return Optional.of(Modality.BMD);
             case "CD":
-                return Modality.RETIRED_CD;
+                return Optional.of(Modality.RETIRED_CD);
             case "CF":
-                return Modality.RETIRED_CF;
+                return Optional.of(Modality.RETIRED_CF);
             case "CP":
-                return Modality.RETIRED_CP;
+                return Optional.of(Modality.RETIRED_CP);
             case "CR":
-                return Modality.CR;
+                return Optional.of(Modality.CR);
             case "CS":
-                return Modality.RETIRED_CS;
+                return Optional.of(Modality.RETIRED_CS);
             case "CT":
-                return Modality.CT;
+                return Optional.of(Modality.CT);
             case "DD":
-                return Modality.RETIRED_DD;
+                return Optional.of(Modality.RETIRED_DD);
             case "DF":
-                return Modality.RETIRED_DF;
+                return Optional.of(Modality.RETIRED_DF);
             case "DG":
-                return Modality.DG;
+                return Optional.of(Modality.DG);
             case "DM":
-                return Modality.RETIRED_DM;
+                return Optional.of(Modality.RETIRED_DM);
             case "DOC":
-                return Modality.DOC;
+                return Optional.of(Modality.DOC);
             case "DS":
-                return Modality.RETIRED_DS;
+                return Optional.of(Modality.RETIRED_DS);
             case "DX":
-                return Modality.DX;
+                return Optional.of(Modality.DX);
             case "EC":
-                return Modality.RETIRED_EC;
+                return Optional.of(Modality.RETIRED_EC);
             case "ECG":
-                return Modality.ECG;
+                return Optional.of(Modality.ECG);
             case "EPS":
-                return Modality.EPS;
+                return Optional.of(Modality.EPS);
             case "ES":
-                return Modality.ES;
+                return Optional.of(Modality.ES);
             case "FA":
-                return Modality.RETIRED_FA;
+                return Optional.of(Modality.RETIRED_FA);
             case "FID":
-                return Modality.FID;
+                return Optional.of(Modality.FID);
             case "FS":
-                return Modality.RETIRED_FS;
+                return Optional.of(Modality.RETIRED_FS);
             case "GM":
-                return Modality.GM;
+                return Optional.of(Modality.GM);
             case "HC":
-                return Modality.HC;
+                return Optional.of(Modality.HC);
             case "HD":
-                return Modality.HD;
+                return Optional.of(Modality.HD);
             case "IO":
-                return Modality.IO;
+                return Optional.of(Modality.IO);
             case "IOL":
-                return Modality.IOL;
+                return Optional.of(Modality.IOL);
             case "IVOCT":
-                return Modality.IVOCT;
+                return Optional.of(Modality.IVOCT);
             case "IVUS":
-                return Modality.IVUS;
+                return Optional.of(Modality.IVUS);
             case "KER":
-                return Modality.KER;
+                return Optional.of(Modality.KER);
             case "KO":
-                return Modality.KO;
+                return Optional.of(Modality.KO);
             case "LEN":
-                return Modality.LEN;
+                return Optional.of(Modality.LEN);
             case "LP":
-                return Modality.RETIRED_LP;
+                return Optional.of(Modality.RETIRED_LP);
             case "LS":
-                return Modality.LS;
+                return Optional.of(Modality.LS);
             case "MA":
-                return Modality.RETIRED_MA;
+                return Optional.of(Modality.RETIRED_MA);
             case "MG":
-                return Modality.MG;
+                return Optional.of(Modality.MG);
             case "MR":
-                return Modality.MR;
+                return Optional.of(Modality.MR);
             case "MS":
-                return Modality.RETIRED_MS;
+                return Optional.of(Modality.RETIRED_MS);
             case "NM":
-                return Modality.NM;
+                return Optional.of(Modality.NM);
             case "OAM":
-                return Modality.OAM;
+                return Optional.of(Modality.OAM);
             case "OCT":
-                return Modality.OCT;
+                return Optional.of(Modality.OCT);
             case "OP":
-                return Modality.OP;
+                return Optional.of(Modality.OP);
             case "OPM":
-                return Modality.OPM;
+                return Optional.of(Modality.OPM);
             case "OPR":
-                return Modality.OPR;
+                return Optional.of(Modality.OPR);
             case "OPT":
-                return Modality.RETIRED_OPT;
+                return Optional.of(Modality.RETIRED_OPT);
             case "OPV":
-                return Modality.OPV;
+                return Optional.of(Modality.OPV);
             case "OSS":
-                return Modality.OSS;
+                return Optional.of(Modality.OSS);
             case "OT":
-                return Modality.OT;
+                return Optional.of(Modality.OT);
             case "PLAN":
-                return Modality.PLAN;
+                return Optional.of(Modality.PLAN);
             case "PR":
-                return Modality.PR;
+                return Optional.of(Modality.PR);
             case "PT":
-                return Modality.PT;
+                return Optional.of(Modality.PT);
             case "PX":
-                return Modality.PX;
+                return Optional.of(Modality.PX);
             case "REG":
-                return Modality.REG;
+                return Optional.of(Modality.REG);
             case "RESP":
-                return Modality.RESP;
+                return Optional.of(Modality.RESP);
             case "RF":
-                return Modality.RF;
+                return Optional.of(Modality.RF);
             case "RG":
-                return Modality.RG;
+                return Optional.of(Modality.RG);
             case "RTDOSE":
-                return Modality.RTDOSE;
+                return Optional.of(Modality.RTDOSE);
             case "RTIMAGE":
-                return Modality.RTIMAGE;
+                return Optional.of(Modality.RTIMAGE);
             case "RTPLAN":
-                return Modality.RTPLAN;
+                return Optional.of(Modality.RTPLAN);
             case "RTRECORD":
-                return Modality.RTRECORD;
+                return Optional.of(Modality.RTRECORD);
             case "RTSTRUCT":
-                return Modality.RTSTRUCT;
+                return Optional.of(Modality.RTSTRUCT);
             case "RWV":
-                return Modality.RWV;
+                return Optional.of(Modality.RWV);
             case "SEG":
-                return Modality.SEG;
+                return Optional.of(Modality.SEG);
             case "SM":
-                return Modality.SM;
+                return Optional.of(Modality.SM);
             case "SMR":
-                return Modality.SMR;
+                return Optional.of(Modality.SMR);
             case "SR":
-                return Modality.SR;
+                return Optional.of(Modality.SR);
             case "SRF":
-                return Modality.SRF;
+                return Optional.of(Modality.SRF);
             case "ST":
-                return Modality.RETIRED_ST;
+                return Optional.of(Modality.RETIRED_ST);
             case "STAIN":
-                return Modality.STAIN;
+                return Optional.of(Modality.STAIN);
             case "TG":
-                return Modality.TG;
+                return Optional.of(Modality.TG);
             case "US":
-                return Modality.US;
+                return Optional.of(Modality.US);
             case "VA":
-                return Modality.VA;
+                return Optional.of(Modality.VA);
             case "VF":
-                return Modality.RETIRED_VF;
+                return Optional.of(Modality.RETIRED_VF);
             case "XA":
-                return Modality.XA;
+                return Optional.of(Modality.XA);
             case "XC":
-                return Modality.XC;
+                return Optional.of(Modality.XC);
         }
-        return Modality.UNKNOWN;
+        return Optional.of(Modality.UNKNOWN);
     }
 
     /**
@@ -657,11 +687,11 @@ public class Reader {
      * @param order  byteorder
      * @return List with pixel values
      */
-    private static List<Long> getPixelData(byte[] buffer, int offset, int length,
-                                           int bps, PixelRepresentation pixelRepresentation, ByteOrder order) throws UnsupportedOperationException {
+    private static Optional<List<Long>> getPixelData(byte[] buffer, int offset, int length,
+                                                     int bps, PixelRepresentation pixelRepresentation, ByteOrder order) throws UnsupportedOperationException {
         List<Long> pixels;
         int end = offset + length;
-        if (buffer == null || end > buffer.length || order == null) return new ArrayList<>();
+        if (buffer == null || end > buffer.length || order == null) return Optional.empty();
         pixels = new ArrayList<>(length / bps + 1);
         if (bps == 2) {
             int i = offset;
@@ -706,23 +736,23 @@ public class Reader {
         } else {
             throw new UnsupportedOperationException("Currently only 2 or 4 bytes per sample are supported.");
         }
-        return pixels;
+        return Optional.of(pixels);
     }
 
-    private static Optional<MetaHeader> metaHeader(Attributes meta) throws IOException {
-        if (meta == null) return Optional.empty();
+    private static Optional<MetaHeader> metaHeader(Attributes attr) {
+        if (attr == null) return Optional.empty();
         var hdr = new MetaHeader();
-        hdr.setFileMetaInformationGroupLength(meta.getInt(Tag.FileMetaInformationGroupLength, DicomUtils.UNDEFINED_U32));
-        hdr.setFileMetaInformationVersion(meta.getBytes(Tag.FileMetaInformationVersion));
-        hdr.setMediaStorageSOPClassUID(meta.getString(Tag.MediaStorageSOPClassUID, ""));
-        hdr.setMediaStorageSOPInstanceUID(meta.getString(Tag.MediaStorageSOPInstanceUID, ""));
-        hdr.setTransferSyntaxUID(meta.getString(Tag.TransferSyntaxUID, ""));
-        hdr.setImplementationClassUID(meta.getString(Tag.ImplementationClassUID, ""));
-        hdr.setImplementationVersionName(meta.getString(Tag.ImplementationVersionName, ""));
+        hdr.setFileMetaInformationGroupLength(readInt(attr, Tag.FileMetaInformationGroupLength));
+        hdr.setFileMetaInformationVersion(readBytes(attr, Tag.FileMetaInformationVersion));
+        hdr.setMediaStorageSOPClassUID(readString(attr, Tag.MediaStorageSOPClassUID));
+        hdr.setMediaStorageSOPInstanceUID(readString(attr, Tag.MediaStorageSOPInstanceUID));
+        hdr.setTransferSyntaxUID(readString(attr, Tag.TransferSyntaxUID));
+        hdr.setImplementationClassUID(readString(attr, Tag.ImplementationClassUID));
+        hdr.setImplementationVersionName(readString(attr, Tag.ImplementationVersionName));
         return Optional.of(hdr);
     }
 
-    private static Optional<DvhItem> dvh(Attributes attr) throws IOException {
+    private static Optional<DvhItem> dvh(Attributes attr) {
         if (attr == null) return Optional.empty();
         DvhItem item = new DvhItem();
         item.setDvhType(readString(attr, Tag.DVHType));
@@ -732,14 +762,7 @@ public class Reader {
         item.setDvhVolumeUnits(readString(attr, Tag.DVHVolumeUnits));
         item.setDvhNumberOfBins(readInt(attr, Tag.DVHNumberOfBins));
         item.setDvhData(readDoubles(attr, Tag.DVHData));
-        item.getDvhReferencedROISequence().clear();
-        if (attr.contains(Tag.DVHReferencedROISequence)) {
-            Sequence seq = attr.getSequence(Tag.DVHReferencedROISequence);
-            for (Attributes value : seq) {
-                var optTmp = dvhReferencedROI(value);
-                optTmp.ifPresent(tmp -> item.getDvhReferencedROISequence().add(tmp));
-            }
-        }
+        item.setDvhReferencedROISequence(readSequence(attr, Tag.DVHReferencedROISequence, Reader::dvhReferencedROI));
         item.setDvhMinimumDose(readDouble(attr, Tag.DVHMinimumDose));
         item.setDvhMaximumDose(readDouble(attr, Tag.DVHMaximumDose));
         item.setDvhMeanDose(readDouble(attr, Tag.DVHMeanDose));
@@ -758,7 +781,7 @@ public class Reader {
             ct = new CT(optMeta.get());
         }
         ct.setSpecificCharacterSet(readString(attr, Tag.SpecificCharacterSet));
-        ct.setImageType(Arrays.stream(readString(attr, Tag.ImageType).split("\\\\")).collect(Collectors.toList()));
+        ct.setImageType(readListString(attr, Tag.ImageType));
         ct.setSOPClassUID(readString(attr, Tag.SOPClassUID));
         ct.setSOPInstanceUID(readString(attr, Tag.SOPInstanceUID));
         ct.setStudyDate(readDate(attr, Tag.StudyDate));
@@ -771,7 +794,7 @@ public class Reader {
         ct.setContentTime(DicomUtils.tmToLocalTime(readString(attr, Tag.ContentTime)));
         ct.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         ct.setModality(modality(attr));
-        if (ct.getModality() != Modality.CT) {
+        if (ct.getModality().isEmpty() || ct.getModality().get() != Modality.CT) {
             log.error("Trying to read a DICOM file that is not a CT");
             return Optional.empty();
         }
@@ -779,25 +802,11 @@ public class Reader {
         ct.setInstitutionName(readString(attr, Tag.InstitutionName));
         ct.setReferringPhysicianName(readString(attr, Tag.ReferringPhysicianName));
         ct.setStationName(readString(attr, Tag.StationName));
-        ct.getProcedureCodeSequence().clear();
-        if (attr.contains(Tag.ProcedureCodeSequence)) {
-            Sequence seq = attr.getSequence(Tag.ProcedureCodeSequence);
-            for (Attributes value : seq) {
-                var optCode = reducedCode(value);
-                optCode.ifPresent(code -> ct.getProcedureCodeSequence().add(code));
-            }
-        }
+        ct.setProcedureCodeSequence(readSequence(attr, Tag.ProcedureCodeSequence, Reader::reducedCode));
         ct.setSeriesDescription(readString(attr, Tag.SeriesDescription));
         ct.setInstitutionalDepartmentName(readString(attr, Tag.InstitutionalDepartmentName));
         ct.setManufacturerModelName(readString(attr, Tag.ManufacturerModelName));
-        ct.getReferencedStudySequence().clear();
-        if (attr.contains(Tag.ReferencedStudySequence)) {
-            Sequence seq = attr.getSequence(Tag.ReferencedStudySequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedSOPClassInstance(value);
-                optTmp.ifPresent(tmp -> ct.getReferencedStudySequence().add(tmp));
-            }
-        }
+        ct.setReferencedStudySequence(readSequence(attr, Tag.ReferencedStudySequence, Reader::referencedSOPClassInstance));
         ct.setPatientName(readString(attr, Tag.PatientName));
         ct.setPatientID(readString(attr, Tag.PatientID));
         ct.setPatientBirthDate(readDate(attr, Tag.PatientBirthDate));
@@ -860,52 +869,49 @@ public class Reader {
         ct.setPerformedProcedureStepStartDate(readDate(attr, Tag.PerformedProcedureStepStartDate));
         ct.setPerformedProcedureStepStartTime(DicomUtils.tmToLocalTime(readString(attr, Tag.PerformedProcedureStepStartTime)));
         ct.setPerformedProcedureStepID(readString(attr, Tag.PerformedProcedureStepID));
-        ct.getPerformedProtocolCodeSequence().clear();
-        if (attr.contains(Tag.PerformedProtocolCodeSequence)) {
-            Sequence seq = attr.getSequence(Tag.PerformedProtocolCodeSequence);
-            for (Attributes value : seq) {
-                var optTmp = reducedCode(value);
-                optTmp.ifPresent(tmp -> ct.getPerformedProtocolCodeSequence().add(tmp));
+        ct.setPerformedProtocolCodeSequence(readSequence(attr, Tag.PerformedProtocolCodeSequence, Reader::reducedCode));
+        var optBuf = readBytes(attr, Tag.PixelData);
+        if (ct.getBitsAllocated().isPresent() && optBuf.isPresent()) {
+            var tbuf = optBuf.get();
+            int nbuf = tbuf.length;
+            int bps = ct.getBitsAllocated().get() / 8;
+            if (ct.getBitsAllocated().get() != 16 || bps != 2)
+                throw new DicomException("Only 16bit CT pixeldata is supported");
+            var optPixelRepresentation = ct.getPixelRepresentation();
+            if (optPixelRepresentation.isEmpty()) throw new DicomException("CT requires a valid pixel representation");
+            byte[] bb = new byte[nbuf];
+            for (int i = 0; i < nbuf; i++) {
+                bb[i] = tbuf[i];
             }
+            tbuf = null;
+            optBuf = Optional.empty();
+            ct.setPixelData(getPixelData(bb, 0, nbuf, bps, optPixelRepresentation.get(), order));
         }
-
-        byte[] buf = attr.getBytes(Tag.PixelData);
-        int nbuf = buf.length;
-        int bps = ct.getBitsAllocated() / 8;
-        if (ct.getBitsAllocated() != 16 || bps != 2) throw new DicomException("Only 16bit CT pixeldata is supported");
-        var optPixelRepresentation = ct.getPixelRepresentation();
-        if (optPixelRepresentation.isEmpty()) throw new DicomException("CT requires a valid pixel representation");
-        ct.setPixelData(getPixelData(buf, 0, nbuf, bps, optPixelRepresentation.get(), order));
-//        for (int i = 0; i < nbuf; i += bps) {
-//            int tv = ByteUtils.bytesToShort(buf, i, order == ByteOrder.BIG_ENDIAN);
-//            ct.getPixelData().add(tv);
-//        }
         return Optional.of(ct);
     }
 
     public static Optional<RTDose> rtDose(Attributes meta, Attributes attr, ByteOrder order) throws DicomException, IOException {
         if (attr == null) return Optional.empty();
-        RTDose rtdose = new RTDose();
-        if (meta != null) {
-            rtdose.setFileMetaInformationGroupLength(meta.getInt(Tag.FileMetaInformationGroupLength, DicomUtils.UNDEFINED_U32));
-            rtdose.setFileMetaInformationVersion(meta.getBytes(Tag.FileMetaInformationVersion));
-            rtdose.setMediaStorageSOPClassUID(meta.getString(Tag.MediaStorageSOPClassUID, ""));
-            rtdose.setMediaStorageSOPInstanceUID(meta.getString(Tag.MediaStorageSOPInstanceUID, ""));
-            rtdose.setTransferSyntaxUID(meta.getString(Tag.TransferSyntaxUID, ""));
-            rtdose.setImplementationClassUID(meta.getString(Tag.ImplementationClassUID, ""));
-            rtdose.setImplementationVersionName(meta.getString(Tag.ImplementationVersionName, ""));
+        var optMeta = metaHeader(meta);
+        RTDose rtdose;
+        if (optMeta.isEmpty()) {
+            rtdose = new RTDose();
+        } else {
+            rtdose = new RTDose(optMeta.get());
         }
         rtdose.setSpecificCharacterSet(readString(attr, Tag.SpecificCharacterSet));
         rtdose.setInstanceCreationDate(readDate(attr, Tag.InstanceCreationDate));
         rtdose.setInstanceCreationTime(DicomUtils.tmToLocalTime(readString(attr, Tag.InstanceCreationTime)));
         rtdose.setSopClassUID(readString(attr, Tag.SOPClassUID));
-        if (!rtdose.getSopClassUID().equals(UID.RTDoseStorage)) return Optional.empty();
-        rtdose.setSopInstanceUID(attr.getString(Tag.SOPInstanceUID));
+        if (rtdose.getSopClassUID().isEmpty() || !rtdose.getSopClassUID().get().equals(UID.RTDoseStorage)) {
+            log.error("Trying to read a DICOM file that is not a RTDOSE");
+            return Optional.empty();
+        }
         rtdose.setStudyDate(readDate(attr, Tag.StudyDate));
         rtdose.setStudyTime(DicomUtils.tmToLocalTime(readString(attr, Tag.StudyTime)));
         rtdose.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         rtdose.setModality(modality(attr));
-        if (!rtdose.getModality().equals(Modality.RTDOSE)) {
+        if (rtdose.getModality().isEmpty() || !rtdose.getModality().get().equals(Modality.RTDOSE)) {
             log.error("Trying to read a DICOM file that is not a RTDOSE");
             return Optional.empty();
         }
@@ -916,10 +922,7 @@ public class Reader {
         rtdose.setManufacturerModelName(readString(attr, Tag.ManufacturerModelName));
         rtdose.setPatientName(readString(attr, Tag.PatientName));
         rtdose.setPatientID(readString(attr, Tag.PatientID));
-        if (attr.contains(Tag.PatientBirthDate))
-            rtdose.setPatientBirthDate(DicomUtils.getLocalDate(attr.getDate(Tag.PatientBirthDate)));
-        else
-            rtdose.setPatientBirthDate(null);
+        rtdose.setPatientBirthDate(readDate(attr, Tag.PatientBirthDate));
         rtdose.setPatientSex(readString(attr, Tag.PatientSex));
         rtdose.setSliceThicknes(readDouble(attr, Tag.SliceThickness));
         rtdose.setDeviceSerialNumber(readString(attr, Tag.DeviceSerialNumber));
@@ -950,55 +953,35 @@ public class Reader {
         rtdose.setGridFrameOffsetVector(readDoubles(attr, Tag.GridFrameOffsetVector));
         rtdose.setDoseGridScaling(readDouble(attr, Tag.DoseGridScaling));
         rtdose.setTissueHeterogeneityCorrection(readString(attr, Tag.TissueHeterogeneityCorrection));
-        rtdose.getDvhSequence().clear();
-        if (attr.contains(Tag.DVHSequence)) {
-            Sequence seq = attr.getSequence(Tag.DVHSequence);
-            for (Attributes value : seq) {
-                var optTmp = dvh(value);
-                optTmp.ifPresent(tmp -> rtdose.getDvhSequence().add(tmp));
-            }
-        }
-        rtdose.getReferencedRTPlanSequence().clear();
-        if (attr.contains(Tag.ReferencedRTPlanSequence)) {
-            Sequence seq = attr.getSequence(Tag.ReferencedRTPlanSequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedSOPClassInstance(value);
-                optTmp.ifPresent(tmp -> rtdose.getReferencedRTPlanSequence().add(tmp));
-            }
-        }
-        rtdose.getReferencedStructureSetSequence().clear();
-        if (attr.contains(Tag.ReferencedStructureSetSequence)) {
-            Sequence seq = attr.getSequence(Tag.ReferencedStructureSetSequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedSOPClassInstance(value);
-                optTmp.ifPresent(tmp -> rtdose.getReferencedStructureSetSequence().add(tmp));
-            }
+        rtdose.setDvhSequence(readSequence(attr, Tag.DVHSequence, Reader::dvh));
+        rtdose.setReferencedRTPlanSequence(readSequence(attr, Tag.ReferencedRTPlanSequence, Reader::referencedSOPClassInstance));
+        rtdose.setReferencedStructureSetSequence(readSequence(attr, Tag.ReferencedStructureSetSequence, Reader::referencedSOPClassInstance));
+        if (rtdose.getPhotometricInterpretation().isEmpty() || rtdose.getPhotometricInterpretation().get() != PhotometricInterpretation.MONOCHROME2) {
+            var pi = "";
+            if (rtdose.getPhotometricInterpretation().isPresent())
+                pi = rtdose.getPhotometricInterpretation().get().toString();
+            throw new DicomException("In RTDose files the supported photometric interpretation is MONOCHROME2, not " + pi);
         }
 
-        if (rtdose.getPhotometricInterpretation() != PhotometricInterpretation.MONOCHROME2) {
-            throw new DicomException("In RTDose files the supported photometric interpretation is MONOCHROME2, not " +
-                    rtdose.getPhotometricInterpretation());
+        var optBuf = readBytes(attr, Tag.PixelData);
+        if (rtdose.getBitsAllocated().isPresent() && optBuf.isPresent()) {
+            var tbuf = optBuf.get();
+            int nbuf = tbuf.length;
+            var optBitsAllocated = rtdose.getBitsAllocated();
+            var bitsAllocated = optBitsAllocated.get();
+            int bps = bitsAllocated / 8;
+            if ((bitsAllocated != 16 || bps != 2) && (bitsAllocated != 32 || bps != 4))
+                throw new DicomException("Only 16 or 32 bit pixeldata is supported");
+            if (rtdose.getPixelRepresentation().isEmpty())
+                throw new DicomException("RTDOSE requires a valid pixel representation");
+            byte[] bb = new byte[nbuf];
+            for (int i = 0; i < nbuf; i++) {
+                bb[i] = tbuf[i];
+            }
+            tbuf = null;
+            optBuf = Optional.empty();
+            rtdose.setPixelData(getPixelData(bb, 0, nbuf, bps, rtdose.getPixelRepresentation().get(), order));
         }
-
-        byte[] buf = attr.getBytes(Tag.PixelData);
-        int nbuf = buf.length;
-        int bps = rtdose.getBitsAllocated() / 8;
-        if ((rtdose.getBitsAllocated() != 16 || bps != 2) && (rtdose.getBitsAllocated() != 32 || bps != 4))
-            throw new DicomException("Only 16 or 32 bit pixeldata is supported");
-        rtdose.setPixelData(getPixelData(buf, 0, nbuf, bps, rtdose.getPixelRepresentation(), order));
-//        for (int i = 0; i < nbuf; i += bps) {
-//            int tv = ByteUtils.bytesToShort(buf, i, order == ByteOrder.BIG_ENDIAN);
-//            rtdose.getPixelData().add(tv);
-//        }
-
-//        byte[] buf = attr.getBytes(Tag.PixelData);
-//        int nbuf = buf.length;
-//        int bps = rtdose.getBitsAllocated() / 8;
-//        if(rtdose.getBitsAllocated() != 16 || bps != 2) throw new DicomException("Only 16bit CT pixeldata is supported");
-//        for (int i = 0; i < nbuf; i += bps) {
-//            int tv = ByteUtils.bytesToShort(buf, i, order == ByteOrder.BIG_ENDIAN);
-//            rtdose.getPixelData().add(tv);
-//        }
         return Optional.of(rtdose);
     }
 
@@ -1025,7 +1008,7 @@ public class Reader {
         pt.setContentTime(DicomUtils.tmToLocalTime(readString(attr, Tag.ContentTime)));
         pt.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         pt.setModality(modality(attr));
-        if (pt.getModality() != Modality.PT) {
+        if (pt.getModality().isEmpty() || pt.getModality().get() != Modality.PT) {
             log.error("Trying to read a DICOM file that is not a PT");
             return Optional.empty();
         }

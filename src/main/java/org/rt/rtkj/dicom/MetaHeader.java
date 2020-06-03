@@ -9,7 +9,7 @@ import java.util.Optional;
 @NoArgsConstructor
 public class MetaHeader {
     private Optional<Integer> fileMetaInformationGroupLength;
-    private Optional<byte[]> fileMetaInformationVersion;
+    private Optional<Byte[]> fileMetaInformationVersion;
     private Optional<String> mediaStorageSOPClassUID;
     private Optional<String> mediaStorageSOPInstanceUID;
     private Optional<String> transferSyntaxUID;
