@@ -33,6 +33,9 @@ public class Writer {
         if (nr == 0 || nc == 0) {
             throw new IOException(String.format("Unable to write tiff file when the row[%d] or column[%d] dimensions are 0.", nr, nc));
         }
+        if (ct.getPixelData().isEmpty() || ct.getPixelData().get().isEmpty()) {
+            throw new IOException("No pixeldata is available to write to a tiff file.");
+        }
 
         File outputFile = new File(filename);
         ImageTypeSpecifier specifier = ImageTypeSpecifier.createGrayscale(16, TYPE_USHORT, false);
@@ -47,7 +50,7 @@ public class Writer {
         double max = Integer.MIN_VALUE;
         int n = nr * nc;
         for (int i = 0; i < n; ++i) {
-            long pixel = ct.getPixelData().get(i);
+            long pixel = ct.getPixelData().get().get(i);
             if (pixel < min) min = pixel;
             if (pixel > max) max = pixel;
         }
@@ -66,7 +69,7 @@ public class Writer {
         int k = 0;
         for (int j = 0; j < nr; j++) {
             for (int i = 0; i < nc; i++) {
-                double p = ct.getPixelData().get(k);
+                double p = ct.getPixelData().get().get(k);
                 p += imin;
 //                p *= scale;
                 raster.setPixel(i, j, new int[]{(int) p});
@@ -105,7 +108,7 @@ public class Writer {
         if (n == 0) return;
         var tmp = new double[n];
         for (int i = 0; i < n; i++) {
-            tmp[i]=value[i];
+            tmp[i] = value[i];
         }
         attr.setDouble(tag, dict.vrOf(tag), tmp);
     }
@@ -172,40 +175,38 @@ public class Writer {
         writeDouble(root, dict, Tag.DoseGridScaling, dose.getDoseGridScaling());
         writeString(root, dict, Tag.TissueHeterogeneityCorrection, dose.getTissueHeterogeneityCorrection());
 
-        if (dose.getDvhSequence() != null && !dose.getDvhSequence().isEmpty()) {
-            if (!addSequence(root, Tag.DVHSequence, dose.getDvhSequence(), dict, Writer::dvh)) {
-                log.error("Unable to read DVHSequence");
-            }
+        if (!addSequence(root, Tag.DVHSequence, dose.getDvhSequence(), dict, Writer::dvh)) {
+            log.error("Unable to read DVHSequence");
         }
 
-        if (dose.getReferencedRTPlanSequence() != null && !dose.getReferencedRTPlanSequence().isEmpty()) {
-            if (!addSequence(root, Tag.ReferencedRTPlanSequence, dose.getReferencedRTPlanSequence(), dict, Writer::referencedSOPClassInstance)) {
-                log.error("Unable to read ReferencedRTPlanSequence");
-            }
+        if (!addSequence(root, Tag.ReferencedRTPlanSequence, dose.getReferencedRTPlanSequence(), dict, Writer::referencedSOPClassInstance)) {
+            log.error("Unable to read ReferencedRTPlanSequence");
         }
 
-        if (dose.getReferencedStructureSetSequence() != null && !dose.getReferencedStructureSetSequence().isEmpty()) {
-            if (!addSequence(root, Tag.ReferencedStructureSetSequence, dose.getReferencedStructureSetSequence(), dict, Writer::referencedSOPClassInstance)) {
-                log.error("Unable to read ReferencedStructureSetSequence");
-            }
+        if (!addSequence(root, Tag.ReferencedStructureSetSequence, dose.getReferencedStructureSetSequence(), dict, Writer::referencedSOPClassInstance)) {
+            log.error("Unable to read ReferencedStructureSetSequence");
         }
 
         // dose.getPixelData()
         // Checks based on info found in C.8.8.3.4
-        if (dose.getPhotometricInterpretation() != PhotometricInterpretation.MONOCHROME2) {
+        if (dose.getPhotometricInterpretation().isEmpty() || dose.getPhotometricInterpretation().get() != PhotometricInterpretation.MONOCHROME2) {
             log.error("The photometrix interpretation for RTDOSE file must be MONOCHROME2");
             return Optional.empty();
         }
-        if (dose.getBitsAllocated() != 16 && dose.getBitsAllocated() != 32) {
+        if (dose.getBitsAllocated().isEmpty() || (dose.getBitsAllocated().get() != 16 && dose.getBitsAllocated().get() != 32)) {
             log.error("The number of bits allocated must be either 16 or 32");
             return Optional.empty();
         }
-        if (dose.getBitsStored() != dose.getBitsAllocated()) {
+        if (dose.getBitsAllocated().isEmpty() || dose.getBitsStored().get() != dose.getBitsAllocated().get()) {
             log.error("The number of bits stored but be equal to the number of bits allocated.");
             return Optional.empty();
         }
-        if (dose.getPixelRepresentation() != PixelRepresentation.UNSIGNED) {
+        if (dose.getPixelRepresentation().isEmpty() || dose.getPixelRepresentation().get() != PixelRepresentation.UNSIGNED) {
             log.error("Supported pixel representation for RTDOSE pixel data is unsigned integer values. Not the two's complement integer representation.");
+            return Optional.empty();
+        }
+        if (dose.getNumberOfFrames().isEmpty() || dose.getNumberOfFrames().get() < 1) {
+            log.error("Number of frames must be equal to 1 or higher.");
             return Optional.empty();
         }
 
@@ -218,8 +219,8 @@ public class Writer {
         }
 
         ByteBuffer pb = null;
-        int bs = dose.getBitsAllocated();
-        int npixels = dose.getNumberOfFrames() * dose.getRows() * dose.getColumns();
+        int bs = dose.getBitsAllocated().get();
+        int npixels = dose.getNumberOfFrames().get() * dose.getRows().get() * dose.getColumns().get();
         if (bs == 16) pb = ByteBuffer.allocate(npixels * 2);
         if (bs == 32) pb = ByteBuffer.allocate(npixels * 4);
 
@@ -227,7 +228,7 @@ public class Writer {
         pb.order(ByteOrder.LITTLE_ENDIAN);
         int k = 0;
         for (int i = 0; i < npixels; i++) {
-            var val = dose.getPixelData().get(i);
+            var val = dose.getPixelData().get().get(i);
             if (bs == 16) {
                 pb.put(k++, (byte) ((val) & 0xFF));
                 pb.put(k++, (byte) ((val >> 8) & 0xFF));
@@ -276,44 +277,37 @@ public class Writer {
     private static Optional<Attributes> dvh(DvhItem item, ElementDictionary dict) {
         if (item == null || dict == null) return Optional.empty();
         Attributes attr = new Attributes();
-        attr.setString(Tag.DVHType, dict.vrOf(Tag.DVHType), item.getDvhType());
-        attr.setString(Tag.DoseUnits, dict.vrOf(Tag.DoseUnits), item.getDoseUnits());
-        attr.setString(Tag.DoseType, dict.vrOf(Tag.DoseType), item.getDoseType());
-        attr.setDouble(Tag.DVHDoseScaling, dict.vrOf(Tag.DVHDoseScaling), item.getDvhDoseScaling());
-        attr.setString(Tag.DVHVolumeUnits, dict.vrOf(Tag.DVHVolumeUnits), item.getDvhVolumeUnits());
-        attr.setDouble(Tag.DVHData, dict.vrOf(Tag.DVHData), item.getDvhData());
-        if (item.getDvhReferencedROISequence() != null && !item.getDvhReferencedROISequence().isEmpty()) {
-            int n = item.getDvhReferencedROISequence().size();
-            var dvhReferencedROISequence = attr.newSequence(Tag.DVHReferencedROISequence, n);
-            for (int i = 0; i < n; i++) {
-                var optDvhReferencedROIItem = dvhReferencedROI(item.getDvhReferencedROISequence().get(i), dict);
-                if (optDvhReferencedROIItem.isEmpty()) {
-                    log.error("Dvh referenced ROI item is empty");
-                    return Optional.empty();
-                }
-                dvhReferencedROISequence.add(optDvhReferencedROIItem.get());
-            }
+        writeString(attr, dict, Tag.DVHType, item.getDvhType());
+        writeString(attr, dict, Tag.DoseUnits, item.getDoseUnits());
+        writeString(attr, dict, Tag.DoseType, item.getDoseType());
+        writeDouble(attr, dict, Tag.DVHDoseScaling, item.getDvhDoseScaling());
+        writeString(attr, dict, Tag.DVHVolumeUnits, item.getDvhVolumeUnits());
+        writeDoubles(attr, dict, Tag.DVHData, item.getDvhData());
+        if (!addSequence(attr, Tag.DVHReferencedROISequence, item.getDvhReferencedROISequence(), dict, Writer::dvhReferencedROI)) {
+
+            log.error("Unable to write DVHReferencedROISequence");
+            return Optional.empty();
         }
-        attr.setInt(Tag.DVHNumberOfBins, dict.vrOf(Tag.DVHNumberOfBins), item.getDvhNumberOfBins());
-        attr.setDouble(Tag.DVHMinimumDose, dict.vrOf(Tag.DVHMinimumDose), item.getDvhMinimumDose());
-        attr.setDouble(Tag.DVHMaximumDose, dict.vrOf(Tag.DVHMaximumDose), item.getDvhMaximumDose());
-        attr.setDouble(Tag.DVHMeanDose, dict.vrOf(Tag.DVHMeanDose), item.getDvhMeanDose());
+        writeInt(attr, dict, Tag.DVHNumberOfBins, item.getDvhNumberOfBins());
+        writeDouble(attr, dict, Tag.DVHMinimumDose, item.getDvhMinimumDose());
+        writeDouble(attr, dict, Tag.DVHMaximumDose, item.getDvhMaximumDose());
+        writeDouble(attr, dict, Tag.DVHMeanDose, item.getDvhMeanDose());
         return Optional.of(attr);
     }
 
     private static Optional<Attributes> dvhReferencedROI(DVHReferencedROIItem item, ElementDictionary dict) {
         if (item == null || dict == null) return Optional.empty();
         Attributes attr = new Attributes();
-        attr.setString(Tag.DVHROIContributionType, dict.vrOf(Tag.DVHROIContributionType), item.getDvhROIContributionType());
-        attr.setInt(Tag.ReferencedROINumber, dict.vrOf(Tag.ReferencedROINumber), item.getReferencedROINumber());
+        writeString(attr, dict, Tag.DVHROIContributionType, item.getDvhROIContributionType());
+        writeInt(attr, dict, Tag.ReferencedROINumber, item.getReferencedROINumber());
         return Optional.of(attr);
     }
 
     private static Optional<Attributes> referencedSOPClassInstance(ReferencedSOPClassInstanceItem item, ElementDictionary dict) {
         if (item == null || dict == null) return Optional.empty();
         Attributes attr = new Attributes();
-        attr.setString(Tag.ReferencedSOPClassUID, dict.vrOf(Tag.ReferencedSOPClassUID), item.getReferencedSOPClassUID());
-        attr.setString(Tag.ReferencedSOPInstanceUID, dict.vrOf(Tag.ReferencedSOPInstanceUID), item.getReferencedSOPInstanceUID());
+        writeString(attr, dict, Tag.ReferencedSOPClassUID, item.getReferencedSOPClassUID());
+        writeString(attr, dict, Tag.ReferencedSOPInstanceUID, item.getReferencedSOPInstanceUID());
         return Optional.of(attr);
     }
 
