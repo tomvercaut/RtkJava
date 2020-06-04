@@ -28,8 +28,11 @@ import static java.awt.image.DataBuffer.TYPE_USHORT;
 public class Writer {
     public static void writeGrayTiff(CT ct, String filename) throws IOException {
         log.info("filename: " + filename);
-        int nr = ct.getRows();
-        int nc = ct.getColumns();
+        int nr = ct.getRows().orElse(0);
+        int nc = ct.getColumns().orElse(0);
+        if (nr == 0 || nc == 0) {
+            throw new IOException(String.format("Unable to write tiff file when the row[%d] or column[%d] dimensions are 0.", nr, nc));
+        }
 
         File outputFile = new File(filename);
         ImageTypeSpecifier specifier = ImageTypeSpecifier.createGrayscale(16, TYPE_USHORT, false);
@@ -75,70 +78,99 @@ public class Writer {
         writer.write(bi);
     }
 
+    private static void writeString(Attributes attr, int tag, VR vr, Optional<String> optionalValue) {
+        if (attr == null || optionalValue.isEmpty()) return;
+        attr.setString(tag, vr, optionalValue.get());
+    }
+
+    private static void writeString(Attributes attr, ElementDictionary dict, int tag, Optional<String> optionalValue) {
+        if (attr == null || dict == null || optionalValue.isEmpty()) return;
+        attr.setString(tag, dict.vrOf(tag), optionalValue.get());
+    }
+
+    private static void writeInt(Attributes attr, ElementDictionary dict, int tag, Optional<Integer> optionalValue) {
+        if (attr == null || dict == null || optionalValue.isEmpty()) return;
+        attr.setInt(tag, dict.vrOf(tag), optionalValue.get());
+    }
+
+    private static void writeDouble(Attributes attr, ElementDictionary dict, int tag, Optional<Double> optionalValue) {
+        if (attr == null || dict == null || optionalValue.isEmpty()) return;
+        attr.setDouble(tag, dict.vrOf(tag), optionalValue.get());
+    }
+
+    private static void writeDoubles(Attributes attr, ElementDictionary dict, int tag, Optional<Double[]> optionalValue) {
+        if (attr == null || dict == null || optionalValue.isEmpty()) return;
+        var value = optionalValue.get();
+        var n = value.length;
+        if (n == 0) return;
+        var tmp = new double[n];
+        for (int i = 0; i < n; i++) {
+            tmp[i]=value[i];
+        }
+        attr.setDouble(tag, dict.vrOf(tag), tmp);
+    }
+
     public static Optional<Attributes> rtdose(RTDose dose) {
         var dict = ElementDictionary.getStandardElementDictionary();
-        if (dose.getModality() != Modality.RTDOSE) {
+        if (dose.getModality().isEmpty() || dose.getModality().get() != Modality.RTDOSE) {
             log.error("RTDose instance has an invalid modality: " + dose.getModality().toString());
             return Optional.empty();
         }
 
         Attributes root = new Attributes();
-        root.setString(Tag.SpecificCharacterSet, dict.vrOf(Tag.SpecificCharacterSet), dose.getSpecificCharacterSet());
+        writeString(root, dict, Tag.SpecificCharacterSet, dose.getSpecificCharacterSet());
         root.setString(Tag.InstanceCreationDate, dict.vrOf(Tag.InstanceCreationDate), DicomUtils.getLocalDateNow());
         root.setString(Tag.InstanceCreationTime, dict.vrOf(Tag.InstanceCreationTime), DicomUtils.getLocalTimeNow());
-        root.setString(Tag.SOPClassUID, dict.vrOf(Tag.SOPClassUID), dose.getSopClassUID());
-        root.setString(Tag.SOPInstanceUID, dict.vrOf(Tag.SOPInstanceUID), dose.getSopInstanceUID());
-        root.setString(Tag.StudyDate, dict.vrOf(Tag.StudyDate), dose.getStudyDate().format(DicomUtils.getDateFormatter()));
-        root.setString(Tag.StudyTime, dict.vrOf(Tag.StudyTime), dose.getStudyTime().format(DicomUtils.getTimeFormatter()));
-        root.setString(Tag.AccessionNumber, dict.vrOf(Tag.AccessionNumber), dose.getAccessionNumber());
-        root.setString(Tag.Modality, dict.vrOf(Tag.Modality), dose.getModality().toString());
-        root.setString(Tag.Manufacturer, dict.vrOf(Tag.Manufacturer), dose.getManufacturer());
-        root.setString(Tag.ReferringPhysicianName, dict.vrOf(Tag.ReferringPhysicianName), dose.getReferringPhysicianName());
-        root.setString(Tag.StationName, dict.vrOf(Tag.StationName), dose.getStationName());
-        root.setString(Tag.SeriesDescription, dict.vrOf(Tag.SeriesDescription), dose.getSeriesDescription());
-        root.setString(Tag.ManufacturerModelName, dict.vrOf(Tag.ManufacturerModelName), dose.getManufacturerModelName());
-        root.setString(Tag.PatientName, dict.vrOf(Tag.PatientName), dose.getPatientName());
-        root.setString(Tag.PatientID, dict.vrOf(Tag.PatientID), dose.getPatientID());
-        if (dose.getPatientBirthDate() != null) {
-            root.setString(Tag.PatientBirthDate, dict.vrOf(Tag.PatientBirthDate), dose.getPatientBirthDate().format(DicomUtils.getDateFormatter()));
+        writeString(root, dict, Tag.SOPClassUID, dose.getSopClassUID());
+        writeString(root, dict, Tag.SOPInstanceUID, dose.getSopInstanceUID());
+        writeString(root, dict, Tag.StudyDate, dose.getStudyDate().map(localDate -> localDate.format(DicomUtils.getDateFormatter())));
+        writeString(root, dict, Tag.StudyTime, dose.getStudyTime().map(localDate -> localDate.format(DicomUtils.getTimeFormatter())));
+        writeString(root, dict, Tag.AccessionNumber, dose.getAccessionNumber());
+        writeString(root, dict, Tag.Modality, dose.getModality().map(Enum::toString));
+        writeString(root, dict, Tag.Manufacturer, dose.getManufacturer());
+        writeString(root, dict, Tag.ReferringPhysicianName, dose.getReferringPhysicianName());
+        writeString(root, dict, Tag.StationName, dose.getStationName());
+        writeString(root, dict, Tag.SeriesDescription, dose.getSeriesDescription());
+        writeString(root, dict, Tag.ManufacturerModelName, dose.getManufacturerModelName());
+        writeString(root, dict, Tag.PatientName, dose.getPatientName());
+        writeString(root, dict, Tag.PatientID, dose.getPatientID());
+        writeString(root, dict, Tag.PatientBirthDate, dose.getPatientBirthDate().map(localDate -> {
+            return localDate.format(DicomUtils.getDateFormatter());
+        }));
+        writeString(root, dict, Tag.PatientSex, dose.getPatientSex());
+        writeDouble(root, dict, Tag.SliceThickness, dose.getSliceThicknes());
+        writeString(root, dict, Tag.DeviceSerialNumber, dose.getDeviceSerialNumber());
+        writeString(root, dict, Tag.SoftwareVersions, dose.getSoftwareVersions());
+        writeString(root, dict, Tag.StudyInstanceUID, dose.getStudyInstanceUID());
+        writeString(root, dict, Tag.SeriesInstanceUID, dose.getSeriesInstanceUID());
+        writeString(root, dict, Tag.StudyID, dose.getStudyID());
+        writeInt(root, dict, Tag.SeriesNumber, dose.getSeriesNumber());
+        writeInt(root, dict, Tag.InstanceNumber, dose.getInstanceNumber());
+        writeDoubles(root, dict, Tag.ImagePositionPatient, dose.getImagePositionPatient());
+        writeDoubles(root, dict, Tag.ImageOrientationPatient, dose.getImageOrientationPatient());
+        writeString(root, dict, Tag.FrameOfReferenceUID, dose.getFrameOfReferenceUID());
+        writeString(root, dict, Tag.PositionReferenceIndicator, dose.getPositionReferenceIndicator());
+        writeInt(root, dict, Tag.SamplesPerPixel, dose.getSamplesPerPixel());
+        writeString(root, dict, Tag.PhotometricInterpretation, dose.getPhotometricInterpretation().map(Enum::toString));
+        writeInt(root, dict, Tag.NumberOfFrames, dose.getNumberOfFrames());
+        writeInt(root, dict, Tag.FrameIncrementPointer, dose.getFrameIncrementPointer());
+        writeInt(root, dict, Tag.Rows, dose.getRows());
+        writeInt(root, dict, Tag.Columns, dose.getColumns());
+        writeDoubles(root, dict, Tag.PixelSpacing, dose.getPixelSpacing());
+        writeInt(root, dict, Tag.BitsAllocated, dose.getBitsAllocated());
+        writeInt(root, dict, Tag.BitsStored, dose.getBitsStored());
+        writeInt(root, dict, Tag.HighBit, dose.getHighBit());
+        if (dose.getPixelRepresentation().isEmpty()) {
+            log.error("RTDose is missing the required pixel representation.");
+            return Optional.empty();
         }
-        root.setString(Tag.PatientSex, dict.vrOf(Tag.PatientSex), dose.getPatientSex());
-        root.setDouble(Tag.SliceThickness, dict.vrOf(Tag.SliceThickness), dose.getSliceThicknes());
-        root.setString(Tag.DeviceSerialNumber, dict.vrOf(Tag.DeviceSerialNumber), dose.getDeviceSerialNumber());
-        root.setString(Tag.SoftwareVersions, dict.vrOf(Tag.SoftwareVersions), dose.getSoftwareVersions());
-        root.setString(Tag.StudyInstanceUID, dict.vrOf(Tag.StudyInstanceUID), dose.getStudyInstanceUID());
-        root.setString(Tag.SeriesInstanceUID, dict.vrOf(Tag.SeriesInstanceUID), dose.getSeriesInstanceUID());
-        root.setString(Tag.StudyID, dict.vrOf(Tag.StudyID), dose.getStudyID());
-        root.setInt(Tag.SeriesNumber, dict.vrOf(Tag.SeriesNumber), dose.getSeriesNumber());
-        root.setInt(Tag.InstanceNumber, dict.vrOf(Tag.InstanceNumber), dose.getInstanceNumber());
-        root.setDouble(Tag.ImagePositionPatient, dict.vrOf(Tag.ImagePositionPatient), dose.getImagePositionPatient());
-        root.setDouble(Tag.ImageOrientationPatient, dict.vrOf(Tag.ImageOrientationPatient), dose.getImageOrientationPatient());
-        root.setString(Tag.FrameOfReferenceUID, dict.vrOf(Tag.FrameOfReferenceUID), dose.getFrameOfReferenceUID());
-        root.setString(Tag.PositionReferenceIndicator, dict.vrOf(Tag.PositionReferenceIndicator), dose.getPositionReferenceIndicator());
-        root.setInt(Tag.SamplesPerPixel, dict.vrOf(Tag.SamplesPerPixel), dose.getSamplesPerPixel());
-        root.setString(Tag.PhotometricInterpretation, dict.vrOf(Tag.PhotometricInterpretation), dose.getPhotometricInterpretation().toString());
-        root.setInt(Tag.NumberOfFrames, dict.vrOf(Tag.NumberOfFrames), dose.getNumberOfFrames());
-        root.setInt(Tag.FrameIncrementPointer, dict.vrOf(Tag.FrameIncrementPointer), dose.getFrameIncrementPointer());
-        root.setInt(Tag.Rows, dict.vrOf(Tag.Rows), dose.getRows());
-        root.setInt(Tag.Columns, dict.vrOf(Tag.Columns), dose.getColumns());
-        root.setDouble(Tag.PixelSpacing, dict.vrOf(Tag.PixelSpacing), dose.getPixelSpacing());
-        root.setInt(Tag.BitsAllocated, dict.vrOf(Tag.BitsAllocated), dose.getBitsAllocated());
-        root.setInt(Tag.BitsStored, dict.vrOf(Tag.BitsStored), dose.getBitsStored());
-        root.setInt(Tag.HighBit, dict.vrOf(Tag.HighBit), dose.getHighBit());
-        {
-            var optPixelRep = toString(dose.getPixelRepresentation());
-            if (optPixelRep.isEmpty()) {
-                log.error("RTDose is missing the required pixel representation.");
-                return Optional.empty();
-            }
-            root.setString(Tag.PixelRepresentation, dict.vrOf(Tag.PixelRepresentation), optPixelRep.get());
-        }
-        root.setString(Tag.DoseUnits, dict.vrOf(Tag.DoseUnits), dose.getDoseUnits());
-        root.setString(Tag.DoseType, dict.vrOf(Tag.DoseType), dose.getDoseType());
-        root.setString(Tag.DoseSummationType, dict.vrOf(Tag.DoseSummationType), dose.getDoseSummationType());
-        root.setDouble(Tag.GridFrameOffsetVector, dict.vrOf(Tag.GridFrameOffsetVector), dose.getGridFrameOffsetVector());
-        root.setDouble(Tag.DoseGridScaling, dict.vrOf(Tag.DoseGridScaling), dose.getDoseGridScaling());
-        root.setString(Tag.TissueHeterogeneityCorrection, dict.vrOf(Tag.TissueHeterogeneityCorrection), dose.getTissueHeterogeneityCorrection());
+        writeString(root, dict, Tag.PixelRepresentation, dose.getPixelRepresentation().map(Enum::toString));
+        writeString(root, dict, Tag.DoseUnits, dose.getDoseUnits());
+        writeString(root, dict, Tag.DoseType, dose.getDoseType());
+        writeString(root, dict, Tag.DoseSummationType, dose.getDoseSummationType());
+        writeDoubles(root, dict, Tag.GridFrameOffsetVector, dose.getGridFrameOffsetVector());
+        writeDouble(root, dict, Tag.DoseGridScaling, dose.getDoseGridScaling());
+        writeString(root, dict, Tag.TissueHeterogeneityCorrection, dose.getTissueHeterogeneityCorrection());
 
         if (dose.getDvhSequence() != null && !dose.getDvhSequence().isEmpty()) {
             if (!addSequence(root, Tag.DVHSequence, dose.getDvhSequence(), dict, Writer::dvh)) {
@@ -216,13 +248,17 @@ public class Writer {
         return Optional.of(root);
     }
 
-    private static <T> boolean addSequence(Attributes parent, int seqTag, List<T> items, ElementDictionary dict, BiFunction<T, ElementDictionary, Optional<Attributes>> function) {
-        if (parent == null || items == null || dict == null) {
+    private static <T> boolean addSequence(Attributes parent, int seqTag, Optional<List<T>> optionalItems, ElementDictionary dict, BiFunction<T, ElementDictionary, Optional<Attributes>> function) {
+        if (parent == null || dict == null) {
             if (parent == null) log.error("Parent of the sequence can't be null.");
-            if (items == null) log.error("List of sequence items can't be null.");
             if (dict == null) log.error("DICOM dictionary can't be null.");
             return false;
         }
+        if (optionalItems.isEmpty()) {
+            log.info(String.format("skipping empty sequence tag: %s", dict.keywordOf(seqTag)));
+            return true;
+        }
+        var items = optionalItems.get();
         int n = items.size();
         var sequence = parent.newSequence(seqTag, items.size());
         for (T item : items) {

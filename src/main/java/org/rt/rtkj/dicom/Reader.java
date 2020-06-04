@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Log4j2
 public class Reader {
@@ -1024,22 +1023,8 @@ public class Reader {
         pt.setPerformingPhysicianName(readString(attr, Tag.PerformingPhysicianName));
         pt.setOperatorsName(readString(attr, Tag.OperatorsName));
         pt.setManufacturerModelName(readString(attr, Tag.ManufacturerModelName));
-        pt.getReferencedPatientSequence().clear();
-        if (attr.contains(Tag.ReferencedPatientSequence)) {
-            Sequence seq = attr.getSequence(Tag.ReferencedPatientSequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedSOPClassInstance(value);
-                optTmp.ifPresent(tmp -> pt.getReferencedPatientSequence().add(tmp));
-            }
-        }
-        pt.getPurposeOfReferenceCodeSequence().clear();
-        if (attr.contains(Tag.PurposeOfReferenceCodeSequence)) {
-            Sequence seq = attr.getSequence(Tag.PurposeOfReferenceCodeSequence);
-            for (Attributes value : seq) {
-                var optTmp = codeItem(value);
-                optTmp.ifPresent(tmp -> pt.getPurposeOfReferenceCodeSequence().add(tmp));
-            }
-        }
+        pt.setReferencedPatientSequence(readSequence(attr, Tag.ReferencedPatientSequence, Reader::referencedSOPClassInstance));
+        pt.setPurposeOfReferenceCodeSequence(readSequence(attr, Tag.PurposeOfReferenceCodeSequence, Reader::codeItem));
         pt.setPatientName(readString(attr, Tag.PatientName));
         pt.setPatientID(readString(attr, Tag.PatientID));
         pt.setIssuerOfPatientID(readString(attr, Tag.IssuerOfPatientID));
@@ -1078,7 +1063,7 @@ public class Reader {
         pt.setRows(readInt(attr, Tag.Rows));
         pt.setColumns(readInt(attr, Tag.Columns));
         pt.setPixelSpacing(readDoubles(attr, Tag.PixelSpacing));
-        pt.setCorrectedImage(Arrays.stream(readString(attr, Tag.CorrectedImage).split("\\\\")).collect(Collectors.toList()));
+        pt.setCorrectedImage(readListString(attr, Tag.CorrectedImage));
         pt.setBitsAllocated(readInt(attr, Tag.BitsAllocated));
         pt.setBitsStored(readInt(attr, Tag.BitsStored));
         pt.setHighBit(readInt(attr, Tag.HighBit));
@@ -1096,48 +1081,13 @@ public class Reader {
         pt.setCurrentPatientLocation(readString(attr, Tag.CurrentPatientLocation));
         pt.setPerformedProcedureStepStartDate(readDate(attr, Tag.PerformedProcedureStepStartDate));
         pt.setPerformedProcedureStepStartTime(DicomUtils.tmToLocalTime(readString(attr, Tag.PerformedProcedureStepStartTime)));
-        pt.getRequestAttributesSequence().clear();
-        if (attr.contains(Tag.RequestAttributesSequence)) {
-            Sequence seq = attr.getSequence(Tag.RequestAttributesSequence);
-            for (Attributes value : seq) {
-                var optTmp = requestAttributes(value);
-                optTmp.ifPresent(tmp -> pt.getRequestAttributesSequence().add(tmp));
-            }
-        }
+        pt.setRequestAttributesSequence(readSequence(attr, Tag.RequestAttributesSequence, Reader::requestAttributes));
         pt.setRequestedProcedureID(readString(attr, Tag.RequestedProcedureID));
-        pt.getEnergyWindowRangeSequence().clear();
-        if (attr.contains(Tag.EnergyWindowRangeSequence)) {
-            Sequence seq = attr.getSequence(Tag.EnergyWindowRangeSequence);
-            for (Attributes value : seq) {
-                var optTmp = energyWindowRange(value);
-                optTmp.ifPresent(tmp -> pt.getEnergyWindowRangeSequence().add(tmp));
-            }
-        }
-        pt.getRadiopharmaceuticalInformationSequence().clear();
-        if (attr.contains(Tag.RadiopharmaceuticalInformationSequence)) {
-            Sequence seq = attr.getSequence(Tag.RadiopharmaceuticalInformationSequence);
-            for (Attributes value : seq) {
-                var optTmp = radiopharmaceuticalInformation(value);
-                optTmp.ifPresent(tmp -> pt.getRadiopharmaceuticalInformationSequence().add(tmp));
-            }
-        }
+        pt.setEnergyWindowRangeSequence(readSequence(attr, Tag.EnergyWindowRangeSequence, Reader::energyWindowRange));
+        pt.setRadiopharmaceuticalInformationSequence(readSequence(attr, Tag.RadiopharmaceuticalInformationSequence, Reader::radiopharmaceuticalInformation));
         pt.setNumberOfSlices(readInt(attr, Tag.NumberOfSlices));
-        pt.getPatientOrientationCodeSequence().clear();
-        if (attr.contains(Tag.PatientOrientationCodeSequence)) {
-            Sequence seq = attr.getSequence(Tag.PatientOrientationCodeSequence);
-            for (Attributes value : seq) {
-                var optTmp = patientOrientationCode(value);
-                optTmp.ifPresent(tmp -> pt.getPatientOrientationCodeSequence().add(tmp));
-            }
-        }
-        pt.getPatientGantryRelationshipCodeSequence().clear();
-        if (attr.contains(Tag.PatientGantryRelationshipCodeSequence)) {
-            Sequence seq = attr.getSequence(Tag.PatientGantryRelationshipCodeSequence);
-            for (Attributes value : seq) {
-                var optTmp = codeItem(value);
-                optTmp.ifPresent(tmp -> pt.getPatientGantryRelationshipCodeSequence().add(tmp));
-            }
-        }
+        pt.setPatientOrientationCodeSequence(readSequence(attr, Tag.PatientOrientationCodeSequence, Reader::patientOrientationCode));
+        pt.setPatientGantryRelationshipCodeSequence(readSequence(attr, Tag.PatientGantryRelationshipCodeSequence, Reader::codeItem));
         pt.setSeriesType(readString(attr, Tag.SeriesType));
         pt.setUnits(readString(attr, Tag.Units));
         pt.setCountsSource(readString(attr, Tag.CountsSource));
@@ -1154,19 +1104,23 @@ public class Reader {
         pt.setScatterFractionFactor(readDouble(attr, Tag.ScatterFractionFactor));
         pt.setImageIndex(readInt(attr, Tag.ImageIndex));
 
-        byte[] buf = attr.getBytes(Tag.PixelData);
-        int nbuf = buf.length;
-        int bps = pt.getBitsAllocated() / 8;
-        if ((pt.getBitsAllocated() != 16 || bps != 2) && (pt.getBitsAllocated() != 32 || bps != 4))
-            throw new DicomException("Only 16 or 32 bit pixeldata is supported");
-        var optPixelRepresentation = pt.getPixelRepresentation();
-        if (optPixelRepresentation.isEmpty()) throw new DicomException("CT requires a valid pixel representation");
-        pt.setPixelData(getPixelData(buf, 0, nbuf, bps, optPixelRepresentation.get(), order));
-//        for (int i = 0; i < nbuf; i += bps) {
-//            var bb = ByteBuffer.wrap(buf, i, bps);
-//            pt.getPixelData().add(bb.getInt());
-//        }
-
+        var optBuf = readBytes(attr, Tag.PixelData);
+        if (pt.getBitsAllocated().isPresent() && optBuf.isPresent()) {
+            var tbuf = optBuf.get();
+            int nbuf = tbuf.length;
+            int bps = pt.getBitsAllocated().get() / 8;
+            if ((pt.getBitsAllocated().get() != 16 || bps != 2) && (pt.getBitsAllocated().get() != 32 || bps != 4))
+                throw new DicomException("Only 16 or 32 bit PT pixeldata is supported");
+            var optPixelRepresentation = pt.getPixelRepresentation();
+            if (optPixelRepresentation.isEmpty()) throw new DicomException("PT requires a valid pixel representation");
+            byte[] bb = new byte[nbuf];
+            for (int i = 0; i < nbuf; i++) {
+                bb[i] = tbuf[i];
+            }
+            tbuf = null;
+            optBuf = Optional.empty();
+            pt.setPixelData(getPixelData(bb, 0, nbuf, bps, optPixelRepresentation.get(), order));
+        }
         return Optional.of(pt);
     }
 
@@ -1192,7 +1146,7 @@ public class Reader {
         sr.setContentTime(DicomUtils.tmToLocalTime(readString(attr, Tag.ContentTime)));
         sr.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         sr.setModality(modality(attr));
-        if (sr.getModality() != Modality.REG) {
+        if (sr.getModality().isEmpty() || sr.getModality().get() != Modality.REG) {
             log.error("Trying to read a DICOM file that is not a SR");
             return Optional.empty();
         }
@@ -1200,24 +1154,8 @@ public class Reader {
         sr.setReferringPhysicianName(readString(attr, Tag.ReferringPhysicianName));
         sr.setSeriesDescription(readString(attr, Tag.SeriesDescription));
         sr.setManufacturerModelName(readString(attr, Tag.ManufacturerModelName));
-
-        sr.getReferencedSeriesSequence().clear();
-        if (attr.contains(Tag.ReferencedSeriesSequence)) {
-            Sequence seq = attr.getSequence(Tag.ReferencedSeriesSequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedSeries(value);
-                optTmp.ifPresent(tmp -> sr.getReferencedSeriesSequence().add(tmp));
-            }
-        }
-
-        sr.getStudiesContainingOtherReferencedInstancesSequence().clear();
-        if (attr.contains(Tag.StudiesContainingOtherReferencedInstancesSequence)) {
-            Sequence seq = attr.getSequence(Tag.StudiesContainingOtherReferencedInstancesSequence);
-            for (Attributes value : seq) {
-                var optTmp = studiesContainingOtherReferencedInstances(value);
-                optTmp.ifPresent(tmp -> sr.getStudiesContainingOtherReferencedInstancesSequence().add(tmp));
-            }
-        }
+        sr.setReferencedSeriesSequence(readSequence(attr, Tag.ReferencedSeriesSequence, Reader::referencedSeries));
+        sr.setStudiesContainingOtherReferencedInstancesSequence(readSequence(attr, Tag.StudiesContainingOtherReferencedInstancesSequence, Reader::studiesContainingOtherReferencedInstances));
 
         sr.setPatientName(readString(attr, Tag.PatientName));
         sr.setPatientID(readString(attr, Tag.PatientID));
@@ -1234,14 +1172,7 @@ public class Reader {
         sr.setContentLabel(readString(attr, Tag.ContentLabel));
         sr.setContentDescription(readString(attr, Tag.ContentDescription));
         sr.setContentCreatorName(readString(attr, Tag.ContentCreatorName));
-        sr.getRegistrationSequence().clear();
-        if (attr.contains(Tag.RegistrationSequence)) {
-            Sequence seq = attr.getSequence(Tag.RegistrationSequence);
-            for (Attributes value : seq) {
-                var optTmp = registration(value);
-                optTmp.ifPresent(tmp -> sr.getRegistrationSequence().add(tmp));
-            }
-        }
+        sr.setRegistrationSequence(readSequence(attr, Tag.RegistrationSequence, Reader::registration));
         return Optional.of(sr);
     }
 
@@ -1263,7 +1194,7 @@ public class Reader {
         ss.setStudyTime(DicomUtils.tmToLocalTime(readString(attr, Tag.StudyTime)));
         ss.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         ss.setModality(modality(attr));
-        if (ss.getModality() != Modality.RTSTRUCT) {
+        if (ss.getModality().isEmpty() || ss.getModality().get() != Modality.RTSTRUCT) {
             log.error("Trying to read a DICOM file that is not a RTSTRUCT");
             return Optional.empty();
         }
@@ -1286,36 +1217,10 @@ public class Reader {
         ss.setStructureSetLabel(readString(attr, Tag.StructureSetLabel));
         ss.setStructureSetDate(readDate(attr, Tag.StructureSetDate));
         ss.setStructureSetTime(DicomUtils.tmToLocalTime(readString(attr, Tag.StructureSetTime)));
-        if (attr.contains(Tag.ReferencedFrameOfReferenceSequence)) {
-            Sequence seq = attr.getSequence(Tag.ReferencedFrameOfReferenceSequence);
-            for (Attributes value : seq) {
-                var optTmp = referencedFrameOfReference(value);
-                optTmp.ifPresent(tmp -> ss.getReferencedFrameOfReferenceSequence().add(tmp));
-            }
-        }
-        if (attr.contains(Tag.StructureSetROISequence)) {
-            Sequence seq = attr.getSequence(Tag.StructureSetROISequence);
-            for (Attributes value : seq) {
-                var optTmp = structureSetROI(value);
-                optTmp.ifPresent(tmp -> ss.getStructureSetROISequence().add(tmp));
-            }
-        }
-
-        if (attr.contains(Tag.ROIContourSequence)) {
-            Sequence seq = attr.getSequence(Tag.ROIContourSequence);
-            for (Attributes value : seq) {
-                var optTmp = roiContour(value);
-                optTmp.ifPresent(tmp -> ss.getRoiContourSequence().add(tmp));
-            }
-        }
-
-        if (attr.contains(Tag.RTROIObservationsSequence)) {
-            Sequence seq = attr.getSequence(Tag.RTROIObservationsSequence);
-            for (Attributes value : seq) {
-                var optTmp = rtROIObservations(value);
-                optTmp.ifPresent(tmp -> ss.getRtROIObservationsSequence().add(tmp));
-            }
-        }
+        ss.setReferencedFrameOfReferenceSequence(readSequence(attr, Tag.ReferencedFrameOfReferenceSequence, Reader::referencedFrameOfReference));
+        ss.setStructureSetROISequence(readSequence(attr, Tag.StructureSetROISequence, Reader::structureSetROI));
+        ss.setRoiContourSequence(readSequence(attr, Tag.ROIContourSequence, Reader::roiContour));
+        ss.setRtROIObservationsSequence(readSequence(attr, Tag.RTROIObservationsSequence, Reader::rtROIObservations));
         ss.setApprovalStatus(readString(attr, Tag.ApprovalStatus));
         return Optional.of(ss);
     }
