@@ -49,8 +49,8 @@ public class SpatialRegistrationTest {
         assertEquals("1662", sr.getAccessionNumber().get());
         assertEquals(Modality.REG, sr.getModality().get());
         assertEquals("RaySearch Laboratories", sr.getManufacturer().get());
-        assertEquals("", sr.getReferringPhysicianName().get());
-        assertEquals("", sr.getSeriesDescription().get());
+        assertTrue(sr.getReferringPhysicianName().isEmpty());
+        assertTrue(sr.getSeriesDescription().isEmpty());
         {
             var referencedSeriesSequence = sr.getReferencedSeriesSequence();
             assertEquals(1, referencedSeriesSequence.get().size());
@@ -60,86 +60,86 @@ public class SpatialRegistrationTest {
             referencedInstanceItem.setReferencedSOPClassUID(Optional.of(UID.CTImageStorage));
             referencedInstanceItem.setReferencedSOPInstanceUID(Optional.of("1.2.392.200036.9116.2.6.1.16.1613471639.1569981394.848382"));
             assertEquals(referencedInstanceItem, referencedInstanceSequence.get(0));
-            assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1569981382.889372", referencedSerie.getSeriesInstanceUID());
+            assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1569981382.889372", referencedSerie.getSeriesInstanceUID().get());
         }
         {
-            var studiesContainingOtherReferencedInstancesSequence = sr.getStudiesContainingOtherReferencedInstancesSequence();
+            var studiesContainingOtherReferencedInstancesSequence = sr.getStudiesContainingOtherReferencedInstancesSequence().get();
             var studiesContainingOtherReferencedInstancesItem = studiesContainingOtherReferencedInstancesSequence.get(0);
             var referencedSeriesSequence = studiesContainingOtherReferencedInstancesItem.getReferencedSeriesSequence();
-            ReferencedSeriesItem referencedSeriesItem = referencedSeriesSequence.get(0);
+            ReferencedSeriesItem referencedSeriesItem = referencedSeriesSequence.get().get(0);
             var referencedInstanceItem = new ReferencedSOPClassInstanceItem();
-            referencedInstanceItem.setReferencedSOPClassUID(UID.CTImageStorage);
-            referencedInstanceItem.setReferencedSOPInstanceUID("1.2.392.200036.9116.2.6.1.16.1613471639.1543482020.16715");
-            assertEquals(referencedInstanceItem, referencedSeriesItem.getReferencedInstanceSequence().get(0));
-            assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1543481929.823084", referencedSeriesItem.getSeriesInstanceUID());
-            assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1543481030.280100", studiesContainingOtherReferencedInstancesItem.getStudyInstanceUID());
+            referencedInstanceItem.setReferencedSOPClassUID(Optional.of(UID.CTImageStorage));
+            referencedInstanceItem.setReferencedSOPInstanceUID(Optional.of("1.2.392.200036.9116.2.6.1.16.1613471639.1543482020.16715"));
+            assertEquals(referencedInstanceItem, referencedSeriesItem.getReferencedInstanceSequence().get().get(0));
+            assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1543481929.823084", referencedSeriesItem.getSeriesInstanceUID().get());
+            assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1543481030.280100", studiesContainingOtherReferencedInstancesItem.getStudyInstanceUID().get());
         }
 
-        assertEquals("carpet^kimmanon", sr.getPatientName());
-        assertEquals("X021000", sr.getPatientID());
-        assertEquals("20001002", sr.getPatientBirthDate());
-        assertEquals("M", sr.getPatientSex());
-        assertEquals("6.1.1.2 (Dicom Export)", sr.getSoftwareVersions());
-        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1569981043.583561", sr.getStudyInstanceUID());
-        assertEquals("1.2.752.243.1.1.20191009143733562.5000.74370.1", sr.getSeriesInstanceUID());
-        assertEquals("CT1", sr.getStudyID());
-        assertEquals(DicomUtils.UNDEFINED_U32, sr.getSeriesNumber());
-        assertEquals(0, sr.getInstanceNumber());
-        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1569981196.949149", sr.getFrameOfReferenceUID());
-        assertEquals("", sr.getPositionReferenceIndicator());
-        assertEquals("REGISTRATION", sr.getContentLabel());
-        assertEquals("", sr.getContentDescription());
-        assertEquals("RayStation", sr.getContentCreatorName());
+        assertEquals("carpet^kimmanon", sr.getPatientName().get());
+        assertEquals("X021000", sr.getPatientID().get());
+        assertEquals("20001002", sr.getPatientBirthDate().get());
+        assertEquals("M", sr.getPatientSex().get());
+        assertEquals("6.1.1.2 (Dicom Export)", sr.getSoftwareVersions().get());
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1569981043.583561", sr.getStudyInstanceUID().get());
+        assertEquals("1.2.752.243.1.1.20191009143733562.5000.74370.1", sr.getSeriesInstanceUID().get());
+        assertEquals("CT1", sr.getStudyID().get());
+        assertTrue(sr.getSeriesNumber().isEmpty());
+        assertEquals(0, sr.getInstanceNumber().get());
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1569981196.949149", sr.getFrameOfReferenceUID().get());
+        assertTrue(sr.getPositionReferenceIndicator().isEmpty());
+        assertEquals("REGISTRATION", sr.getContentLabel().get());
+        assertTrue(sr.getContentDescription().isEmpty());
+        assertEquals("RayStation", sr.getContentCreatorName().get());
 //        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1569981196.949149", .getFrameOfReferenceUID());
 
         var registrationSequence = sr.getRegistrationSequence();
-        assertEquals(2, registrationSequence.size());
-        var registrationItem0 = registrationSequence.get(0);
+        assertEquals(2, registrationSequence.get().size());
+        var registrationItem0 = registrationSequence.get().get(0);
         {
-            assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1569981196.949149", registrationItem0.getFrameOfReferenceUID());
-            var referencedImageSequence = registrationItem0.getReferencedImageSequence();
+            assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1569981196.949149", registrationItem0.getFrameOfReferenceUID().get());
+            var referencedImageSequence = registrationItem0.getReferencedImageSequence().get();
             var b = referencedImageSequence.get(0);
             var a = new ReferencedSOPClassInstanceItem();
-            a.setReferencedSOPClassUID(UID.CTImageStorage);
-            a.setReferencedSOPInstanceUID("1.2.392.200036.9116.2.6.1.16.1613471639.1569981394.848382");
+            a.setReferencedSOPClassUID(Optional.of(UID.CTImageStorage));
+            a.setReferencedSOPInstanceUID(Optional.of("1.2.392.200036.9116.2.6.1.16.1613471639.1569981394.848382"));
             assertEquals(a, b);
 
             var matrixRegistrationSequence = registrationItem0.getMatrixRegistrationSequence();
-            assertEquals(1, matrixRegistrationSequence.size());
-            var matrixSequence = matrixRegistrationSequence.get(0).getMatrixSequence();
-            assertEquals(1, matrixSequence.size());
-            var matrix = matrixSequence.get(0);
-            assertEquals(TransformationMatrixType.RIGID, matrix.getFrameOfReferenceTransformationMatrixType());
+            assertEquals(1, matrixRegistrationSequence.get().size());
+            var matrixSequence = matrixRegistrationSequence.get().get(0).getMatrixSequence();
+            assertEquals(1, matrixSequence.get().size());
+            var matrix = matrixSequence.get().get(0);
+            assertEquals(TransformationMatrixType.RIGID, matrix.getFrameOfReferenceTransformationMatrixType().get());
             double exp[] = new double[]{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
-            double actual[] = matrix.getFrameOfReferenceTransformationMatrix();
+            Double[] actual = matrix.getFrameOfReferenceTransformationMatrix().get();
             assertEquals(exp.length, actual.length);
             for (int i = 0; i < exp.length; i++) {
-                assertEquals(exp[i], actual[i], Precision.EPSILON);
+                assertEquals(exp[i], (double) actual[i], Precision.EPSILON);
             }
         }
 
-        var registrationItem1 = registrationSequence.get(1);
+        var registrationItem1 = registrationSequence.get().get(1);
         {
 
-            assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1543481617.727710", registrationItem1.getFrameOfReferenceUID());
+            assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1543481617.727710", registrationItem1.getFrameOfReferenceUID().get());
             var referencedImageSequence = registrationItem1.getReferencedImageSequence();
-            var b = referencedImageSequence.get(0);
+            var b = referencedImageSequence.get().get(0);
             var a = new ReferencedSOPClassInstanceItem();
-            a.setReferencedSOPClassUID(UID.CTImageStorage);
-            a.setReferencedSOPInstanceUID("1.2.392.200036.9116.2.6.1.16.1613471639.1543482020.16715");
+            a.setReferencedSOPClassUID(Optional.of(UID.CTImageStorage));
+            a.setReferencedSOPInstanceUID(Optional.of("1.2.392.200036.9116.2.6.1.16.1613471639.1543482020.16715"));
             assertEquals(a, b);
 
-            var matrixRegistrationSequence = registrationItem1.getMatrixRegistrationSequence();
+            var matrixRegistrationSequence = registrationItem1.getMatrixRegistrationSequence().get();
             assertEquals(1, matrixRegistrationSequence.size());
             var matrixSequence = matrixRegistrationSequence.get(0).getMatrixSequence();
-            assertEquals(1, matrixSequence.size());
-            var matrix = matrixSequence.get(0);
-            assertEquals(TransformationMatrixType.RIGID, matrix.getFrameOfReferenceTransformationMatrixType());
+            assertEquals(1, matrixSequence.get().size());
+            var matrix = matrixSequence.get().get(0);
+            assertEquals(TransformationMatrixType.RIGID, matrix.getFrameOfReferenceTransformationMatrixType().get());
             double exp[] = new double[]{1, 0, 0, -76.89132, 0, 1, 0, -40.52152, 0, 0, 1, -40.24639, 0, 0, 0, 1};
-            double actual[] = matrix.getFrameOfReferenceTransformationMatrix();
+            Double actual[] = matrix.getFrameOfReferenceTransformationMatrix().get();
             assertEquals(exp.length, actual.length);
             for (int i = 0; i < exp.length; i++) {
-                assertEquals(exp[i], actual[i], Precision.EPSILON);
+                assertEquals(exp[i], (double) actual[i], Precision.EPSILON);
             }
         }
 

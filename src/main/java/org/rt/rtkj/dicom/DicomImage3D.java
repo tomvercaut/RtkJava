@@ -9,15 +9,15 @@ public interface DicomImage3D<T> extends HasPixelRepresentation {
 
     Optional<PatientPosition> getPatientPosition();
 
-    Optional<double[]> getImagePositionPatient();
+    Optional<Double[]> getImagePositionPatient();
 
-    Optional<double[]> getImageOrientationPatient();
+    Optional<Double[]> getImageOrientationPatient();
 
     Optional<Integer> getRows();
 
     Optional<Integer> getColumns();
 
-    Optional<double[]> getPixelSpacing();
+    Optional<Double[]> getPixelSpacing();
 
     Optional<Integer> getBitsAllocated();
 

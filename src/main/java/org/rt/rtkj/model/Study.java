@@ -22,7 +22,7 @@ public class Study {
     }
 
     public Study(String studyInstanceUID) {
-        if (studyInstanceUID == null || studyInstanceUID.isEmpty())
+        if (studyInstanceUID == null || studyInstanceUID.isBlank())
             this.studyInstanceUID = "";
         else
             this.studyInstanceUID = studyInstanceUID;
@@ -34,10 +34,10 @@ public class Study {
         if (image == null || image.getSOPInstanceUID().isEmpty() ||
                 image.getStudyInstanceUID().isEmpty() || image.getSeriesInstanceUID().isEmpty())
             return;
-        if (series.isEmpty() && studyInstanceUID.isEmpty())
-            this.studyInstanceUID = image.getStudyInstanceUID();
-        if (!this.studyInstanceUID.equals(image.getStudyInstanceUID())) return;
-        String uid = image.getSeriesInstanceUID();
+        if (series.isEmpty() && studyInstanceUID.isBlank())
+            this.studyInstanceUID = image.getStudyInstanceUID().get();
+        if (!this.studyInstanceUID.equals(image.getStudyInstanceUID().get())) return;
+        String uid = image.getSeriesInstanceUID().get();
         for (Serie serie : series) {
             if (serie.getSeriesInstanceUID().equals(uid)) {
                 serie.add(image);

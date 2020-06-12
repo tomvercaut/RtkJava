@@ -19,7 +19,7 @@ public class ImageFactory {
             log.error("Missing frame of reference UID");
             return Optional.empty();
         }
-        if (ct.getModality() == Modality.UNKNOWN) {
+        if (ct.getModality().isEmpty() || ct.getModality().get() == Modality.UNKNOWN) {
             log.error("Missing modality");
             return Optional.empty();
         }
@@ -31,19 +31,19 @@ public class ImageFactory {
             log.error("Missing series instance UID");
             return Optional.empty();
         }
-        if (ct.getPatientPosition() == PatientPosition.UNKOWN) {
+        if (ct.getPatientPosition().isEmpty() || ct.getPatientPosition().get() == PatientPosition.UNKOWN) {
             log.error("Uknown patient position");
             return Optional.empty();
         }
-        if (ct.getImagePositionPatient() == null || ct.getImagePositionPatient().length != 3) {
+        if (ct.getImagePositionPatient().isEmpty() || ct.getImagePositionPatient().get().length != 3) {
             log.error("Missing or invalid image position patient");
             return Optional.empty();
         }
-        if (ct.getImageOrientationPatient() == null || ct.getImageOrientationPatient().length != 6) {
+        if (ct.getImageOrientationPatient().isEmpty() || ct.getImageOrientationPatient().get().length != 6) {
             log.error("Missing or invalid image orientation patient");
             return Optional.empty();
         }
-        if (ct.getPixelSpacing() == null || ct.getPixelSpacing().length != 2) {
+        if (ct.getPixelSpacing().isEmpty() || ct.getPixelSpacing().get().length != 2) {
             log.error("Missing or invalid pixel spacing");
             return Optional.empty();
         }
@@ -51,15 +51,15 @@ public class ImageFactory {
             log.error("Missing or invalid pixel representation");
             return Optional.empty();
         }
-        if (ct.getBitsAllocated() < 1) {
+        if (ct.getBitsAllocated().isEmpty() || ct.getBitsAllocated().get() < 1) {
             log.error("Missing or invalid number of allocated bits");
             return Optional.empty();
         }
-        if (ct.getSamplesPerPixel() != 1) {
+        if (ct.getSamplesPerPixel().isEmpty() || ct.getSamplesPerPixel().get() != 1) {
             log.error("Only one sample per pixel is supported for a CT image");
             return Optional.empty();
         }
-        if (ct.getPhotometricInterpretation() != PhotometricInterpretation.MONOCHROME2) {
+        if (ct.getPhotometricInterpretation().isEmpty() || ct.getPhotometricInterpretation().get() != PhotometricInterpretation.MONOCHROME2) {
             log.error("Only monochrome2 pixel values supported");
             return Optional.empty();
         }
@@ -74,22 +74,24 @@ public class ImageFactory {
         image.setPixelSpacing(ct.getPixelSpacing());
         image.setImageOrientationPatient(ct.getImageOrientationPatient());
         image.setImagePositionPatient(ct.getImagePositionPatient());
-        image.setPixelRepresentation(ct.getPixelRepresentation().orElse(PixelRepresentation.NONE));
+        image.setPixelRepresentation(ct.getPixelRepresentation());
         image.setBitsAllocated(ct.getBitsAllocated());
         image.setRescaleIntercept(ct.getRescaleIntercept());
         image.setRescaleSlope(ct.getRescaleSlope());
-        int rows = ct.getRows();
-        int cols = ct.getColumns();
+        int rows = ct.getRows().orElse(0);
+        int cols = ct.getColumns().orElse(0);
         image.resize(cols, rows);
         int idx = 0;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                var pixel = ct.getPixelData().get(idx);
-                if (!image.setValue(j, i, pixel)) {
-                    log.error("Unable to set pixel value at [row, column] = [" + i + ", " + j + "] = " + (double) pixel);
-                    return Optional.empty();
+        if (ct.getPixelData().isPresent()) {
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    var pixel = ct.getPixelData().get().get(idx);
+                    if (!image.setValue(j, i, pixel)) {
+                        log.error("Unable to set pixel value at [row, column] = [" + i + ", " + j + "] = " + (double) pixel);
+                        return Optional.empty();
+                    }
+                    idx++;
                 }
-                idx++;
             }
         }
         return Optional.of(image);
@@ -106,7 +108,7 @@ public class ImageFactory {
             log.error("Missing frame of reference UID");
             return Optional.empty();
         }
-        if (pt.getModality() == Modality.UNKNOWN) {
+        if (pt.getModality().isEmpty() || pt.getModality().get() == Modality.UNKNOWN) {
             log.error("Missing modality");
             return Optional.empty();
         }
@@ -118,19 +120,19 @@ public class ImageFactory {
             log.error("Missing series instance UID");
             return Optional.empty();
         }
-        if (pt.getPatientPosition() == PatientPosition.UNKOWN) {
+        if (pt.getPatientPosition().isEmpty() || pt.getPatientPosition().get() == PatientPosition.UNKOWN) {
             log.error("Uknown patient position");
             return Optional.empty();
         }
-        if (pt.getImagePositionPatient() == null || pt.getImagePositionPatient().length != 3) {
+        if (pt.getImagePositionPatient().isEmpty() || pt.getImagePositionPatient().get().length != 3) {
             log.error("Missing or invalid image position patient");
             return Optional.empty();
         }
-        if (pt.getImageOrientationPatient() == null || pt.getImageOrientationPatient().length != 6) {
+        if (pt.getImageOrientationPatient().isEmpty() || pt.getImageOrientationPatient().get().length != 6) {
             log.error("Missing or invalid image orientation patient");
             return Optional.empty();
         }
-        if (pt.getPixelSpacing() == null || pt.getPixelSpacing().length != 2) {
+        if (pt.getPixelSpacing().isEmpty() || pt.getPixelSpacing().get().length != 2) {
             log.error("Missing or invalid pixel spacing");
             return Optional.empty();
         }
@@ -138,15 +140,15 @@ public class ImageFactory {
             log.error("Missing or invalid pixel representation");
             return Optional.empty();
         }
-        if (pt.getBitsAllocated() < 1) {
+        if (pt.getBitsAllocated().isEmpty() || pt.getBitsAllocated().get() < 1) {
             log.error("Missing or invalid number of allocated bits");
             return Optional.empty();
         }
-        if (pt.getSamplesPerPixel() != 1) {
+        if (pt.getSamplesPerPixel().isEmpty() || pt.getSamplesPerPixel().get() != 1) {
             log.error("Only one sample per pixel is supported for a CT image");
             return Optional.empty();
         }
-        if (pt.getPhotometricInterpretation() != PhotometricInterpretation.MONOCHROME2) {
+        if (pt.getPhotometricInterpretation().isEmpty() || pt.getPhotometricInterpretation().get() != PhotometricInterpretation.MONOCHROME2) {
             log.error("Only monochrome2 pixel values supported");
             return Optional.empty();
         }
@@ -161,22 +163,24 @@ public class ImageFactory {
         image.setPixelSpacing(pt.getPixelSpacing());
         image.setImageOrientationPatient(pt.getImageOrientationPatient());
         image.setImagePositionPatient(pt.getImagePositionPatient());
-        image.setPixelRepresentation(pt.getPixelRepresentation().orElse(PixelRepresentation.NONE));
+        image.setPixelRepresentation(pt.getPixelRepresentation());
         image.setBitsAllocated(pt.getBitsAllocated());
         image.setRescaleIntercept(pt.getRescaleIntercept());
         image.setRescaleSlope(pt.getRescaleSlope());
-        int rows = pt.getRows();
-        int cols = pt.getColumns();
+        int rows = pt.getRows().orElse(0);
+        int cols = pt.getColumns().orElse(0);
         image.resize(cols, rows);
         int idx = 0;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                var pixel = pt.getPixelData().get(idx);
-                if (!image.setValue(j, i, pixel)) {
-                    log.error("Unable to set pixel value at [row, column] = [" + i + ", " + j + "] = " + (double) pixel);
-                    return Optional.empty();
+        if (pt.getPixelData().isPresent()) {
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    var pixel = pt.getPixelData().get().get(idx);
+                    if (!image.setValue(j, i, pixel)) {
+                        log.error("Unable to set pixel value at [row, column] = [" + i + ", " + j + "] = " + (double) pixel);
+                        return Optional.empty();
+                    }
+                    idx++;
                 }
-                idx++;
             }
         }
         return Optional.of(image);

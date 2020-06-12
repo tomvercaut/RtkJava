@@ -15,7 +15,8 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RTDoseTest {
 
@@ -41,17 +42,17 @@ public class RTDoseTest {
         assertEquals("RT Dose", rtdose.getSeriesDescription().get());
         assertEquals("model", rtdose.getManufacturerModelName().get());
         assertEquals("boost^breast", rtdose.getPatientName().get());
-        assertNull(rtdose.getPatientBirthDate());
+        assertTrue(rtdose.getPatientBirthDate().isEmpty());
         assertEquals("123456", rtdose.getPatientID().get());
         assertEquals("O", rtdose.getPatientSex().get());
-        assertEquals(0.0, rtdose.getSliceThicknes().get(), Precision.EPSILON);
+        assertTrue(rtdose.getSliceThicknes().isEmpty());
         assertEquals("0", rtdose.getDeviceSerialNumber().get());
         assertEquals("1.0", rtdose.getSoftwareVersions().get());
         assertEquals("2.16.840.1.113662.2.12.0.3057.1241703565.35", rtdose.getStudyInstanceUID().get());
         assertEquals("1.2.246.352.71.2.320687012.28240.20090603082420", rtdose.getSeriesInstanceUID().get());
         assertEquals("1", rtdose.getStudyID().get());
         assertEquals(14, rtdose.getSeriesNumber().get());
-        assertEquals(DicomUtils.UNDEFINED_I32, rtdose.getInstanceNumber().get());
+        assertTrue(rtdose.getInstanceNumber().isEmpty());
         assertEquals(3, rtdose.getImagePositionPatient().get().length);
         assertEquals(-228.6541915, rtdose.getImagePositionPatient().get()[0], Precision.EPSILON);
         assertEquals(-419.2444776, rtdose.getImagePositionPatient().get()[1], Precision.EPSILON);

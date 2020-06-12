@@ -86,6 +86,25 @@ public class CollectionPrecision {
      * @return {@code true} if both array elements are equal withing the range of allowed error.
      * @see Precision#equals(double, double)
      */
+    public static boolean equalsDoubles(Double[] l1, Double[] l2) {
+        if (l1 == null && l2 == null) return true;
+        if (l1 == null || l2 == null) return false;
+        int n = l1.length;
+        if (n != l2.length) return false;
+        for (int i = 0; i < n; i++) {
+            if (!Precision.equals(l1[i], l2[i])) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Return true if the content of the arrays are equal or within the range of allowed error.
+     *
+     * @param l1 first array
+     * @param l2 second array
+     * @return {@code true} if both array elements are equal withing the range of allowed error.
+     * @see Precision#equals(double, double)
+     */
     public static boolean equalsDoubles(double[] l1, double[] l2) {
         if (l1 == null && l2 == null) return true;
         if (l1 == null || l2 == null) return false;
@@ -93,6 +112,27 @@ public class CollectionPrecision {
         if (n != l2.length) return false;
         for (int i = 0; i < n; i++) {
             if (!Precision.equals(l1[i], l2[i])) return false;
+        }
+        return true;
+    }
+
+
+    /**
+     * Return true if the content of the arrays are equal or within the range of allowed error.
+     *
+     * @param l1  first array
+     * @param l2  second array
+     * @param eps Amount of allowed absolute error.
+     * @return {@code true} if both array elements are equal withing the range of allowed error.
+     * @see Precision#equals(double, double, double)
+     */
+    public static boolean equalsDoubles(Double[] l1, Double[] l2, double eps) {
+        if (l1 == null && l2 == null) return true;
+        if (l1 == null || l2 == null) return false;
+        int n = l1.length;
+        if (n != l2.length) return false;
+        for (int i = 0; i < n; i++) {
+            if (!Precision.equals(l1[i], l2[i], eps)) return false;
         }
         return true;
     }

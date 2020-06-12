@@ -36,49 +36,49 @@ public class Image3D {
         sorted = true;
     }
 
-    public String getFrameOfReferenceUID() {
-        if (images.isEmpty()) return "";
+    public Optional<String> getFrameOfReferenceUID() {
+        if (images.isEmpty()) return Optional.empty();
         return images.get(0).getFrameOfReferenceUID();
     }
 
-    public Modality getModality() {
-        if (images.isEmpty()) return Modality.UNKNOWN;
+    public Optional<Modality> getModality() {
+        if (images.isEmpty()) return Optional.empty();
         return images.get(0).getModality();
     }
 
-    public String getStudyInstanceUID() {
-        if (images.isEmpty()) return "";
+    public Optional<String> getStudyInstanceUID() {
+        if (images.isEmpty()) return Optional.empty();
         return images.get(0).getStudyInstanceUID();
     }
 
-    public PatientPosition getPatientPosition() {
-        if (images.isEmpty()) return PatientPosition.UNKOWN;
+    public Optional<PatientPosition> getPatientPosition() {
+        if (images.isEmpty()) return Optional.empty();
         return images.get(0).getPatientPosition();
     }
 
-    public double[] getPixelSpacing() {
-        if (images.isEmpty()) return null;
+    public Optional<Double[]> getPixelSpacing() {
+        if (images.isEmpty()) return Optional.empty();
         return images.get(0).getPixelSpacing();
     }
 
-    public Optional<double[]> getImagePositionPatient() {
+    public Optional<Double[]> getImagePositionPatient() {
         if (images.isEmpty()) return Optional.empty();
         if (!sorted) sort();
-        return Optional.of(images.get(0).getImagePositionPatient());
+        return images.get(0).getImagePositionPatient();
     }
 
-    public double[] getImageOrientationPatient() {
-        if (images.isEmpty()) return null;
+    public Optional<Double[]> getImageOrientationPatient() {
+        if (images.isEmpty()) return Optional.empty();
         return images.get(0).getImageOrientationPatient();
     }
 
-    public PixelRepresentation getPixelRepresentation() {
-        if (images.isEmpty()) return PixelRepresentation.NONE;
+    public Optional<PixelRepresentation> getPixelRepresentation() {
+        if (images.isEmpty()) return Optional.empty();
         return images.get(0).getPixelRepresentation();
     }
 
-    public int getBitsAllocated() {
-        if (images.isEmpty()) return 0;
+    public Optional<Integer> getBitsAllocated() {
+        if (images.isEmpty()) return Optional.empty();
         return images.get(0).getBitsAllocated();
     }
 

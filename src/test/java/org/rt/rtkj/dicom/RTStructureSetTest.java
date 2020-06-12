@@ -40,9 +40,9 @@ public class RTStructureSetTest {
         assertEquals(LocalTime.of(18, 20, 11), ss.getStudyTime().get());
         assertEquals("1585", ss.getAccessionNumber().get());
         assertEquals(Modality.RTSTRUCT, ss.getModality().get());
-        assertEquals("", ss.getReferringPhysicianName().get());
+        assertTrue(ss.getReferringPhysicianName().isEmpty());
         assertEquals("RS: Unapproved Structure Set", ss.getSeriesDescription().get());
-        assertEquals("", ss.getOperatorsName().get());
+        assertTrue(ss.getOperatorsName().isEmpty());
         assertEquals("RayStation", ss.getManufacturerModelName().get());
         assertTrue(ss.getPatientName().get().startsWith("carpet"));
         assertEquals("X021000", ss.getPatientID().get());
@@ -52,8 +52,8 @@ public class RTStructureSetTest {
         assertEquals("1.2.752.243.1.1.20191119180209579.1200.70340.1", ss.getSeriesInstanceUID().get());
         assertEquals("CT1", ss.getStudyID().get());
         assertEquals(1, ss.getSeriesNumber().get());
-        assertEquals("", ss.getFrameOfReferenceUID().get());
-        assertEquals("", ss.getPositionReferenceIndicator().get());
+        assertTrue(ss.getFrameOfReferenceUID().isEmpty());
+        assertTrue(ss.getPositionReferenceIndicator().isEmpty());
         assertEquals("RS: Unapproved", ss.getStructureSetLabel().get());
         assertEquals(LocalDate.of(2019, 11, 19), ss.getStructureSetDate().get());
         assertEquals(LocalTime.of(18, 2, 9), ss.getStructureSetTime().get());
@@ -70,7 +70,7 @@ public class RTStructureSetTest {
         var rtReferencedSeriesSequence = rtReferencedStudyItem.getRtReferencedSeriesSequence().get();
         assertEquals(1, rtReferencedSeriesSequence.size());
         var rtReferencedSeriesItem = rtReferencedSeriesSequence.get(0);
-        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891527.871910", rtReferencedSeriesItem.getSeriesInstanceUID());
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891527.871910", rtReferencedSeriesItem.getSeriesInstanceUID().get());
         var contourImageSequence = rtReferencedSeriesItem.getContourImageSequence();
         assertEquals(200, contourImageSequence.get().size());
         var expContourImageItem = new ReferencedSOPClassInstanceItem();
@@ -125,10 +125,11 @@ public class RTStructureSetTest {
 
         expContourImageItem.setReferencedSOPClassUID(Optional.of(UID.CTImageStorage));
         expContourImageItem.setReferencedSOPInstanceUID(Optional.of("1.2.392.200036.9116.2.6.1.16.1613471639.1540891569.28542"));
-        expContourItem.getContourImageSequence().get().add(expContourImageItem);
+        expContourItem.getContourImageSequence().orElse(new ArrayList<>()).add(expContourImageItem);
         expContourItem.setContourGeometricType(Optional.of("CLOSED_PLANAR"));
         expContourItem.setNumberOfContourPoints(Optional.of(4));
         expContourItem.setContourNumber(Optional.of(0));
+        expContourItem.setContourData(Optional.of(new ArrayList<>()));
         expContourItem.getContourData().get().add(-10.63135);
         expContourItem.getContourData().get().add(-5.951199);
         expContourItem.getContourData().get().add(-12.0);
@@ -282,31 +283,31 @@ public class RTStructureSetTest {
         rtROIObservation0.setReferencedROINumber(Optional.of(2));
         rtROIObservation0.setROIObservationLabel(Optional.of("GTV"));
         rtROIObservation0.setRTROIInterpretedType(Optional.of("GTV"));
-        rtROIObservation0.setROIInterpreter(Optional.of(""));
-        rtROIObservation0.setMaterialID(Optional.of(""));
+//        rtROIObservation0.setROIInterpreter(Optional.of(""));
+//        rtROIObservation0.setMaterialID(Optional.of(""));
 
         var rtROIObservation1 = new RTROIObservationsItem();
         rtROIObservation1.setObservationNumber(Optional.of(2));
         rtROIObservation1.setReferencedROINumber(Optional.of(3));
         rtROIObservation1.setROIObservationLabel(Optional.of("PTV"));
         rtROIObservation1.setRTROIInterpretedType(Optional.of("PTV"));
-        rtROIObservation1.setROIInterpreter(Optional.of(""));
-        rtROIObservation1.setMaterialID(Optional.of(""));
+//        rtROIObservation1.setROIInterpreter(Optional.of(""));
+//        rtROIObservation1.setMaterialID(Optional.of(""));
 
         var rtROIObservation2 = new RTROIObservationsItem();
         rtROIObservation2.setObservationNumber(Optional.of(3));
         rtROIObservation2.setReferencedROINumber(Optional.of(4));
         rtROIObservation2.setROIObservationLabel(Optional.of("External"));
         rtROIObservation2.setRTROIInterpretedType(Optional.of("EXTERNAL"));
-        rtROIObservation2.setROIInterpreter(Optional.of(""));
-        rtROIObservation2.setMaterialID(Optional.of(""));
+//        rtROIObservation2.setROIInterpreter(Optional.of(""));
+//        rtROIObservation2.setMaterialID(Optional.of(""));
 
         var rtROIObservation3 = new RTROIObservationsItem();
         rtROIObservation3.setObservationNumber(Optional.of(4));
         rtROIObservation3.setReferencedROINumber(Optional.of(5));
         rtROIObservation3.setROIObservationLabel(Optional.of("TAFEL_SYN23"));
         rtROIObservation3.setRTROIInterpretedType(Optional.of("SUPPORT"));
-        rtROIObservation3.setROIInterpreter(Optional.of(""));
+//        rtROIObservation3.setROIInterpreter(Optional.of(""));
         var expROIPhysicalProperties0 = new ROIPhysicalPropertiesItem();
         expROIPhysicalProperties0.setROIPhysicalProperty(Optional.of("REL_MASS_DENSITY"));
         expROIPhysicalProperties0.setROIPhysicalPropertyValue(Optional.of(0.25));
@@ -328,8 +329,10 @@ public class RTStructureSetTest {
         var roiElementalComposition1 = new ROIElementalCompositionItem();
         roiElementalComposition1.setRoiElementalCompositionAtomicNumber(Optional.of(8));
         roiElementalComposition1.setRoiElementalCompositionAtomicMassFraction(Optional.of(0.8881059885025024));
+        expROIPhysicalProperties4.setROIElementalCompositionSequence(Optional.of(new ArrayList<>()));
         expROIPhysicalProperties4.getROIElementalCompositionSequence().get().add(roiElementalComposition0);
         expROIPhysicalProperties4.getROIElementalCompositionSequence().get().add(roiElementalComposition1);
+        rtROIObservation3.setROIPhysicalPropertiesSequence(Optional.of(new ArrayList<>()));
         rtROIObservation3.getROIPhysicalPropertiesSequence().get().add(expROIPhysicalProperties0);
         rtROIObservation3.getROIPhysicalPropertiesSequence().get().add(expROIPhysicalProperties1);
         rtROIObservation3.getROIPhysicalPropertiesSequence().get().add(expROIPhysicalProperties2);
@@ -342,8 +345,8 @@ public class RTStructureSetTest {
         rtROIObservation4.setReferencedROINumber(Optional.of(1));
         rtROIObservation4.setROIObservationLabel(Optional.of("iso"));
         rtROIObservation4.setRTROIInterpretedType(Optional.of("ISOCENTER"));
-        rtROIObservation4.setROIInterpreter(Optional.of(""));
-        rtROIObservation4.setMaterialID(Optional.of(""));
+//        rtROIObservation4.setROIInterpreter(Optional.of(""));
+//        rtROIObservation4.setMaterialID(Optional.of(""));
 
         List<RTROIObservationsItem> expRTROIObservationsSequence = new ArrayList<>();
         expRTROIObservationsSequence.add(rtROIObservation0);
@@ -352,7 +355,7 @@ public class RTStructureSetTest {
         expRTROIObservationsSequence.add(rtROIObservation3);
         expRTROIObservationsSequence.add(rtROIObservation4);
 
-        assertEquals(expRTROIObservationsSequence, rtROIObservationSequence);
-        assertEquals("UNAPPROVED", ss.getApprovalStatus());
+        assertEquals(expRTROIObservationsSequence, rtROIObservationSequence.get());
+        assertEquals("UNAPPROVED", ss.getApprovalStatus().get());
     }
 }

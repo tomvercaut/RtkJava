@@ -126,7 +126,7 @@ public class Reader {
         if (attr == null || !attr.containsValue(tag)) return Optional.empty();
         var val = attr.getDoubles(tag);
         if (val == null) return Optional.empty();
-        return Optional.of((Double[]) Arrays.stream(val).boxed().toArray());
+        return Optional.of(Arrays.stream(val).boxed().toArray(Double[]::new));
     }
 
     /**
@@ -153,7 +153,7 @@ public class Reader {
         if (attr == null || !attr.containsValue(tag)) return Optional.empty();
         var val = attr.getInts(tag);
         if (val == null) return Optional.empty();
-        return Optional.of((Integer[]) Arrays.stream(val).boxed().toArray());
+        return Optional.of(Arrays.stream(val).boxed().toArray(Integer[]::new));
     }
 
     /**

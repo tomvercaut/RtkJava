@@ -30,7 +30,7 @@ public class Patient {
                 image.getStudyInstanceUID().isEmpty() ||
                 image.getSeriesInstanceUID().isEmpty())
             return;
-        String uid = image.getStudyInstanceUID();
+        String uid = image.getStudyInstanceUID().get();
         for (Study study : studies) {
             if (uid.equals(study.getStudyInstanceUID())) {
                 study.add(image);

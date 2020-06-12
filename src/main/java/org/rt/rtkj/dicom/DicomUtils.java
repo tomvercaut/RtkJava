@@ -53,7 +53,7 @@ public class DicomUtils {
         int day = 0;
         if (n >= 4) year = Integer.parseInt(s.substring(0, 4));
         if (n >= 6) month = Integer.parseInt(s.substring(4, 6));
-        if (n >= 8) month = Integer.parseInt(s.substring(6, 8));
+        if (n >= 8) day = Integer.parseInt(s.substring(6, 8));
         return LocalDate.of(year, month, day);
     }
 
@@ -66,8 +66,7 @@ public class DicomUtils {
         if (date == null) return null;
         var instant = date.toInstant();
         var zoneDt = instant.atZone(ZoneId.systemDefault());
-        var ld = zoneDt.toLocalDate();
-        return ld;
+        return zoneDt.toLocalDate();
     }
 
     public static Optional<LocalDateTime> getLocalDateTime(Optional<String> s) {

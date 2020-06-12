@@ -55,27 +55,30 @@ public class CT3d implements DicomImage3D {
         if (!ref.getDeidentificationMethod().equals(slice.getDeidentificationMethod())) return false;
         if (!ref.getBodyPartExamined().equals(slice.getBodyPartExamined())) return false;
         if (!ref.getScanOptions().equals(slice.getScanOptions())) return false;
-        if (!Precision.equals(ref.getSliceThickness(), slice.getSliceThickness(), Precision.EPSILON)) return false;
-        if (!Precision.equals(ref.getKVP(), slice.getKVP(), Precision.EPSILON)) return false;
-        if (!Precision.equals(ref.getDataCollectionDiameter(), slice.getDataCollectionDiameter(), Precision.EPSILON))
+        if (!Precision.equals(ref.getSliceThickness().get(), slice.getSliceThickness().get(), Precision.EPSILON))
+            return false;
+        if (!Precision.equals(ref.getKVP().get(), slice.getKVP().get(), Precision.EPSILON)) return false;
+        if (!Precision.equals(ref.getDataCollectionDiameter().get(), slice.getDataCollectionDiameter().get(), Precision.EPSILON))
             return false;
         if (!ref.getDeviceSerialNumber().equals(slice.getDeviceSerialNumber())) return false;
         if (!ref.getSoftwareVersions().equals(slice.getSoftwareVersions())) return false;
         if (!ref.getProtocolName().equals(slice.getProtocolName())) return false;
-        if (!Precision.equals(ref.getReconstructionDiameter(), slice.getReconstructionDiameter(), Precision.EPSILON))
+        if (!Precision.equals(ref.getReconstructionDiameter().get(), slice.getReconstructionDiameter().get(), Precision.EPSILON))
             return false;
-        if (!Precision.equals(ref.getGantryDetectorTilt(), slice.getGantryDetectorTilt(), Precision.EPSILON))
+        if (!Precision.equals(ref.getGantryDetectorTilt().get(), slice.getGantryDetectorTilt().get(), Precision.EPSILON))
             return false;
-        if (!Precision.equals(ref.getTableHeight(), slice.getTableHeight(), Precision.EPSILON)) return false;
+        if (!Precision.equals(ref.getTableHeight().get(), slice.getTableHeight().get(), Precision.EPSILON))
+            return false;
         if (!ref.getRotationDirection().equals(slice.getRotationDirection())) return false;
 //        if (ref.getExposureTime() != slice.getExposureTime()) return false;
 //        if (ref.getXRayTubeCurrent() != slice.getXRayTubeCurrent()) return false;
 //        if (ref.getExposure() != slice.getExposure()) return false;
 //        if (ref.getGeneratorPower() != slice.getGeneratorPower()) return false;
-        if (ref.getFocalSpots().length != 2) return false;
-        if (slice.getFocalSpots().length != 2) return false;
+        if (ref.getFocalSpots().get().length != 2) return false;
+        if (slice.getFocalSpots().get().length != 2) return false;
         for (int i = 0; i < 2; i++)
-            if (!Precision.equals(ref.getFocalSpots()[i], slice.getFocalSpots()[i], Precision.EPSILON)) return false;
+            if (!Precision.equals(ref.getFocalSpots().get()[i], slice.getFocalSpots().get()[i], Precision.EPSILON))
+                return false;
         if (!ref.getConvolutionKernel().equals(slice.getConvolutionKernel())) return false;
         if (!ref.getPatientPosition().equals(slice.getPatientPosition())) return false;
         if (!ref.getExposureModulationType().equals(slice.getExposureModulationType())) return false;
@@ -87,14 +90,14 @@ public class CT3d implements DicomImage3D {
 //        if (ref.getInstanceNumber() != slice.getInstanceNumber()) return false; // Called Image Number in the previous version of the standard
 //        if (!CollectionPrecision.equalsDoubles(ref.getImagePositionPatient(), slice.getImagePositionPatient(), Precision.EPSILON))
 //            return false;
-        if (!CollectionPrecision.equalsDoubles(ref.getImageOrientationPatient(), slice.getImageOrientationPatient(), Precision.EPSILON))
+        if (!CollectionPrecision.equalsDoubles(ref.getImageOrientationPatient().get(), slice.getImageOrientationPatient().get(), Precision.EPSILON))
             return false;
         if (!ref.getFrameOfReferenceUID().equals(slice.getFrameOfReferenceUID())) return false;
         if (ref.getSamplesPerPixel() != slice.getSamplesPerPixel()) return false;
         if (ref.getPhotometricInterpretation() != slice.getPhotometricInterpretation()) return false;
         if (ref.getRows() != slice.getRows()) return false;
         if (ref.getColumns() != slice.getColumns()) return false;
-        if (!CollectionPrecision.equalsDoubles(ref.getPixelSpacing(), slice.getPixelSpacing(), Precision.EPSILON))
+        if (!CollectionPrecision.equalsDoubles(ref.getPixelSpacing().get(), slice.getPixelSpacing().get(), Precision.EPSILON))
             return false;
         if (ref.getBitsAllocated() != slice.getBitsAllocated()) return false;
         if (ref.getBitsStored() != slice.getBitsStored()) return false;
@@ -108,8 +111,10 @@ public class CT3d implements DicomImage3D {
             return false;
         }
         if (ref.getPixelRepresentation().get() != slice.getPixelRepresentation().get()) return false;
-        if (!Precision.equals(ref.getRescaleIntercept(), slice.getRescaleIntercept(), Precision.EPSILON)) return false;
-        if (!Precision.equals(ref.getRescaleSlope(), slice.getRescaleSlope(), Precision.EPSILON)) return false;
+        if (!Precision.equals(ref.getRescaleIntercept().get(), slice.getRescaleIntercept().get(), Precision.EPSILON))
+            return false;
+        if (!Precision.equals(ref.getRescaleSlope().get(), slice.getRescaleSlope().get(), Precision.EPSILON))
+            return false;
         images.add(slice);
         return true;
     }
@@ -148,22 +153,26 @@ public class CT3d implements DicomImage3D {
      *
      * @return Image orientation patient if all are equal, Optional.empty is returned otherwise.
      */
-    public Optional<double[]> getImageOrientation() {
+    public Optional<Double[]> getImageOrientation() {
         int n = size();
-        Optional<double[]> opt_io = Optional.empty();
+        Optional<Double[]> opt_io = Optional.empty();
         for (int i = 0; i < n; i++) {
             var io = images.get(i).getImageOrientationPatient();
+            if (io.isEmpty()) {
+                log.error("Every image slice requires an image orientation patient array.");
+                return Optional.empty();
+            }
             if (opt_io.isEmpty()) {
-                opt_io = Optional.of(io);
+                opt_io = io;
             } else {
                 var ref_io = opt_io.get();
-                if (ref_io.length != io.length) {
+                if (ref_io.length != io.get().length) {
                     log.error("Image orientation patient array is not equal between slices.");
                     return Optional.empty();
                 }
                 for (int j = 0; j < ref_io.length; j++) {
-                    if (!Precision.equals(ref_io[j], io[j])) {
-                        log.error(String.format("Image orientation is not equal across all slices. [%.10f <-> %.10f]", ref_io[j], io[j]));
+                    if (!Precision.equals(ref_io[j], io.get()[j])) {
+                        log.error(String.format("Image orientation is not equal across all slices. [%.10f <-> %.10f]", ref_io[j], io.get()[j]));
                         return Optional.empty();
                     }
                 }
@@ -185,9 +194,17 @@ public class CT3d implements DicomImage3D {
             log.error(errMsg);
             return Optional.empty();
         }
-        first = images.get(0).getSliceThickness();
+        if (images.get(0).getSliceThickness().isEmpty()) {
+            log.error("First 2D slice of the 3D scan doesn't have a slice thickness defined");
+            return Optional.empty();
+        }
+        first = images.get(0).getSliceThickness().get();
         for (int i = 1; i < n; i++) {
-            if (!Precision.equals(first, images.get(i).getSliceThickness())) {
+            if (images.get(i).getSliceThickness().isEmpty()) {
+                log.error(String.format("2D slice [index=%d] of the 3D scan doesn't have a slice thickness defined", i));
+                return Optional.empty();
+            }
+            if (!Precision.equals(first, images.get(i).getSliceThickness().get())) {
                 log.warn("Not all slices have the same slice thickness.");
                 log.error(errMsg);
                 return Optional.empty();
@@ -198,62 +215,62 @@ public class CT3d implements DicomImage3D {
 
     @Override
     public Optional<String> getFrameOfReferenceUID() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getFrameOfReferenceUID());
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getFrameOfReferenceUID();
     }
 
     @Override
     public Optional<Modality> getModality() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getModality());
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getModality();
     }
 
     @Override
     public Optional<PatientPosition> getPatientPosition() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getPatientPosition());
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getPatientPosition();
     }
 
     @Override
-    public Optional<double[]> getImagePositionPatient() {
+    public Optional<Double[]> getImagePositionPatient() {
         return Optional.empty();
     }
 
     @Override
-    public Optional<double[]> getImageOrientationPatient() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getImageOrientationPatient());
+    public Optional<Double[]> getImageOrientationPatient() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getImageOrientationPatient();
     }
 
     @Override
     public Optional<Integer> getRows() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getRows());
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getRows();
     }
 
     @Override
     public Optional<Integer> getColumns() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getColumns());
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getColumns();
     }
 
     @Override
-    public Optional<double[]> getPixelSpacing() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getPixelSpacing());
+    public Optional<Double[]> getPixelSpacing() {
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getPixelSpacing();
     }
 
     @Override
     public Optional<Integer> getBitsAllocated() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getBitsAllocated());
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getBitsAllocated();
     }
 
     @Override
     public Optional<Integer> getBitsStored() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getBitsStored());
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getBitsStored();
     }
 
     @Override
     public Optional<Integer> getHighBit() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getHighBit());
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getHighBit();
     }
 
     @Override
     public Optional<String> getStudyInstanceUID() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getStudyInstanceUID());
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getStudyInstanceUID();
     }
 
     @Override
@@ -263,6 +280,6 @@ public class CT3d implements DicomImage3D {
 
     @Override
     public Optional<String> getSeriesInstanceUID() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : Optional.of(images.get(0).getSeriesInstanceUID());
+        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getSeriesInstanceUID();
     }
 }
