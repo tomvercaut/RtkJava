@@ -12,12 +12,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.rt.rtkj.utils.OptUtils.equalsIfPresent;
+import static org.rt.rtkj.utils.OptUtils.equalsNotEmpty;
+
 @Data
 @Log4j2
 public class CT3d implements DicomImage3D {
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private List<CT> images = new ArrayList<>();
+
+    private static void logDiffError(String msg) {
+        log.error(msg + " differs between slices");
+    }
 
     public boolean add(CT slice) {
         if (slice == null) return false;
@@ -27,81 +34,249 @@ public class CT3d implements DicomImage3D {
         }
 
         CT ref = images.get(0);
-        if (!ref.getSpecificCharacterSet().equals(slice.getSpecificCharacterSet())) return false;
-        if (!ref.getImageType().equals(slice.getImageType())) return false;
-        if (!ref.getSOPClassUID().equals(slice.getSOPClassUID())) return false;
-        if (ref.getSOPInstanceUID().equals(slice.getSOPInstanceUID())) {
+        if (!equalsIfPresent(ref.getSpecificCharacterSet(), slice.getSpecificCharacterSet())) {
+            logDiffError("SpecificCharacterSet");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getImageType(), slice.getImageType())) {
+            logDiffError("ImageType");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getSOPClassUID(), slice.getSOPClassUID())) {
+            logDiffError("SOPClassUID");
+            return false;
+        }
+        if (equalsNotEmpty(ref.getSOPInstanceUID(), slice.getSOPInstanceUID())) {
             log.error("No two DICOM files should have an identical SOPInstanceUID");
             return false;
         }
-        if (!ref.getAccessionNumber().equals(slice.getAccessionNumber())) return false;
-        if (!ref.getModality().equals(slice.getModality())) return false;
-        if (!ref.getModality().equals(Modality.CT)) return false;
-        if (!ref.getManufacturer().equals(slice.getManufacturer())) return false;
-        if (!ref.getInstitutionName().equals(slice.getInstitutionName())) return false;
-        if (!ref.getReferringPhysicianName().equals(slice.getReferringPhysicianName())) return false;
-        if (!ref.getStationName().equals(slice.getStationName())) return false;
-        if (!ref.getProcedureCodeSequence().equals(slice.getProcedureCodeSequence())) return false;
-        if (!ref.getSeriesDescription().equals(slice.getSeriesDescription())) return false;
-        if (!ref.getInstitutionalDepartmentName().equals(slice.getInstitutionalDepartmentName())) return false;
-        if (!ref.getManufacturerModelName().equals(slice.getManufacturerModelName())) return false;
-        if (!ref.getReferencedStudySequence().equals(slice.getReferencedStudySequence())) return false;
-        if (!ref.getPatientName().equals(slice.getPatientName())) return false;
-        if (!ref.getPatientID().equals(slice.getPatientID())) return false;
-        if (!ref.getPatientBirthDate().equals(slice.getPatientBirthDate())) return false;
-        if (!ref.getPatientSex().equals(slice.getPatientSex())) return false;
-        if (!ref.getPatientAge().equals(slice.getPatientAge())) return false;
-        if (!ref.getPatientIdentityRemoved().equals(slice.getPatientIdentityRemoved())) return false;
-        if (!ref.getDeidentificationMethod().equals(slice.getDeidentificationMethod())) return false;
-        if (!ref.getBodyPartExamined().equals(slice.getBodyPartExamined())) return false;
-        if (!ref.getScanOptions().equals(slice.getScanOptions())) return false;
-        if (!Precision.equals(ref.getSliceThickness().get(), slice.getSliceThickness().get(), Precision.EPSILON))
+        if (!equalsIfPresent(ref.getAccessionNumber(), slice.getAccessionNumber())) {
+            logDiffError("AccessionNumber");
             return false;
-        if (!Precision.equals(ref.getKVP().get(), slice.getKVP().get(), Precision.EPSILON)) return false;
-        if (!Precision.equals(ref.getDataCollectionDiameter().get(), slice.getDataCollectionDiameter().get(), Precision.EPSILON))
+        }
+        if (!equalsNotEmpty(ref.getModality(), slice.getModality())) {
+            logDiffError("Modality");
             return false;
-        if (!ref.getDeviceSerialNumber().equals(slice.getDeviceSerialNumber())) return false;
-        if (!ref.getSoftwareVersions().equals(slice.getSoftwareVersions())) return false;
-        if (!ref.getProtocolName().equals(slice.getProtocolName())) return false;
-        if (!Precision.equals(ref.getReconstructionDiameter().get(), slice.getReconstructionDiameter().get(), Precision.EPSILON))
+        }
+        if (!equalsNotEmpty(ref.getModality(), Optional.of(Modality.CT))) {
+            logDiffError("Modality");
             return false;
-        if (!Precision.equals(ref.getGantryDetectorTilt().get(), slice.getGantryDetectorTilt().get(), Precision.EPSILON))
+        }
+        if (!equalsIfPresent(ref.getManufacturer(), slice.getManufacturer())) {
+            logDiffError("Manufacturer");
             return false;
-        if (!Precision.equals(ref.getTableHeight().get(), slice.getTableHeight().get(), Precision.EPSILON))
+        }
+        if (!equalsIfPresent(ref.getInstitutionName(), slice.getInstitutionName())) {
+            logDiffError("InstitutionName");
             return false;
-        if (!ref.getRotationDirection().equals(slice.getRotationDirection())) return false;
+        }
+        if (!equalsIfPresent(ref.getReferringPhysicianName(), slice.getReferringPhysicianName())) {
+            logDiffError("ReferringPhysicianName");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getStationName(), slice.getStationName())) {
+            logDiffError("StationName");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getProcedureCodeSequence(), slice.getProcedureCodeSequence())) {
+            logDiffError("ProcedureCodeSequence");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getSeriesDescription(), slice.getSeriesDescription())) {
+            logDiffError("SeriesDescription");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getInstitutionalDepartmentName(), slice.getInstitutionalDepartmentName())) {
+            logDiffError("InstitutionalDepartmentName");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getManufacturerModelName(), slice.getManufacturerModelName())) {
+            logDiffError("ManufacturerModelName");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getReferencedStudySequence(), slice.getReferencedStudySequence())) {
+            logDiffError("ReferencedStudySequence");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getPatientName(), slice.getPatientName())) {
+            logDiffError("PatientName");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getPatientID(), slice.getPatientID())) {
+            logDiffError("PatientID");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getPatientBirthDate(), slice.getPatientBirthDate())) {
+            logDiffError("PatientBirthDate");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getPatientSex(), slice.getPatientSex())) {
+            logDiffError("PatientSex");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getPatientAge(), slice.getPatientAge())) {
+            logDiffError("PatientAge");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getPatientIdentityRemoved(), slice.getPatientIdentityRemoved())) {
+            logDiffError("PatientIdentityRemoved");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getDeidentificationMethod(), slice.getDeidentificationMethod())) {
+            logDiffError("DeidentificationMethod");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getBodyPartExamined(), slice.getBodyPartExamined())) {
+            logDiffError("BodyPartExamined");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getScanOptions(), slice.getScanOptions())) {
+            logDiffError("ScanOptions");
+            {
+                logDiffError("ScanOptions");
+                return false;
+            }
+        }
+        if (ref.getSliceThickness().isEmpty() || slice.getSliceThickness().isEmpty() ||
+                !Precision.equals(ref.getSliceThickness().get(), slice.getSliceThickness().get(), Precision.EPSILON)) {
+            logDiffError("SliceThickness");
+            return false;
+        }
+        if (ref.getKVP().isEmpty() || slice.getKVP().isEmpty() ||
+                !Precision.equals(ref.getKVP().get(), slice.getKVP().get(), Precision.EPSILON)) {
+            logDiffError("KVP");
+            return false;
+        }
+        if (ref.getDataCollectionDiameter().isEmpty() || slice.getDataCollectionDiameter().isEmpty() ||
+                !Precision.equals(ref.getDataCollectionDiameter().get(), slice.getDataCollectionDiameter().get(), Precision.EPSILON)) {
+            logDiffError("DataCollectionDiameter");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getDeviceSerialNumber(), slice.getDeviceSerialNumber())) {
+            logDiffError("DeviceSerialNumber");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getSoftwareVersions(), slice.getSoftwareVersions())) {
+            logDiffError("SoftwareVersions");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getProtocolName(), slice.getProtocolName())) {
+            logDiffError("ProtocolName");
+            return false;
+        }
+        if (ref.getReconstructionDiameter().isEmpty() || slice.getReconstructionDiameter().isEmpty() ||
+                !Precision.equals(ref.getReconstructionDiameter().get(), slice.getReconstructionDiameter().get(), Precision.EPSILON)) {
+            logDiffError("ReconstructionDiameter");
+            return false;
+        }
+        if (ref.getGantryDetectorTilt().isEmpty() || slice.getGantryDetectorTilt().isEmpty() ||
+                !Precision.equals(ref.getGantryDetectorTilt().get(), slice.getGantryDetectorTilt().get(), Precision.EPSILON)) {
+            logDiffError("GantryDetectorTilt");
+            return false;
+        }
+        if (ref.getTableHeight().isEmpty() || slice.getTableHeight().isEmpty() ||
+                !Precision.equals(ref.getTableHeight().get(), slice.getTableHeight().get(), Precision.EPSILON)) {
+            logDiffError("TableHeight");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getRotationDirection(), slice.getRotationDirection())) {
+            logDiffError("RotationDirection");
+            return false;
+        }
 //        if (ref.getExposureTime() != slice.getExposureTime()) return false;
 //        if (ref.getXRayTubeCurrent() != slice.getXRayTubeCurrent()) return false;
 //        if (ref.getExposure() != slice.getExposure()) return false;
 //        if (ref.getGeneratorPower() != slice.getGeneratorPower()) return false;
-        if (ref.getFocalSpots().get().length != 2) return false;
-        if (slice.getFocalSpots().get().length != 2) return false;
+        if (ref.getFocalSpots().isEmpty() || ref.getFocalSpots().get().length != 2) {
+            log.error("CT slice is missing a FocalSpot");
+            return false;
+        }
+        if (slice.getFocalSpots().isEmpty() || slice.getFocalSpots().get().length != 2) {
+            log.error("CT slice is missing a FocalSpot");
+            return false;
+        }
         for (int i = 0; i < 2; i++)
-            if (!Precision.equals(ref.getFocalSpots().get()[i], slice.getFocalSpots().get()[i], Precision.EPSILON))
+            if (!Precision.equals(ref.getFocalSpots().get()[i], slice.getFocalSpots().get()[i], Precision.EPSILON)) {
+                logDiffError("FocalSpots");
                 return false;
-        if (!ref.getConvolutionKernel().equals(slice.getConvolutionKernel())) return false;
-        if (!ref.getPatientPosition().equals(slice.getPatientPosition())) return false;
-        if (!ref.getExposureModulationType().equals(slice.getExposureModulationType())) return false;
-        if (!ref.getStudyInstanceUID().equals(slice.getStudyInstanceUID())) return false;
-        if (!ref.getSeriesInstanceUID().equals(slice.getSeriesInstanceUID())) return false;
-        if (!ref.getStudyID().equals(slice.getStudyID())) return false;
-        if (ref.getSeriesNumber() != slice.getSeriesNumber()) return false;
-        if (ref.getAcquisitionNumber() != slice.getAcquisitionNumber()) return false;
+            }
+        if (!equalsIfPresent(ref.getConvolutionKernel(), slice.getConvolutionKernel())) {
+            logDiffError("ConvolutionKernel");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getPatientPosition(), slice.getPatientPosition())) {
+            logDiffError("PatientPosition");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getExposureModulationType(), slice.getExposureModulationType())) {
+            logDiffError("ExposureModulationType");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getStudyInstanceUID(), slice.getStudyInstanceUID())) {
+            logDiffError("StudyInstanceUID");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getSeriesInstanceUID(), slice.getSeriesInstanceUID())) {
+            logDiffError("SeriesInstanceUID");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getStudyID(), slice.getStudyID())) {
+            logDiffError("StudyID");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getSeriesNumber(), slice.getSeriesNumber())) {
+            logDiffError("SeriesNumber");
+            return false;
+        }
+        if (!equalsIfPresent(ref.getAcquisitionNumber(), slice.getAcquisitionNumber())) {
+            logDiffError("AcquisitionNumber");
+            return false;
+        }
 //        if (ref.getInstanceNumber() != slice.getInstanceNumber()) return false; // Called Image Number in the previous version of the standard
 //        if (!CollectionPrecision.equalsDoubles(ref.getImagePositionPatient(), slice.getImagePositionPatient(), Precision.EPSILON))
 //            return false;
-        if (!CollectionPrecision.equalsDoubles(ref.getImageOrientationPatient().get(), slice.getImageOrientationPatient().get(), Precision.EPSILON))
+        if (ref.getImageOrientationPatient().isEmpty() || slice.getImageOrientationPatient().isEmpty() ||
+                !CollectionPrecision.equalsDoubles(ref.getImageOrientationPatient().get(), slice.getImageOrientationPatient().get(), Precision.EPSILON)) {
+            logDiffError("ImageOrientationPatient");
             return false;
-        if (!ref.getFrameOfReferenceUID().equals(slice.getFrameOfReferenceUID())) return false;
-        if (ref.getSamplesPerPixel() != slice.getSamplesPerPixel()) return false;
-        if (ref.getPhotometricInterpretation() != slice.getPhotometricInterpretation()) return false;
-        if (ref.getRows() != slice.getRows()) return false;
-        if (ref.getColumns() != slice.getColumns()) return false;
-        if (!CollectionPrecision.equalsDoubles(ref.getPixelSpacing().get(), slice.getPixelSpacing().get(), Precision.EPSILON))
+        }
+        if (!equalsIfPresent(ref.getFrameOfReferenceUID(), slice.getFrameOfReferenceUID())) {
+            logDiffError("FrameOfReferenceUID");
             return false;
-        if (ref.getBitsAllocated() != slice.getBitsAllocated()) return false;
-        if (ref.getBitsStored() != slice.getBitsStored()) return false;
-        if (ref.getHighBit() != slice.getHighBit()) return false;
+        }
+        if (!equalsNotEmpty(ref.getSamplesPerPixel(), slice.getSamplesPerPixel())) {
+            logDiffError("SamplesPerPixel");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getPhotometricInterpretation(), slice.getPhotometricInterpretation())) {
+            logDiffError("PhotometricInterpretation");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getRows(), slice.getRows())) {
+            logDiffError("Rows");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getColumns(), slice.getColumns())) {
+            logDiffError("Columns");
+            return false;
+        }
+        if (ref.getPixelSpacing().isEmpty() || slice.getPixelSpacing().isEmpty() ||
+                !CollectionPrecision.equalsDoubles(ref.getPixelSpacing().get(), slice.getPixelSpacing().get(), Precision.EPSILON)) {
+            logDiffError("PixelSpacing");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getBitsAllocated(), slice.getBitsAllocated())) {
+            logDiffError("BitsAllocated");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getBitsStored(), slice.getBitsStored())) {
+            logDiffError("BitsStored");
+            return false;
+        }
+        if (!equalsNotEmpty(ref.getHighBit(), slice.getHighBit())) {
+            logDiffError("HighBit");
+            return false;
+        }
         if (ref.getPixelRepresentation().isEmpty()) {
             log.error("Existing CT slice is expected to have a pixel representation.");
             return false;
@@ -110,11 +285,15 @@ public class CT3d implements DicomImage3D {
             log.error("Trying to add a CT slice without a pixel representation.");
             return false;
         }
-        if (ref.getPixelRepresentation().get() != slice.getPixelRepresentation().get()) return false;
-        if (!Precision.equals(ref.getRescaleIntercept().get(), slice.getRescaleIntercept().get(), Precision.EPSILON))
+        if (!equalsNotEmpty(ref.getPixelRepresentation(), slice.getPixelRepresentation())) return false;
+        if (ref.getRescaleIntercept().isEmpty() || slice.getRescaleIntercept().isEmpty() || !Precision.equals(ref.getRescaleIntercept().get(), slice.getRescaleIntercept().get(), Precision.EPSILON)) {
+            logDiffError("RescaleIntercept");
             return false;
-        if (!Precision.equals(ref.getRescaleSlope().get(), slice.getRescaleSlope().get(), Precision.EPSILON))
+        }
+        if (ref.getRescaleSlope().isEmpty() || slice.getRescaleSlope().isEmpty() || !Precision.equals(ref.getRescaleSlope().get(), slice.getRescaleSlope().get(), Precision.EPSILON)) {
+            logDiffError("RescaleSlope");
             return false;
+        }
         images.add(slice);
         return true;
     }

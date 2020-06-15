@@ -45,11 +45,11 @@ class ImageFactoryTest {
         var optImage = ImageFactory.build(ct);
         assertTrue(optImage.isPresent());
         var image = optImage.get();
-        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891557.581701", image.getSOPInstanceUID());
-        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891246.945610", image.getFrameOfReferenceUID());
-        assertEquals(Modality.CT, image.getModality());
-        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891206.523047", image.getStudyInstanceUID());
-        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891527.871910", image.getSeriesInstanceUID());
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891557.581701", image.getSOPInstanceUID().get());
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891246.945610", image.getFrameOfReferenceUID().get());
+        assertEquals(Modality.CT, image.getModality().get());
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891206.523047", image.getStudyInstanceUID().get());
+        assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1540891527.871910", image.getSeriesInstanceUID().get());
         assertEquals(6, image.getImageOrientationPatient().get().length);
         assertTrue(Precision.equals(1.00000, image.getImageOrientationPatient().get()[0], Precision.EPSILON));
         assertTrue(Precision.equals(0.00000, image.getImageOrientationPatient().get()[1], Precision.EPSILON));

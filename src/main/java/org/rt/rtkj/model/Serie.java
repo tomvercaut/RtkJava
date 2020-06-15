@@ -55,8 +55,8 @@ public class Serie {
                     Precision.equals(image3D.getImageOrientationPatient().get()[3], slice.getImageOrientationPatient().get()[3], Precision.EPSILON) &&
                     Precision.equals(image3D.getImageOrientationPatient().get()[4], slice.getImageOrientationPatient().get()[4], Precision.EPSILON) &&
                     Precision.equals(image3D.getImageOrientationPatient().get()[5], slice.getImageOrientationPatient().get()[5], Precision.EPSILON) &&
-                    image3D.getPixelRepresentation() == slice.getPixelRepresentation() &&
-                    image3D.getBitsAllocated() == slice.getBitsAllocated() &&
+                    image3D.getPixelRepresentation().get() == slice.getPixelRepresentation().get() &&
+                    image3D.getBitsAllocated().get() == slice.getBitsAllocated().get() &&
                     (image3D.getModality().get() == Modality.CT || image3D.getModality().get() == Modality.PT || image3D.getModality().get() == Modality.MR)
             ) {
                 image3D.add(slice);
