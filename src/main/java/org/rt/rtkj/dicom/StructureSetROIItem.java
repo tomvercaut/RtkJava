@@ -1,13 +1,12 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
-
-import java.util.Optional;
+import org.rt.rtkj.Option;
 
 @Data
 public class StructureSetROIItem {
-    private Optional<Integer> rOINumber = Optional.empty();
-    private Optional<String> referencedFrameOfReferenceUID = Optional.empty();
-    private Optional<String> rOIName = Optional.empty();
-    private Optional<String> rOIGenerationAlgorithm = Optional.empty();
+    private Option<Integer> rOINumber = Option.empty();
+    private Option<String> referencedFrameOfReferenceUID = Option.empty();
+    private Option<String> rOIName = Option.empty();
+    private Option<String> rOIGenerationAlgorithm = Option.empty();
 }

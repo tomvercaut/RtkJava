@@ -2,10 +2,10 @@ package org.rt.rtkj.dicom;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.rt.rtkj.Option;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class DicomObject {
     @Getter
@@ -14,53 +14,53 @@ public class DicomObject {
     @Getter
     private List<String> errors;
     @Getter
-    private Optional<CT> ct;
+    private Option<CT> ct;
     @Getter
-    private Optional<PT> pt;
+    private Option<PT> pt;
     @Getter
-    private Optional<RTStructureSet> rtstruct;
+    private Option<RTStructureSet> rtstruct;
     @Getter
-    private Optional<RTDose> rtdose;
+    private Option<RTDose> rtdose;
     @Getter
-    private Optional<SpatialRegistration> spatialRegistration;
+    private Option<SpatialRegistration> spatialRegistration;
 
     public DicomObject() {
         clear();
     }
 
     public void clear() {
-        ct = Optional.empty();
-        pt = Optional.empty();
-        rtstruct = Optional.empty();
-        rtdose = Optional.empty();
-        spatialRegistration = Optional.empty();
+        ct = Option.empty();
+        pt = Option.empty();
+        rtstruct = Option.empty();
+        rtdose = Option.empty();
+        spatialRegistration = Option.empty();
         if (errors == null) errors = new ArrayList<>();
         errors.clear();
     }
 
     public void set(CT ct) {
         clear();
-        if (ct != null) this.ct = Optional.of(ct);
+        if (ct != null) this.ct = Option.of(ct);
     }
 
     public void set(PT pt) {
         clear();
-        if (pt != null) this.pt = Optional.of(pt);
+        if (pt != null) this.pt = Option.of(pt);
     }
 
     public void set(RTStructureSet ss) {
         clear();
-        if (ss != null) this.rtstruct = Optional.of(ss);
+        if (ss != null) this.rtstruct = Option.of(ss);
     }
 
     public void set(RTDose rtdose) {
         clear();
-        if (rtdose != null) this.rtdose = Optional.of(rtdose);
+        if (rtdose != null) this.rtdose = Option.of(rtdose);
     }
 
     public void set(SpatialRegistration sr) {
         clear();
-        if (sr != null) this.spatialRegistration = Optional.of(sr);
+        if (sr != null) this.spatialRegistration = Option.of(sr);
     }
 
     public boolean hasCT() {

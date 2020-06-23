@@ -1,11 +1,10 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
-
-import java.util.Optional;
+import org.rt.rtkj.Option;
 
 @Data
 public class ROIElementalCompositionItem {
-    private Optional<Integer> roiElementalCompositionAtomicNumber = Optional.empty();
-    private Optional<Double> roiElementalCompositionAtomicMassFraction = Optional.empty();
+    private Option<Integer> roiElementalCompositionAtomicNumber = Option.empty();
+    private Option<Double> roiElementalCompositionAtomicMassFraction = Option.empty();
 }

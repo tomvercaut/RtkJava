@@ -1,13 +1,12 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
+import org.rt.rtkj.Option;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 public class RTReferencedSeriesItem {
-    private Optional<String> seriesInstanceUID = Optional.empty();
-    private Optional<List<ReferencedSOPClassInstanceItem>> contourImageSequence = Optional.empty();
+    private Option<String> seriesInstanceUID = Option.empty();
+    private Option<List<ReferencedSOPClassInstanceItem>> contourImageSequence = Option.empty();
 }

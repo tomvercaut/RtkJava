@@ -1,14 +1,13 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
+import org.rt.rtkj.Option;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 public class ROIPhysicalPropertiesItem {
-    private Optional<String> rOIPhysicalProperty = Optional.empty();
-    private Optional<Double> rOIPhysicalPropertyValue = Optional.empty();
-    private Optional<List<ROIElementalCompositionItem>> rOIElementalCompositionSequence = Optional.empty();
+    private Option<String> rOIPhysicalProperty = Option.empty();
+    private Option<Double> rOIPhysicalPropertyValue = Option.empty();
+    private Option<List<ROIElementalCompositionItem>> rOIElementalCompositionSequence = Option.empty();
 }

@@ -3,80 +3,79 @@ package org.rt.rtkj.dicom;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.rt.rtkj.Option;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class RTDose extends MetaHeader //implements DicomImage<Long>
 {
-    private Optional<String> specificCharacterSet = Optional.empty();
-    private Optional<LocalDate> instanceCreationDate = Optional.empty();
-    private Optional<LocalTime> instanceCreationTime = Optional.empty();
-    private Optional<String> sopClassUID = Optional.empty();
-    private Optional<String> sopInstanceUID = Optional.empty();
-    private Optional<LocalDate> studyDate = Optional.empty();
-    private Optional<LocalTime> studyTime = Optional.empty();
-    private Optional<String> accessionNumber = Optional.empty();
-    private Optional<Modality> modality = Optional.empty();
-    private Optional<String> manufacturer = Optional.empty();
-    private Optional<String> referringPhysicianName = Optional.empty();
-    private Optional<String> stationName = Optional.empty();
-    private Optional<String> seriesDescription = Optional.empty();
-    private Optional<String> manufacturerModelName = Optional.empty();
-    private Optional<String> patientName = Optional.empty();
-    private Optional<String> patientID = Optional.empty();
-    private Optional<LocalDate> patientBirthDate = Optional.empty();
-    private Optional<String> patientSex = Optional.empty();
-    private Optional<Double> sliceThicknes = Optional.empty();
-    private Optional<String> deviceSerialNumber = Optional.empty();
-    private Optional<String> softwareVersions = Optional.empty();
-    private Optional<String> studyInstanceUID = Optional.empty();
-    private Optional<String> seriesInstanceUID = Optional.empty();
-    private Optional<String> studyID = Optional.empty();
-    private Optional<Integer> seriesNumber = Optional.empty();
-    private Optional<Integer> instanceNumber = Optional.empty();
-    private Optional<Double[]> imagePositionPatient = Optional.empty();
-    private Optional<Double[]> imageOrientationPatient = Optional.empty();
-    private Optional<String> frameOfReferenceUID = Optional.empty();
-    private Optional<String> positionReferenceIndicator = Optional.empty();
-    private Optional<Integer> samplesPerPixel = Optional.empty();
-    private Optional<PhotometricInterpretation> photometricInterpretation = Optional.empty();
-    private Optional<Integer> numberOfFrames = Optional.empty();
-    private Optional<Integer> frameIncrementPointer = Optional.empty();
-    private Optional<Integer> rows = Optional.empty();
-    private Optional<Integer> columns = Optional.empty();
-    private Optional<Double[]> pixelSpacing = Optional.empty();
-    private Optional<Integer> bitsAllocated = Optional.empty();
-    private Optional<Integer> bitsStored = Optional.empty();
-    private Optional<Integer> highBit = Optional.empty();
-    private Optional<PixelRepresentation> pixelRepresentation = Optional.empty();
-    private Optional<String> doseUnits = Optional.empty();
-    private Optional<String> doseType = Optional.empty();
-    private Optional<String> doseSummationType = Optional.empty();
-    private Optional<Double[]> gridFrameOffsetVector = Optional.empty();
-    private Optional<Double> doseGridScaling = Optional.empty();
-    private Optional<String> tissueHeterogeneityCorrection = Optional.empty();
-    private Optional<List<DvhItem>> dvhSequence = Optional.empty();
-    private Optional<List<ReferencedSOPClassInstanceItem>> referencedRTPlanSequence = Optional.empty();
-    private Optional<List<ReferencedSOPClassInstanceItem>> referencedStructureSetSequence = Optional.empty();
-    private Optional<List<Long>> pixelData = Optional.empty();
+    private Option<String> specificCharacterSet = Option.empty();
+    private Option<LocalDate> instanceCreationDate = Option.empty();
+    private Option<LocalTime> instanceCreationTime = Option.empty();
+    private Option<String> sopClassUID = Option.empty();
+    private Option<String> sopInstanceUID = Option.empty();
+    private Option<LocalDate> studyDate = Option.empty();
+    private Option<LocalTime> studyTime = Option.empty();
+    private Option<String> accessionNumber = Option.empty();
+    private Option<Modality> modality = Option.empty();
+    private Option<String> manufacturer = Option.empty();
+    private Option<String> referringPhysicianName = Option.empty();
+    private Option<String> stationName = Option.empty();
+    private Option<String> seriesDescription = Option.empty();
+    private Option<String> manufacturerModelName = Option.empty();
+    private Option<String> patientName = Option.empty();
+    private Option<String> patientID = Option.empty();
+    private Option<LocalDate> patientBirthDate = Option.empty();
+    private Option<String> patientSex = Option.empty();
+    private Option<Double> sliceThicknes = Option.empty();
+    private Option<String> deviceSerialNumber = Option.empty();
+    private Option<String> softwareVersions = Option.empty();
+    private Option<String> studyInstanceUID = Option.empty();
+    private Option<String> seriesInstanceUID = Option.empty();
+    private Option<String> studyID = Option.empty();
+    private Option<Integer> seriesNumber = Option.empty();
+    private Option<Integer> instanceNumber = Option.empty();
+    private Option<Double[]> imagePositionPatient = Option.empty();
+    private Option<Double[]> imageOrientationPatient = Option.empty();
+    private Option<String> frameOfReferenceUID = Option.empty();
+    private Option<String> positionReferenceIndicator = Option.empty();
+    private Option<Integer> samplesPerPixel = Option.empty();
+    private Option<PhotometricInterpretation> photometricInterpretation = Option.empty();
+    private Option<Integer> numberOfFrames = Option.empty();
+    private Option<Integer> frameIncrementPointer = Option.empty();
+    private Option<Integer> rows = Option.empty();
+    private Option<Integer> columns = Option.empty();
+    private Option<Double[]> pixelSpacing = Option.empty();
+    private Option<Integer> bitsAllocated = Option.empty();
+    private Option<Integer> bitsStored = Option.empty();
+    private Option<Integer> highBit = Option.empty();
+    private Option<PixelRepresentation> pixelRepresentation = Option.empty();
+    private Option<String> doseUnits = Option.empty();
+    private Option<String> doseType = Option.empty();
+    private Option<String> doseSummationType = Option.empty();
+    private Option<Double[]> gridFrameOffsetVector = Option.empty();
+    private Option<Double> doseGridScaling = Option.empty();
+    private Option<String> tissueHeterogeneityCorrection = Option.empty();
+    private Option<List<DvhItem>> dvhSequence = Option.empty();
+    private Option<List<ReferencedSOPClassInstanceItem>> referencedRTPlanSequence = Option.empty();
+    private Option<List<ReferencedSOPClassInstanceItem>> referencedStructureSetSequence = Option.empty();
+    private Option<List<Long>> pixelData = Option.empty();
 
     public RTDose(MetaHeader meta) {
         super(meta);
     }
 
-    public Optional<Double> getDose(int index) throws NullPointerException, IndexOutOfBoundsException {
+    public Option<Double> getDose(int index) throws NullPointerException, IndexOutOfBoundsException {
         if (pixelData == null || pixelData.isEmpty()) throw new NullPointerException("PixelData was not initialised.");
         int n = pixelData.get().size();
         if (index >= n)
             throw new IndexOutOfBoundsException("Index [" + index + "] exceeds the pixeldata boundary [" + n + "]");
-        return Optional.of(doseGridScaling.get() * (double) pixelData.get().get(index));
+        return Option.of(doseGridScaling.get() * (double) pixelData.get().get(index));
     }
 
 }

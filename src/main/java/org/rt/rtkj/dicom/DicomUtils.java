@@ -1,12 +1,18 @@
 package org.rt.rtkj.dicom;
 
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.json.JSONWriter;
+import org.rt.rtkj.Option;
+
+import javax.json.Json;
+import javax.json.stream.JsonGenerator;
+import java.io.StringWriter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import java.util.Optional;
 
 public class DicomUtils {
 
@@ -15,9 +21,9 @@ public class DicomUtils {
     public static final double UNDEFINED_DOUBLE = Double.MAX_VALUE;
     public static final float UNDEFINED_FLOAT = Float.MAX_VALUE;
 
-    public static Optional<LocalTime> tmToLocalTime(Optional<String> s) {
-        if (s.isEmpty() || s.get().isBlank()) return Optional.empty();
-        return Optional.ofNullable(tmToLocalTime(s.get()));
+    public static Option<LocalTime> tmToLocalTime(Option<String> s) {
+        if (s.isEmpty() || s.get().isBlank()) return Option.empty();
+        return Option.ofNullable(tmToLocalTime(s.get()));
     }
 
     public static LocalTime tmToLocalTime(String s) {
@@ -40,9 +46,9 @@ public class DicomUtils {
         return LocalTime.of(hour, minute, second, milli * 1000);
     }
 
-    public static Optional<LocalDate> getLocalDateFromString(Optional<String> s) {
-        if (s.isEmpty() || s.get().isBlank()) return Optional.empty();
-        return Optional.ofNullable(getLocalDate(s.get()));
+    public static Option<LocalDate> getLocalDateFromString(Option<String> s) {
+        if (s.isEmpty() || s.get().isBlank()) return Option.empty();
+        return Option.ofNullable(getLocalDate(s.get()));
     }
 
     public static LocalDate getLocalDate(String s) {
@@ -57,9 +63,9 @@ public class DicomUtils {
         return LocalDate.of(year, month, day);
     }
 
-    public static Optional<LocalDate> dateToLocalDate(Optional<Date> s) {
-        if (s.isEmpty()) return Optional.empty();
-        return Optional.ofNullable(dateToLocalDate(s.get()));
+    public static Option<LocalDate> dateToLocalDate(Option<Date> s) {
+        if (s.isEmpty()) return Option.empty();
+        return Option.ofNullable(dateToLocalDate(s.get()));
     }
 
     public static LocalDate dateToLocalDate(Date date) {
@@ -69,9 +75,9 @@ public class DicomUtils {
         return zoneDt.toLocalDate();
     }
 
-    public static Optional<LocalDateTime> getLocalDateTime(Optional<String> s) {
-        if (s.isEmpty() || s.get().isBlank()) return Optional.empty();
-        return Optional.ofNullable(getLocalDateTime(s.get()));
+    public static Option<LocalDateTime> getLocalDateTime(Option<String> s) {
+        if (s.isEmpty() || s.get().isBlank()) return Option.empty();
+        return Option.ofNullable(getLocalDateTime(s.get()));
     }
 
     public static LocalDateTime getLocalDateTime(String s) {
@@ -114,5 +120,15 @@ public class DicomUtils {
 
     public static String getLocalDateTimeNow() {
         return getLocalDateNow() + getLocalTimeNow();
+    }
+
+    public static String toJson(Attributes dataset) {
+        if (dataset == null) return "";
+        StringWriter writer = new StringWriter();
+        JsonGenerator gen = Json.createGenerator(writer);
+        JSONWriter jsonWriter = new JSONWriter(gen);
+        jsonWriter.write(dataset);
+        gen.flush();
+        return writer.toString();
     }
 }

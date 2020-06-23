@@ -2,19 +2,18 @@ package org.rt.rtkj.dicom;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Optional;
+import org.rt.rtkj.Option;
 
 @Data
 @NoArgsConstructor
 public class MetaHeader {
-    private Optional<Integer> fileMetaInformationGroupLength;
-    private Optional<Byte[]> fileMetaInformationVersion;
-    private Optional<String> mediaStorageSOPClassUID;
-    private Optional<String> mediaStorageSOPInstanceUID;
-    private Optional<String> transferSyntaxUID;
-    private Optional<String> implementationClassUID;
-    private Optional<String> implementationVersionName;
+    private Option<Integer> fileMetaInformationGroupLength;
+    private Option<Byte[]> fileMetaInformationVersion;
+    private Option<String> mediaStorageSOPClassUID;
+    private Option<String> mediaStorageSOPInstanceUID;
+    private Option<String> transferSyntaxUID;
+    private Option<String> implementationClassUID;
+    private Option<String> implementationVersionName;
 
     public MetaHeader(MetaHeader hdr) {
         if (hdr != null) {

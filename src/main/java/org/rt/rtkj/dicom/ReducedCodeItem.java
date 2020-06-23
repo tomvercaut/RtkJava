@@ -3,21 +3,20 @@ package org.rt.rtkj.dicom;
 import lombok.Data;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-
-import java.util.Optional;
+import org.rt.rtkj.Option;
 
 @Data
 public class ReducedCodeItem {
-    private Optional<String> codeValue = Optional.empty();
-    private Optional<String> codingSchemeDesignator = Optional.empty();
-    private Optional<String> codeMeaning = Optional.empty();
+    private Option<String> codeValue = Option.empty();
+    private Option<String> codingSchemeDesignator = Option.empty();
+    private Option<String> codeMeaning = Option.empty();
 
-    static Optional<ReducedCodeItem> build(Attributes attr) {
+    static Option<ReducedCodeItem> build(Attributes attr) {
         ReducedCodeItem item = new ReducedCodeItem();
-        if (attr == null) return Optional.empty();
-        item.codeValue = Optional.ofNullable(attr.getString(Tag.CodeValue));
-        item.codingSchemeDesignator = Optional.ofNullable(attr.getString(Tag.CodingSchemeDesignator));
-        item.codeMeaning = Optional.ofNullable(attr.getString(Tag.CodeMeaning));
-        return Optional.of(item);
+        if (attr == null) return Option.empty();
+        item.codeValue = Option.ofNullable(attr.getString(Tag.CodeValue));
+        item.codingSchemeDesignator = Option.ofNullable(attr.getString(Tag.CodingSchemeDesignator));
+        item.codeMeaning = Option.ofNullable(attr.getString(Tag.CodeMeaning));
+        return Option.of(item);
     }
 }

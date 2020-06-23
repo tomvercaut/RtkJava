@@ -1,16 +1,15 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
+import org.rt.rtkj.Option;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 public class ContourItem {
-    private Optional<List<ReferencedSOPClassInstanceItem>> contourImageSequence = Optional.empty();
-    private Optional<String> contourGeometricType = Optional.empty();
-    private Optional<Integer> numberOfContourPoints = Optional.empty();
-    private Optional<Integer> contourNumber = Optional.empty();
-    private Optional<List<Double>> contourData = Optional.empty();
+    private Option<List<ReferencedSOPClassInstanceItem>> contourImageSequence = Option.empty();
+    private Option<String> contourGeometricType = Option.empty();
+    private Option<Integer> numberOfContourPoints = Option.empty();
+    private Option<Integer> contourNumber = Option.empty();
+    private Option<List<Double>> contourData = Option.empty();
 }

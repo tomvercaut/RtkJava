@@ -2,15 +2,14 @@ package org.rt.rtkj.dicom;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.rt.rtkj.Option;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class RTReferencedStudyItem extends ReferencedSOPClassInstanceItem {
-    private Optional<List<RTReferencedSeriesItem>> rtReferencedSeriesSequence = Optional.empty();
+    private Option<List<RTReferencedSeriesItem>> rtReferencedSeriesSequence = Option.empty();
 
     public RTReferencedStudyItem() {
         super();

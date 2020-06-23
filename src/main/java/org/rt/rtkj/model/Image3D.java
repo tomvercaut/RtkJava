@@ -1,6 +1,7 @@
 package org.rt.rtkj.model;
 
 import lombok.Data;
+import org.rt.rtkj.Option;
 import org.rt.rtkj.dicom.ImagePositionPatientComparator;
 import org.rt.rtkj.dicom.Modality;
 import org.rt.rtkj.dicom.PatientPosition;
@@ -8,7 +9,6 @@ import org.rt.rtkj.dicom.PixelRepresentation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 public class Image3D {
@@ -36,64 +36,64 @@ public class Image3D {
         sorted = true;
     }
 
-    public Optional<String> getFrameOfReferenceUID() {
-        if (images.isEmpty()) return Optional.empty();
+    public Option<String> getFrameOfReferenceUID() {
+        if (images.isEmpty()) return Option.empty();
         return images.get(0).getFrameOfReferenceUID();
     }
 
-    public Optional<Modality> getModality() {
-        if (images.isEmpty()) return Optional.empty();
+    public Option<Modality> getModality() {
+        if (images.isEmpty()) return Option.empty();
         return images.get(0).getModality();
     }
 
-    public Optional<String> getStudyInstanceUID() {
-        if (images.isEmpty()) return Optional.empty();
+    public Option<String> getStudyInstanceUID() {
+        if (images.isEmpty()) return Option.empty();
         return images.get(0).getStudyInstanceUID();
     }
 
-    public Optional<PatientPosition> getPatientPosition() {
-        if (images.isEmpty()) return Optional.empty();
+    public Option<PatientPosition> getPatientPosition() {
+        if (images.isEmpty()) return Option.empty();
         return images.get(0).getPatientPosition();
     }
 
-    public Optional<Double[]> getPixelSpacing() {
-        if (images.isEmpty()) return Optional.empty();
+    public Option<Double[]> getPixelSpacing() {
+        if (images.isEmpty()) return Option.empty();
         return images.get(0).getPixelSpacing();
     }
 
-    public Optional<Double[]> getImagePositionPatient() {
-        if (images.isEmpty()) return Optional.empty();
+    public Option<Double[]> getImagePositionPatient() {
+        if (images.isEmpty()) return Option.empty();
         if (!sorted) sort();
         return images.get(0).getImagePositionPatient();
     }
 
-    public Optional<Double[]> getImageOrientationPatient() {
-        if (images.isEmpty()) return Optional.empty();
+    public Option<Double[]> getImageOrientationPatient() {
+        if (images.isEmpty()) return Option.empty();
         return images.get(0).getImageOrientationPatient();
     }
 
-    public Optional<PixelRepresentation> getPixelRepresentation() {
-        if (images.isEmpty()) return Optional.empty();
+    public Option<PixelRepresentation> getPixelRepresentation() {
+        if (images.isEmpty()) return Option.empty();
         return images.get(0).getPixelRepresentation();
     }
 
-    public Optional<Integer> getBitsAllocated() {
-        if (images.isEmpty()) return Optional.empty();
+    public Option<Integer> getBitsAllocated() {
+        if (images.isEmpty()) return Option.empty();
         return images.get(0).getBitsAllocated();
     }
 
-    public Optional<Double> getValue(int column, int row, int depth) {
+    public Option<Double> getValue(int column, int row, int depth) {
         if (!sorted) sort();
         int nd = images.size();
-        if (depth < 0 || depth >= nd) return Optional.empty();
+        if (depth < 0 || depth >= nd) return Option.empty();
         var image = images.get(depth);
         return image.getValue(column, row);
     }
 
-    public Optional<Double> getScaledValue(int column, int row, int depth) {
+    public Option<Double> getScaledValue(int column, int row, int depth) {
         if (!sorted) sort();
         int nd = images.size();
-        if (depth < 0 || depth >= nd) return Optional.empty();
+        if (depth < 0 || depth >= nd) return Option.empty();
         var image = images.get(depth);
         return image.getScaledValue(column, row);
     }

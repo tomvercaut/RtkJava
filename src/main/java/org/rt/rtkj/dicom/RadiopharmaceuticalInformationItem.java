@@ -1,20 +1,19 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
+import org.rt.rtkj.Option;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 public class RadiopharmaceuticalInformationItem {
-    private Optional<String> radiopharmaceutical = Optional.empty();
-    private Optional<LocalTime> radiopharmaceuticalStartTime = Optional.empty();
-    private Optional<Double> radionuclideTotalDose = Optional.empty();
-    private Optional<Double> radionuclideHalfLife = Optional.empty();
-    private Optional<Double> radionuclidePositronFraction = Optional.empty();
-    private Optional<LocalDateTime> radiopharmaceuticalStartDateTime = Optional.empty();
-    private Optional<List<CodeItem>> radionuclideCodeSequence = Optional.empty();
+    private Option<String> radiopharmaceutical = Option.empty();
+    private Option<LocalTime> radiopharmaceuticalStartTime = Option.empty();
+    private Option<Double> radionuclideTotalDose = Option.empty();
+    private Option<Double> radionuclideHalfLife = Option.empty();
+    private Option<Double> radionuclidePositronFraction = Option.empty();
+    private Option<LocalDateTime> radiopharmaceuticalStartDateTime = Option.empty();
+    private Option<List<CodeItem>> radionuclideCodeSequence = Option.empty();
 }

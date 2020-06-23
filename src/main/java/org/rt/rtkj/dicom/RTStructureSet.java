@@ -3,50 +3,49 @@ package org.rt.rtkj.dicom;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.rt.rtkj.Option;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class RTStructureSet extends MetaHeader {
-    private Optional<String> SpecificCharacterSet = Optional.empty();
-    private Optional<LocalDate> InstanceCreationDate = Optional.empty();
-    private Optional<LocalTime> InstanceCreationTime = Optional.empty();
-    private Optional<String> SOPClassUID = Optional.empty();
-    private Optional<String> SOPInstanceUID = Optional.empty();
-    private Optional<LocalDate> StudyDate = Optional.empty();
-    private Optional<LocalTime> StudyTime = Optional.empty();
-    private Optional<String> AccessionNumber = Optional.empty();
-    private Optional<Modality> Modality = Optional.empty();
-    private Optional<String> Manufacturer = Optional.empty();
-    private Optional<String> ReferringPhysicianName = Optional.empty();
-    private Optional<String> SeriesDescription = Optional.empty();
-    private Optional<String> OperatorsName = Optional.empty();
-    private Optional<String> ManufacturerModelName = Optional.empty();
-    private Optional<String> PatientName = Optional.empty();
-    private Optional<String> PatientID = Optional.empty();
-    private Optional<LocalDate> PatientBirthDate = Optional.empty();
-    private Optional<String> PatientSex = Optional.empty();
-    private Optional<String> SoftwareVersions = Optional.empty();
-    private Optional<String> StudyInstanceUID = Optional.empty();
-    private Optional<String> SeriesInstanceUID = Optional.empty();
-    private Optional<String> StudyID = Optional.empty();
-    private Optional<Integer> SeriesNumber = Optional.empty();
-    private Optional<String> FrameOfReferenceUID = Optional.empty();
-    private Optional<String> PositionReferenceIndicator = Optional.empty();
-    private Optional<String> StructureSetLabel = Optional.empty();
-    private Optional<LocalDate> StructureSetDate = Optional.empty();
-    private Optional<LocalTime> StructureSetTime = Optional.empty();
-    private Optional<List<ReferencedFrameOfReferenceItem>> referencedFrameOfReferenceSequence = Optional.empty();
-    private Optional<List<StructureSetROIItem>> structureSetROISequence = Optional.empty();
-    private Optional<List<ROIContourItem>> roiContourSequence = Optional.empty();
-    private Optional<List<RTROIObservationsItem>> rtROIObservationsSequence = Optional.empty();
-    private Optional<String> approvalStatus = Optional.empty();
+    private Option<String> SpecificCharacterSet = Option.empty();
+    private Option<LocalDate> InstanceCreationDate = Option.empty();
+    private Option<LocalTime> InstanceCreationTime = Option.empty();
+    private Option<String> SOPClassUID = Option.empty();
+    private Option<String> SOPInstanceUID = Option.empty();
+    private Option<LocalDate> StudyDate = Option.empty();
+    private Option<LocalTime> StudyTime = Option.empty();
+    private Option<String> AccessionNumber = Option.empty();
+    private Option<Modality> Modality = Option.empty();
+    private Option<String> Manufacturer = Option.empty();
+    private Option<String> ReferringPhysicianName = Option.empty();
+    private Option<String> SeriesDescription = Option.empty();
+    private Option<String> OperatorsName = Option.empty();
+    private Option<String> ManufacturerModelName = Option.empty();
+    private Option<String> PatientName = Option.empty();
+    private Option<String> PatientID = Option.empty();
+    private Option<LocalDate> PatientBirthDate = Option.empty();
+    private Option<String> PatientSex = Option.empty();
+    private Option<String> SoftwareVersions = Option.empty();
+    private Option<String> StudyInstanceUID = Option.empty();
+    private Option<String> SeriesInstanceUID = Option.empty();
+    private Option<String> StudyID = Option.empty();
+    private Option<Integer> SeriesNumber = Option.empty();
+    private Option<String> FrameOfReferenceUID = Option.empty();
+    private Option<String> PositionReferenceIndicator = Option.empty();
+    private Option<String> StructureSetLabel = Option.empty();
+    private Option<LocalDate> StructureSetDate = Option.empty();
+    private Option<LocalTime> StructureSetTime = Option.empty();
+    private Option<List<ReferencedFrameOfReferenceItem>> referencedFrameOfReferenceSequence = Option.empty();
+    private Option<List<StructureSetROIItem>> structureSetROISequence = Option.empty();
+    private Option<List<ROIContourItem>> roiContourSequence = Option.empty();
+    private Option<List<RTROIObservationsItem>> rtROIObservationsSequence = Option.empty();
+    private Option<String> approvalStatus = Option.empty();
 
     public RTStructureSet(MetaHeader meta) {
         super(meta);

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.ejml.simple.SimpleMatrix;
+import org.rt.rtkj.Option;
 import org.rt.rtkj.dicom.HasImagePositionPatient;
 import org.rt.rtkj.dicom.Modality;
 import org.rt.rtkj.dicom.PatientPosition;
@@ -13,25 +14,24 @@ import org.rt.rtkj.utils.Transform4x4;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 @Data
 public class Image2D implements HasImagePositionPatient {
-    private Optional<String> sOPInstanceUID = Optional.empty();
-    private Optional<String> frameOfReferenceUID = Optional.empty();
-    private Optional<Modality> modality = Optional.empty();
-    private Optional<String> studyInstanceUID = Optional.empty();
-    private Optional<String> seriesInstanceUID = Optional.empty();
-    private Optional<PatientPosition> patientPosition = Optional.empty();
-    private Optional<Double[]> imagePositionPatient = Optional.empty();
-    private Optional<Double[]> imageOrientationPatient = Optional.empty();
-    private Optional<Double[]> pixelSpacing = Optional.empty(); // 0: row spacing / 1: column spacing
-    private Optional<Double> rescaleIntercept = Optional.empty();
-    private Optional<Double> rescaleSlope = Optional.empty();
-    private Optional<PixelRepresentation> pixelRepresentation = Optional.empty();
-    private Optional<Integer> bitsAllocated = Optional.empty();
-    private Optional<List<Double>> pixels = Optional.empty();
+    private Option<String> sOPInstanceUID = Option.empty();
+    private Option<String> frameOfReferenceUID = Option.empty();
+    private Option<Modality> modality = Option.empty();
+    private Option<String> studyInstanceUID = Option.empty();
+    private Option<String> seriesInstanceUID = Option.empty();
+    private Option<PatientPosition> patientPosition = Option.empty();
+    private Option<Double[]> imagePositionPatient = Option.empty();
+    private Option<Double[]> imageOrientationPatient = Option.empty();
+    private Option<Double[]> pixelSpacing = Option.empty(); // 0: row spacing / 1: column> spacing
+    private Option<Double> rescaleIntercept = Option.empty();
+    private Option<Double> rescaleSlope = Option.empty();
+    private Option<PixelRepresentation> pixelRepresentation = Option.empty();
+    private Option<Integer> bitsAllocated = Option.empty();
+    private Option<List<Double>> pixels = Option.empty();
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private RowMajorIndex2D indexer = new RowMajorIndex2D();
@@ -58,57 +58,57 @@ public class Image2D implements HasImagePositionPatient {
     }
 
     public boolean setValue(int column, int row, double val) {
-        Optional<Integer> index = indexer.offset(column, row);
+        Option<Integer> index = indexer.offset(column, row);
         if (pixels.isEmpty() || index.isEmpty()) return false;
         pixels.get().set(index.get(), val);
         return true;
     }
 
-    public Optional<Double> getValue(int column, int row) {
-        Optional<Integer> index = indexer.offset(column, row);
-        if (pixels.isEmpty() || index.isEmpty()) return Optional.empty();
+    public Option<Double> getValue(int column, int row) {
+        Option<Integer> index = indexer.offset(column, row);
+        if (pixels.isEmpty() || index.isEmpty()) return Option.empty();
         try {
             var val = pixels.get().get(index.get());
-            return Optional.of(val);
+            return Option.of(val);
         } catch (IndexOutOfBoundsException e) {
-            return Optional.empty();
+            return Option.empty();
         }
     }
 
-    public Optional<Double> getScaledValue(int colum, int row) {
+    public Option<Double> getScaledValue(int colum, int row) {
         var optVal = getValue(colum, row);
         if (optVal.isPresent() && rescaleSlope.isPresent() && rescaleIntercept.isPresent())
-            return Optional.of(optVal.get() * rescaleSlope.get() + rescaleIntercept.get());
-        return Optional.empty();
+            return Option.of(optVal.get() * rescaleSlope.get() + rescaleIntercept.get());
+        return Option.empty();
     }
 
     public void resize(int columns, int rows) {
         indexer.rows = rows;
         indexer.cols = columns;
         int n = indexer.size();
-        pixels = Optional.empty();
+        pixels = Option.empty();
         if (n > 0) {
-            pixels = Optional.of(new ArrayList<Double>(n));
+            pixels = Option.of(new ArrayList<Double>(n));
             IntStream.range(0, n).forEach(i -> pixels.get().add(0.0));
         }
         updateInverseTm = true;
     }
 
     public void clear() {
-        sOPInstanceUID = Optional.empty();
-        frameOfReferenceUID = Optional.empty();
-        modality = Optional.empty();
-        patientPosition = Optional.empty();
-        imagePositionPatient = Optional.empty();
-        imageOrientationPatient = Optional.empty();
+        sOPInstanceUID = Option.empty();
+        frameOfReferenceUID = Option.empty();
+        modality = Option.empty();
+        patientPosition = Option.empty();
+        imagePositionPatient = Option.empty();
+        imageOrientationPatient = Option.empty();
         indexer.rows = 0;
         indexer.cols = 0;
-        pixelSpacing = Optional.empty();
-        rescaleIntercept = Optional.empty();
-        rescaleSlope = Optional.empty();
-        pixelRepresentation = Optional.empty();
-        bitsAllocated = Optional.empty();
-        pixels = Optional.empty();
+        pixelSpacing = Option.empty();
+        rescaleIntercept = Option.empty();
+        rescaleSlope = Option.empty();
+        pixelRepresentation = Option.empty();
+        bitsAllocated = Option.empty();
+        pixels = Option.empty();
         tm.zero();
         itm.zero();
     }
@@ -156,7 +156,7 @@ public class Image2D implements HasImagePositionPatient {
 //        return itm.apply(p);
 //    }
 
-    public boolean setImagePositionPatient(Optional<Double[]> imagePositionPatient) {
+    public boolean setImagePositionPatient(Option<Double[]> imagePositionPatient) {
         updateInverseTm = true;
         this.imagePositionPatient = imagePositionPatient;
         if (this.imagePositionPatient.isPresent()) {
@@ -170,7 +170,7 @@ public class Image2D implements HasImagePositionPatient {
         }
     }
 
-    public boolean setImageOrientationPatient(Optional<Double[]> imageOrientationPatient) {
+    public boolean setImageOrientationPatient(Option<Double[]> imageOrientationPatient) {
         updateInverseTm = true;
         this.imageOrientationPatient = imageOrientationPatient;
         if (this.imageOrientationPatient.isPresent()) {

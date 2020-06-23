@@ -6,6 +6,7 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.util.ByteUtils;
+import org.rt.rtkj.Option;
 import org.rt.rtkj.utils.ByteTools;
 
 import java.io.IOException;
@@ -14,7 +15,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 @Log4j2
@@ -25,19 +25,19 @@ public class Reader {
      *
      * @param attr     attributes containing the sequence.
      * @param seqTag   DICOM tag of the sequence
-     * @param function a function interface that has an sequence item attributes as input and returns an optional value T.
+     * @param function a function interface that has an sequence item attributes as input and returns an Option value T.
      * @param <T>      type representing the sequence item
      * @return If the sequence is found and contains values a list of sequence items is returned. If the sequence is not found or the attribute is null, an empty optional is returned.
      */
-    private static <T> Optional<List<T>> readSequence(Attributes attr, int seqTag, Function<Attributes, Optional<T>> function) {
-        if (attr == null || !attr.contains(seqTag)) return Optional.empty();
+    private static <T> Option<List<T>> readSequence(Attributes attr, int seqTag, Function<Attributes, Option<T>> function) {
+        if (attr == null || !attr.contains(seqTag)) return Option.empty();
         Sequence seq = attr.getSequence(seqTag);
-        Optional<List<T>> optList = Optional.empty();
+        Option<List<T>> optList = Option.empty();
         for (Attributes value : seq) {
             var optTmp = function.apply(value);
             if (optTmp.isPresent()) {
                 var tmp = optTmp.get();
-                if (optList.isEmpty()) optList = Optional.of(new ArrayList<>());
+                if (optList.isEmpty()) optList = Option.of(new ArrayList<>());
                 optList.get().add(tmp);
             }
         }
@@ -51,9 +51,9 @@ public class Reader {
      * @param tag  DICOM tag
      * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
      */
-    private static Optional<String> readString(Attributes attr, int tag) {
-        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
-        return Optional.ofNullable(attr.getString(tag));
+    private static Option<String> readString(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Option.empty();
+        return Option.ofNullable(attr.getString(tag));
     }
 
     /**
@@ -61,30 +61,30 @@ public class Reader {
      *
      * @param attr attributes optionally containing the DICOM tag
      * @param tag  DICOM tag
-     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
+     * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty Option is returned.
      */
-    private static Optional<List<String>> readListString(Attributes attr, int tag) {
-        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+    private static Option<List<String>> readListString(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Option.empty();
         var optS = readString(attr, tag);
-        if (optS.isEmpty() || optS.get().isBlank()) return Optional.empty();
+        if (optS.isEmpty() || optS.get().isBlank()) return Option.empty();
         var s = optS.get();
         var arrayS = s.split("\\\\");
-        if (arrayS.length == 0) return Optional.empty();
-        return Optional.of(List.of(arrayS));
+        if (arrayS.length == 0) return Option.empty();
+        return Option.of(List.of(arrayS));
     }
 
     /**
-     * Read an optional integer from attributes by it's corresponding DICOM tag.
+     * Read an Option integer from attributes by it's corresponding DICOM tag.
      *
      * @param attr attributes optionally containing the DICOM tag
      * @param tag  DICOM tag
      * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
      */
-    private static Optional<Integer> readInt(Attributes attr, int tag) {
-        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+    private static Option<Integer> readInt(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Option.empty();
         var val = attr.getInt(tag, DicomUtils.UNDEFINED_I32);
-        if (val == DicomUtils.UNDEFINED_I32) return Optional.empty();
-        return Optional.of(val);
+        if (val == DicomUtils.UNDEFINED_I32) return Option.empty();
+        return Option.of(val);
     }
 
     /**
@@ -94,11 +94,11 @@ public class Reader {
      * @param tag  DICOM tag
      * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
      */
-    private static Optional<Double> readDouble(Attributes attr, int tag) {
-        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+    private static Option<Double> readDouble(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Option.empty();
         var val = attr.getDouble(tag, DicomUtils.UNDEFINED_DOUBLE);
-        if (val == DicomUtils.UNDEFINED_DOUBLE) return Optional.empty();
-        return Optional.of(val);
+        if (val == DicomUtils.UNDEFINED_DOUBLE) return Option.empty();
+        return Option.of(val);
     }
 
     /**
@@ -108,11 +108,11 @@ public class Reader {
      * @param tag  DICOM tag
      * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
      */
-    private static Optional<Float> readFloat(Attributes attr, int tag) {
-        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+    private static Option<Float> readFloat(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Option.empty();
         var val = attr.getFloat(tag, DicomUtils.UNDEFINED_FLOAT);
-        if (val == DicomUtils.UNDEFINED_FLOAT) return Optional.empty();
-        return Optional.of(val);
+        if (val == DicomUtils.UNDEFINED_FLOAT) return Option.empty();
+        return Option.of(val);
     }
 
     /**
@@ -122,11 +122,11 @@ public class Reader {
      * @param tag  DICOM tag
      * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
      */
-    private static Optional<Double[]> readDoubles(Attributes attr, int tag) {
-        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+    private static Option<Double[]> readDoubles(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Option.empty();
         var val = attr.getDoubles(tag);
-        if (val == null) return Optional.empty();
-        return Optional.of(Arrays.stream(val).boxed().toArray(Double[]::new));
+        if (val == null) return Option.empty();
+        return Option.of(Arrays.stream(val).boxed().toArray(Double[]::new));
     }
 
     /**
@@ -136,10 +136,10 @@ public class Reader {
      * @param tag  DICOM tag
      * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
      */
-    private static Optional<List<Double>> readListDoubles(Attributes attr, int tag) {
+    private static Option<List<Double>> readListDoubles(Attributes attr, int tag) {
         var optArray = readDoubles(attr, tag);
-        if (optArray.isEmpty()) return Optional.empty();
-        return Optional.of(Arrays.asList(optArray.get()));
+        if (optArray.isEmpty()) return Option.empty();
+        return Option.of(Arrays.asList(optArray.get()));
     }
 
     /**
@@ -149,11 +149,11 @@ public class Reader {
      * @param tag  DICOM tag
      * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
      */
-    private static Optional<Integer[]> readInts(Attributes attr, int tag) {
-        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+    private static Option<Integer[]> readInts(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Option.empty();
         var val = attr.getInts(tag);
-        if (val == null) return Optional.empty();
-        return Optional.of(Arrays.stream(val).boxed().toArray(Integer[]::new));
+        if (val == null) return Option.empty();
+        return Option.of(Arrays.stream(val).boxed().toArray(Integer[]::new));
     }
 
     /**
@@ -163,7 +163,7 @@ public class Reader {
      * @param tag  DICOM tag
      * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
      */
-    private static Optional<LocalDate> readDate(Attributes attr, int tag) {
+    private static Option<LocalDate> readDate(Attributes attr, int tag) {
         var optString = readString(attr, tag);
         return DicomUtils.getLocalDateFromString(optString);
     }
@@ -175,80 +175,80 @@ public class Reader {
      * @param tag  DICOM tag
      * @return If the DICOM tag is found and has a value, the value is returned. If the attributes is null or the tag doesn't contain a value, an empty optional is returned.
      */
-    private static Optional<Byte[]> readBytes(Attributes attr, int tag) {
-        if (attr == null || !attr.containsValue(tag)) return Optional.empty();
+    private static Option<Byte[]> readBytes(Attributes attr, int tag) {
+        if (attr == null || !attr.containsValue(tag)) return Option.empty();
         try {
             var bytes = attr.getBytes(tag);
-            if (bytes == null) return Optional.empty();
+            if (bytes == null) return Option.empty();
             var n = bytes.length;
             Byte[] bb = new Byte[n];
             for (int i = 0; i < n; i++) {
                 bb[i] = bytes[i];
             }
-            return Optional.of(bb);
+            return Option.of(bb);
         } catch (IOException e) {
             log.error(e);
         }
-        return Optional.empty();
+        return Option.empty();
     }
 
-    private static Optional<CodeItem> codeItem(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<CodeItem> codeItem(Attributes attr) {
+        if (attr == null) return Option.empty();
         CodeItem item = new CodeItem();
         item.setCodeValue(readString(attr, Tag.CodeValue));
         item.setCodingSchemeDesignator(readString(attr, Tag.CodingSchemeDesignator));
         item.setCodeMeaning(readString(attr, Tag.CodeMeaning));
         item.setMappingResource(readString(attr, Tag.MappingResource));
-        item.setContextGroupVersion(Optional.ofNullable(DicomUtils.getLocalDateTime(attr.getString(Tag.ContextGroupVersion))));
+        item.setContextGroupVersion(Option.ofNullable(DicomUtils.getLocalDateTime(attr.getString(Tag.ContextGroupVersion))));
         item.setContextIdentifier(readString(attr, Tag.ContextIdentifier));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<ReferencedSOPClassInstanceItem> referencedSOPClassInstance(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<ReferencedSOPClassInstanceItem> referencedSOPClassInstance(Attributes attr) {
+        if (attr == null) return Option.empty();
         ReferencedSOPClassInstanceItem item = new ReferencedSOPClassInstanceItem();
         item.setReferencedSOPClassUID(readString(attr, Tag.ReferencedSOPClassUID));
         item.setReferencedSOPInstanceUID(readString(attr, Tag.ReferencedSOPInstanceUID));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<DVHReferencedROIItem> dvhReferencedROI(Attributes attributes) {
-        if (attributes == null) return Optional.empty();
+    private static Option<DVHReferencedROIItem> dvhReferencedROI(Attributes attributes) {
+        if (attributes == null) return Option.empty();
         DVHReferencedROIItem item = new DVHReferencedROIItem();
-        item.setDvhROIContributionType(Optional.ofNullable(attributes.getString(Tag.DVHROIContributionType)));
+        item.setDvhROIContributionType(Option.ofNullable(attributes.getString(Tag.DVHROIContributionType)));
         if (attributes.containsValue(Tag.ReferencedROINumber))
             item.setReferencedROINumber(readInt(attributes, Tag.ReferencedROINumber));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<EnergyWindowRangeItem> energyWindowRange(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<EnergyWindowRangeItem> energyWindowRange(Attributes attr) {
+        if (attr == null) return Option.empty();
         EnergyWindowRangeItem item = new EnergyWindowRangeItem();
         item.setEnergyWindowLowerLimit(readDouble(attr, Tag.EnergyWindowLowerLimit));
         item.setEnergyWindowUpperLimit(readDouble(attr, Tag.EnergyWindowUpperLimit));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<PatientOrientationCodeItem> patientOrientationCode(Attributes attr) {
-        if (attr == null) return Optional.empty();
-        Optional<CodeItem> tmpCodeItem = codeItem(attr);
-        if (tmpCodeItem.isEmpty()) return Optional.empty();
+    private static Option<PatientOrientationCodeItem> patientOrientationCode(Attributes attr) {
+        if (attr == null) return Option.empty();
+        Option<CodeItem> tmpCodeItem = codeItem(attr);
+        if (tmpCodeItem.isEmpty()) return Option.empty();
         PatientOrientationCodeItem item = (PatientOrientationCodeItem) tmpCodeItem.get();
         item.setPatientOrientationModifierCodeSequence(readSequence(attr, Tag.PatientOrientationModifierCodeSequence, Reader::codeItem));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<ReducedCodeItem> reducedCode(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<ReducedCodeItem> reducedCode(Attributes attr) {
+        if (attr == null) return Option.empty();
         ReducedCodeItem item = new ReducedCodeItem();
         item.setCodeValue(readString(attr, Tag.CodeValue));
         item.setCodingSchemeDesignator(readString(attr, Tag.CodingSchemeDesignator));
         item.setCodeMeaning(readString(attr, Tag.CodeMeaning));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<RequestAttributesItem> requestAttributes(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<RequestAttributesItem> requestAttributes(Attributes attr) {
+        if (attr == null) return Option.empty();
         RequestAttributesItem item = new RequestAttributesItem();
         item.setAccessionNumber(readString(attr, Tag.AccessionNumber));
         item.setReferencedStudySequence(readSequence(attr, Tag.ReferencedStudySequence, Reader::referencedSOPClassInstance));
@@ -257,20 +257,20 @@ public class Reader {
         item.setRequestedProcedureCodeSequence(readSequence(attr, Tag.RequestedProcedureCodeSequence, Reader::reducedCode));
         item.setScheduledProcedureStepID(readString(attr, Tag.ScheduledProcedureStepID));
         item.setRequestedProcedureID(readString(attr, Tag.RequestedProcedureID));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<ReferencedPatientItem> referencedPatient(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<ReferencedPatientItem> referencedPatient(Attributes attr) {
+        if (attr == null) return Option.empty();
         ReferencedPatientItem item = new ReferencedPatientItem();
         item.setStudyInstanceUID(readString(attr, Tag.StudyInstanceUID));
         item.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
         item.setPurposeOfReferenceCodeSequence(readSequence(attr, Tag.PurposeOfReferenceCodeSequence, Reader::codeItem));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<RadiopharmaceuticalInformationItem> radiopharmaceuticalInformation(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<RadiopharmaceuticalInformationItem> radiopharmaceuticalInformation(Attributes attr) {
+        if (attr == null) return Option.empty();
         RadiopharmaceuticalInformationItem item = new RadiopharmaceuticalInformationItem();
         item.setRadiopharmaceutical(readString(attr, Tag.Radiopharmaceutical));
         item.setRadiopharmaceuticalStartTime(DicomUtils.tmToLocalTime(readString(attr, Tag.RadiopharmaceuticalStartTime)));
@@ -288,16 +288,16 @@ public class Reader {
                 var optTmp = codeItem(value);
                 optTmp.ifPresent(tmp -> {
                     if (item.getRadionuclideCodeSequence().isEmpty())
-                        item.setRadionuclideCodeSequence(Optional.of(new ArrayList<>()));
+                        item.setRadionuclideCodeSequence(Option.of(new ArrayList<>()));
                     item.getRadionuclideCodeSequence().get().add(tmp);
                 });
             }
         }
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<StudiesContainingOtherReferencedInstancesItem> studiesContainingOtherReferencedInstances(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<StudiesContainingOtherReferencedInstancesItem> studiesContainingOtherReferencedInstances(Attributes attr) {
+        if (attr == null) return Option.empty();
         var item = new StudiesContainingOtherReferencedInstancesItem();
         if (attr.contains(Tag.ReferencedSeriesSequence)) {
             Sequence seq = attr.getSequence(Tag.ReferencedSeriesSequence);
@@ -305,79 +305,79 @@ public class Reader {
                 var optTmp = referencedSeries(value);
                 optTmp.ifPresent(tmp -> {
                     if (item.getReferencedSeriesSequence().isEmpty())
-                        item.setReferencedSeriesSequence(Optional.of(new ArrayList<>()));
+                        item.setReferencedSeriesSequence(Option.of(new ArrayList<>()));
                     item.getReferencedSeriesSequence().get().add(tmp);
                 });
             }
         }
         item.setStudyInstanceUID(readString(attr, Tag.StudyInstanceUID));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<ReferencedSeriesItem> referencedSeries(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<ReferencedSeriesItem> referencedSeries(Attributes attr) {
+        if (attr == null) return Option.empty();
         ReferencedSeriesItem item = new ReferencedSeriesItem();
         item.setReferencedInstanceSequence(readSequence(attr, Tag.ReferencedInstanceSequence, Reader::referencedSOPClassInstance));
         item.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<RegistrationItem> registration(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<RegistrationItem> registration(Attributes attr) {
+        if (attr == null) return Option.empty();
         RegistrationItem item = new RegistrationItem();
         item.setReferencedImageSequence(readSequence(attr, Tag.ReferencedImageSequence, Reader::referencedSOPClassInstance));
         item.setFrameOfReferenceUID(readString(attr, Tag.FrameOfReferenceUID));
         item.setMatrixRegistrationSequence(readSequence(attr, Tag.MatrixRegistrationSequence, Reader::matrixRegistration));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<MatrixRegistrationItem> matrixRegistration(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<MatrixRegistrationItem> matrixRegistration(Attributes attr) {
+        if (attr == null) return Option.empty();
         var item = new MatrixRegistrationItem();
         item.setMatrixSequence(readSequence(attr, Tag.MatrixSequence, Reader::matrix));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<TransformationMatrixType> frameOfReferenceTransformationMatrixType(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<TransformationMatrixType> frameOfReferenceTransformationMatrixType(Attributes attr) {
+        if (attr == null) return Option.empty();
         if (attr.containsValue(Tag.FrameOfReferenceTransformationMatrixType)) {
             var s = attr.getString(Tag.FrameOfReferenceTransformationMatrixType);
             switch (s) {
                 case "RIGID":
-                    return Optional.of(TransformationMatrixType.RIGID);
+                    return Option.of(TransformationMatrixType.RIGID);
                 case "RIGID_SCALE":
-                    return Optional.of(TransformationMatrixType.RIGID_SCALE);
+                    return Option.of(TransformationMatrixType.RIGID_SCALE);
                 case "AFFINE":
-                    return Optional.of(TransformationMatrixType.AFFINE);
+                    return Option.of(TransformationMatrixType.AFFINE);
                 default:
-                    return Optional.of(TransformationMatrixType.NONE);
+                    return Option.of(TransformationMatrixType.NONE);
             }
         }
-        return Optional.empty();
+        return Option.empty();
     }
 
-    private static Optional<MatrixItem> matrix(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<MatrixItem> matrix(Attributes attr) {
+        if (attr == null) return Option.empty();
         var item = new MatrixItem();
         item.setFrameOfReferenceTransformationMatrixType(frameOfReferenceTransformationMatrixType(attr));
         item.setFrameOfReferenceTransformationMatrix(readDoubles(attr, Tag.FrameOfReferenceTransformationMatrix));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<RegistrationTypeCodeItem> registrationTypeCode(Attributes attr) {
-        return Optional.empty();
+    private static Option<RegistrationTypeCodeItem> registrationTypeCode(Attributes attr) {
+        return Option.empty();
     }
 
-    private static Optional<ReferencedFrameOfReferenceItem> referencedFrameOfReference(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<ReferencedFrameOfReferenceItem> referencedFrameOfReference(Attributes attr) {
+        if (attr == null) return Option.empty();
         ReferencedFrameOfReferenceItem item = new ReferencedFrameOfReferenceItem();
         item.setFrameOfReferenceUID(readString(attr, Tag.FrameOfReferenceUID));
         item.setRtReferencedStudySequence(readSequence(attr, Tag.RTReferencedStudySequence, Reader::rtReferencedStudy));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<RTReferencedStudyItem> rtReferencedStudy(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<RTReferencedStudyItem> rtReferencedStudy(Attributes attr) {
+        if (attr == null) return Option.empty();
         var optReferencedSOPClassInstance = referencedSOPClassInstance(attr);
         RTReferencedStudyItem item;
         if (optReferencedSOPClassInstance.isEmpty()) {
@@ -386,49 +386,49 @@ public class Reader {
             item = new RTReferencedStudyItem(optReferencedSOPClassInstance.get());
         }
         item.setRtReferencedSeriesSequence(readSequence(attr, Tag.RTReferencedSeriesSequence, Reader::rtReferencedSeriesItem));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<RTReferencedSeriesItem> rtReferencedSeriesItem(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<RTReferencedSeriesItem> rtReferencedSeriesItem(Attributes attr) {
+        if (attr == null) return Option.empty();
         var item = new RTReferencedSeriesItem();
         item.setSeriesInstanceUID(readString(attr, Tag.SeriesInstanceUID));
         item.setContourImageSequence(readSequence(attr, Tag.ContourImageSequence, Reader::referencedSOPClassInstance));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<ROIContourItem> roiContour(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<ROIContourItem> roiContour(Attributes attr) {
+        if (attr == null) return Option.empty();
         var item = new ROIContourItem();
         item.setROIDisplayColor(readInts(attr, Tag.ROIDisplayColor));
         item.setContourSequence(readSequence(attr, Tag.ContourSequence, Reader::contour));
         item.setReferencedROINumber(readInt(attr, Tag.ReferencedROINumber));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<ContourItem> contour(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<ContourItem> contour(Attributes attr) {
+        if (attr == null) return Option.empty();
         var item = new ContourItem();
         item.setContourImageSequence(readSequence(attr, Tag.ContourImageSequence, Reader::referencedSOPClassInstance));
         item.setContourGeometricType(readString(attr, Tag.ContourGeometricType));
         item.setNumberOfContourPoints(readInt(attr, Tag.NumberOfContourPoints));
         item.setContourNumber(readInt(attr, Tag.ContourNumber));
         item.setContourData(readListDoubles(attr, Tag.ContourData));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<StructureSetROIItem> structureSetROI(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<StructureSetROIItem> structureSetROI(Attributes attr) {
+        if (attr == null) return Option.empty();
         var item = new StructureSetROIItem();
         item.setROINumber(readInt(attr, Tag.ROINumber));
         item.setReferencedFrameOfReferenceUID(readString(attr, Tag.ReferencedFrameOfReferenceUID));
         item.setROIName(readString(attr, Tag.ROIName));
         item.setROIGenerationAlgorithm(readString(attr, Tag.ROIGenerationAlgorithm));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<RTROIObservationsItem> rtROIObservations(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<RTROIObservationsItem> rtROIObservations(Attributes attr) {
+        if (attr == null) return Option.empty();
         var item = new RTROIObservationsItem();
 
         item.setObservationNumber(readInt(attr, Tag.ObservationNumber));
@@ -438,244 +438,244 @@ public class Reader {
         item.setROIInterpreter(readString(attr, Tag.ROIInterpreter));
         item.setROIPhysicalPropertiesSequence(readSequence(attr, Tag.ROIPhysicalPropertiesSequence, Reader::roiPhysicalProperties));
         item.setMaterialID(readString(attr, Tag.MaterialID));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<ROIPhysicalPropertiesItem> roiPhysicalProperties(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<ROIPhysicalPropertiesItem> roiPhysicalProperties(Attributes attr) {
+        if (attr == null) return Option.empty();
         var item = new ROIPhysicalPropertiesItem();
         item.setROIPhysicalProperty(readString(attr, Tag.ROIPhysicalProperty));
         item.setROIPhysicalPropertyValue(readDouble(attr, Tag.ROIPhysicalPropertyValue));
         item.setROIElementalCompositionSequence(readSequence(attr, Tag.ROIElementalCompositionSequence, Reader::roiElementalComposition));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<ROIElementalCompositionItem> roiElementalComposition(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<ROIElementalCompositionItem> roiElementalComposition(Attributes attr) {
+        if (attr == null) return Option.empty();
         var item = new ROIElementalCompositionItem();
         item.setRoiElementalCompositionAtomicNumber(readInt(attr, Tag.ROIElementalCompositionAtomicNumber));
         item.setRoiElementalCompositionAtomicMassFraction(readDouble(attr, Tag.ROIElementalCompositionAtomicMassFraction));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    private static Optional<PixelRepresentation> pixelRepresentation(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<PixelRepresentation> pixelRepresentation(Attributes attr) {
+        if (attr == null) return Option.empty();
         int val = attr.getInt(Tag.PixelRepresentation, DicomUtils.UNDEFINED_U32);
-        if (val == 0) return Optional.of(PixelRepresentation.UNSIGNED);
-        else if (val == 1) return Optional.of(PixelRepresentation.TWO_COMPLEMENT);
-        return Optional.of(PixelRepresentation.NONE);
+        if (val == 0) return Option.of(PixelRepresentation.UNSIGNED);
+        else if (val == 1) return Option.of(PixelRepresentation.TWO_COMPLEMENT);
+        return Option.of(PixelRepresentation.NONE);
     }
 
-    private static Optional<PatientPosition> patientPosition(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<PatientPosition> patientPosition(Attributes attr) {
+        if (attr == null) return Option.empty();
         var pp = attr.getString(Tag.PatientPosition, "");
-        if (pp.equals("HFS")) return Optional.of(PatientPosition.HFS);
-        if (pp.equals("FFS")) return Optional.of(PatientPosition.FFS);
-        if (pp.equals("HFP")) return Optional.of(PatientPosition.HFP);
-        if (pp.equals("FFP")) return Optional.of(PatientPosition.FFP);
+        if (pp.equals("HFS")) return Option.of(PatientPosition.HFS);
+        if (pp.equals("FFS")) return Option.of(PatientPosition.FFS);
+        if (pp.equals("HFP")) return Option.of(PatientPosition.HFP);
+        if (pp.equals("FFP")) return Option.of(PatientPosition.FFP);
         log.error("Unsupported patient position: " + pp);
-        return Optional.of(PatientPosition.UNKOWN);
+        return Option.of(PatientPosition.UNKOWN);
     }
 
-    private static Optional<PhotometricInterpretation> photometricInterpretation(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<PhotometricInterpretation> photometricInterpretation(Attributes attr) {
+        if (attr == null) return Option.empty();
         var val = attr.getString(Tag.PhotometricInterpretation, "");
         switch (val) {
             case "MONOCHROME1":
-                return Optional.of(PhotometricInterpretation.MONOCHROME1);
+                return Option.of(PhotometricInterpretation.MONOCHROME1);
             case "MONOCHROME2":
-                return Optional.of(PhotometricInterpretation.MONOCHROME2);
+                return Option.of(PhotometricInterpretation.MONOCHROME2);
             case "PALETTE COLOR":
-                return Optional.of(PhotometricInterpretation.PALETTE_COLOR);
+                return Option.of(PhotometricInterpretation.PALETTE_COLOR);
             case "RGB":
-                return Optional.of(PhotometricInterpretation.RGB);
+                return Option.of(PhotometricInterpretation.RGB);
             case "HSV":
-                return Optional.of(PhotometricInterpretation.RETIRED_HSV);
+                return Option.of(PhotometricInterpretation.RETIRED_HSV);
             case "ARGB":
-                return Optional.of(PhotometricInterpretation.RETIRED_ARGB);
+                return Option.of(PhotometricInterpretation.RETIRED_ARGB);
             case "CMYK":
-                return Optional.of(PhotometricInterpretation.RETIRED_CMYK);
+                return Option.of(PhotometricInterpretation.RETIRED_CMYK);
             case "FULL":
-                return Optional.of(PhotometricInterpretation.RETIRED_YBR_FULL);
+                return Option.of(PhotometricInterpretation.RETIRED_YBR_FULL);
             case "YBR_FULL_422":
-                return Optional.of(PhotometricInterpretation.YBR_FULL_422);
+                return Option.of(PhotometricInterpretation.YBR_FULL_422);
             case "YBR_PARTIAL_422":
-                return Optional.of(PhotometricInterpretation.YBR_PARTIAL_422);
+                return Option.of(PhotometricInterpretation.YBR_PARTIAL_422);
             case "YBR_PARTIAL_420":
-                return Optional.of(PhotometricInterpretation.YBR_PARTIAL_420);
+                return Option.of(PhotometricInterpretation.YBR_PARTIAL_420);
             default:
-                return Optional.of(PhotometricInterpretation.UNKOWN);
+                return Option.of(PhotometricInterpretation.UNKOWN);
         }
     }
 
-    private static Optional<Modality> modality(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<Modality> modality(Attributes attr) {
+        if (attr == null) return Option.empty();
         var optVal = readString(attr, Tag.Modality);
-        if (optVal.isEmpty()) return Optional.empty();
+        if (optVal.isEmpty()) return Option.empty();
         var val = optVal.get();
         switch (val) {
             case "AR":
-                return Optional.of(Modality.AR);
+                return Option.of(Modality.AR);
             case "AS":
-                return Optional.of(Modality.RETIRED_AS);
+                return Option.of(Modality.RETIRED_AS);
             case "ASMT":
-                return Optional.of(Modality.ASMT);
+                return Option.of(Modality.ASMT);
             case "AU":
-                return Optional.of(Modality.AU);
+                return Option.of(Modality.AU);
             case "BDUS":
-                return Optional.of(Modality.BDUS);
+                return Option.of(Modality.BDUS);
             case "BI":
-                return Optional.of(Modality.BI);
+                return Option.of(Modality.BI);
             case "BMD":
-                return Optional.of(Modality.BMD);
+                return Option.of(Modality.BMD);
             case "CD":
-                return Optional.of(Modality.RETIRED_CD);
+                return Option.of(Modality.RETIRED_CD);
             case "CF":
-                return Optional.of(Modality.RETIRED_CF);
+                return Option.of(Modality.RETIRED_CF);
             case "CP":
-                return Optional.of(Modality.RETIRED_CP);
+                return Option.of(Modality.RETIRED_CP);
             case "CR":
-                return Optional.of(Modality.CR);
+                return Option.of(Modality.CR);
             case "CS":
-                return Optional.of(Modality.RETIRED_CS);
+                return Option.of(Modality.RETIRED_CS);
             case "CT":
-                return Optional.of(Modality.CT);
+                return Option.of(Modality.CT);
             case "DD":
-                return Optional.of(Modality.RETIRED_DD);
+                return Option.of(Modality.RETIRED_DD);
             case "DF":
-                return Optional.of(Modality.RETIRED_DF);
+                return Option.of(Modality.RETIRED_DF);
             case "DG":
-                return Optional.of(Modality.DG);
+                return Option.of(Modality.DG);
             case "DM":
-                return Optional.of(Modality.RETIRED_DM);
+                return Option.of(Modality.RETIRED_DM);
             case "DOC":
-                return Optional.of(Modality.DOC);
+                return Option.of(Modality.DOC);
             case "DS":
-                return Optional.of(Modality.RETIRED_DS);
+                return Option.of(Modality.RETIRED_DS);
             case "DX":
-                return Optional.of(Modality.DX);
+                return Option.of(Modality.DX);
             case "EC":
-                return Optional.of(Modality.RETIRED_EC);
+                return Option.of(Modality.RETIRED_EC);
             case "ECG":
-                return Optional.of(Modality.ECG);
+                return Option.of(Modality.ECG);
             case "EPS":
-                return Optional.of(Modality.EPS);
+                return Option.of(Modality.EPS);
             case "ES":
-                return Optional.of(Modality.ES);
+                return Option.of(Modality.ES);
             case "FA":
-                return Optional.of(Modality.RETIRED_FA);
+                return Option.of(Modality.RETIRED_FA);
             case "FID":
-                return Optional.of(Modality.FID);
+                return Option.of(Modality.FID);
             case "FS":
-                return Optional.of(Modality.RETIRED_FS);
+                return Option.of(Modality.RETIRED_FS);
             case "GM":
-                return Optional.of(Modality.GM);
+                return Option.of(Modality.GM);
             case "HC":
-                return Optional.of(Modality.HC);
+                return Option.of(Modality.HC);
             case "HD":
-                return Optional.of(Modality.HD);
+                return Option.of(Modality.HD);
             case "IO":
-                return Optional.of(Modality.IO);
+                return Option.of(Modality.IO);
             case "IOL":
-                return Optional.of(Modality.IOL);
+                return Option.of(Modality.IOL);
             case "IVOCT":
-                return Optional.of(Modality.IVOCT);
+                return Option.of(Modality.IVOCT);
             case "IVUS":
-                return Optional.of(Modality.IVUS);
+                return Option.of(Modality.IVUS);
             case "KER":
-                return Optional.of(Modality.KER);
+                return Option.of(Modality.KER);
             case "KO":
-                return Optional.of(Modality.KO);
+                return Option.of(Modality.KO);
             case "LEN":
-                return Optional.of(Modality.LEN);
+                return Option.of(Modality.LEN);
             case "LP":
-                return Optional.of(Modality.RETIRED_LP);
+                return Option.of(Modality.RETIRED_LP);
             case "LS":
-                return Optional.of(Modality.LS);
+                return Option.of(Modality.LS);
             case "MA":
-                return Optional.of(Modality.RETIRED_MA);
+                return Option.of(Modality.RETIRED_MA);
             case "MG":
-                return Optional.of(Modality.MG);
+                return Option.of(Modality.MG);
             case "MR":
-                return Optional.of(Modality.MR);
+                return Option.of(Modality.MR);
             case "MS":
-                return Optional.of(Modality.RETIRED_MS);
+                return Option.of(Modality.RETIRED_MS);
             case "NM":
-                return Optional.of(Modality.NM);
+                return Option.of(Modality.NM);
             case "OAM":
-                return Optional.of(Modality.OAM);
+                return Option.of(Modality.OAM);
             case "OCT":
-                return Optional.of(Modality.OCT);
+                return Option.of(Modality.OCT);
             case "OP":
-                return Optional.of(Modality.OP);
+                return Option.of(Modality.OP);
             case "OPM":
-                return Optional.of(Modality.OPM);
+                return Option.of(Modality.OPM);
             case "OPR":
-                return Optional.of(Modality.OPR);
+                return Option.of(Modality.OPR);
             case "OPT":
-                return Optional.of(Modality.RETIRED_OPT);
+                return Option.of(Modality.RETIRED_OPT);
             case "OPV":
-                return Optional.of(Modality.OPV);
+                return Option.of(Modality.OPV);
             case "OSS":
-                return Optional.of(Modality.OSS);
+                return Option.of(Modality.OSS);
             case "OT":
-                return Optional.of(Modality.OT);
+                return Option.of(Modality.OT);
             case "PLAN":
-                return Optional.of(Modality.PLAN);
+                return Option.of(Modality.PLAN);
             case "PR":
-                return Optional.of(Modality.PR);
+                return Option.of(Modality.PR);
             case "PT":
-                return Optional.of(Modality.PT);
+                return Option.of(Modality.PT);
             case "PX":
-                return Optional.of(Modality.PX);
+                return Option.of(Modality.PX);
             case "REG":
-                return Optional.of(Modality.REG);
+                return Option.of(Modality.REG);
             case "RESP":
-                return Optional.of(Modality.RESP);
+                return Option.of(Modality.RESP);
             case "RF":
-                return Optional.of(Modality.RF);
+                return Option.of(Modality.RF);
             case "RG":
-                return Optional.of(Modality.RG);
+                return Option.of(Modality.RG);
             case "RTDOSE":
-                return Optional.of(Modality.RTDOSE);
+                return Option.of(Modality.RTDOSE);
             case "RTIMAGE":
-                return Optional.of(Modality.RTIMAGE);
+                return Option.of(Modality.RTIMAGE);
             case "RTPLAN":
-                return Optional.of(Modality.RTPLAN);
+                return Option.of(Modality.RTPLAN);
             case "RTRECORD":
-                return Optional.of(Modality.RTRECORD);
+                return Option.of(Modality.RTRECORD);
             case "RTSTRUCT":
-                return Optional.of(Modality.RTSTRUCT);
+                return Option.of(Modality.RTSTRUCT);
             case "RWV":
-                return Optional.of(Modality.RWV);
+                return Option.of(Modality.RWV);
             case "SEG":
-                return Optional.of(Modality.SEG);
+                return Option.of(Modality.SEG);
             case "SM":
-                return Optional.of(Modality.SM);
+                return Option.of(Modality.SM);
             case "SMR":
-                return Optional.of(Modality.SMR);
+                return Option.of(Modality.SMR);
             case "SR":
-                return Optional.of(Modality.SR);
+                return Option.of(Modality.SR);
             case "SRF":
-                return Optional.of(Modality.SRF);
+                return Option.of(Modality.SRF);
             case "ST":
-                return Optional.of(Modality.RETIRED_ST);
+                return Option.of(Modality.RETIRED_ST);
             case "STAIN":
-                return Optional.of(Modality.STAIN);
+                return Option.of(Modality.STAIN);
             case "TG":
-                return Optional.of(Modality.TG);
+                return Option.of(Modality.TG);
             case "US":
-                return Optional.of(Modality.US);
+                return Option.of(Modality.US);
             case "VA":
-                return Optional.of(Modality.VA);
+                return Option.of(Modality.VA);
             case "VF":
-                return Optional.of(Modality.RETIRED_VF);
+                return Option.of(Modality.RETIRED_VF);
             case "XA":
-                return Optional.of(Modality.XA);
+                return Option.of(Modality.XA);
             case "XC":
-                return Optional.of(Modality.XC);
+                return Option.of(Modality.XC);
         }
-        return Optional.of(Modality.UNKNOWN);
+        return Option.of(Modality.UNKNOWN);
     }
 
     /**
@@ -686,11 +686,11 @@ public class Reader {
      * @param order  byteorder
      * @return List with pixel values
      */
-    private static Optional<List<Long>> getPixelData(byte[] buffer, int offset, int length,
-                                                     int bps, PixelRepresentation pixelRepresentation, ByteOrder order) throws UnsupportedOperationException {
+    private static Option<List<Long>> getPixelData(byte[] buffer, int offset, int length,
+                                                   int bps, PixelRepresentation pixelRepresentation, ByteOrder order) throws UnsupportedOperationException {
         List<Long> pixels;
         int end = offset + length;
-        if (buffer == null || end > buffer.length || order == null) return Optional.empty();
+        if (buffer == null || end > buffer.length || order == null) return Option.empty();
         pixels = new ArrayList<>(length / bps + 1);
         if (bps == 2) {
             int i = offset;
@@ -701,7 +701,7 @@ public class Reader {
                         pixels.add((long) tv);
                         i += bps;
                     }
-                    ;
+                    break;
                 case TWO_COMPLEMENT:
                     while (i < end) {
                         int tv = ByteUtils.bytesToShort(buffer, i, order == ByteOrder.BIG_ENDIAN);
@@ -735,11 +735,11 @@ public class Reader {
         } else {
             throw new UnsupportedOperationException("Currently only 2 or 4 bytes per sample are supported.");
         }
-        return Optional.of(pixels);
+        return Option.of(pixels);
     }
 
-    private static Optional<MetaHeader> metaHeader(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<MetaHeader> metaHeader(Attributes attr) {
+        if (attr == null) return Option.empty();
         var hdr = new MetaHeader();
         hdr.setFileMetaInformationGroupLength(readInt(attr, Tag.FileMetaInformationGroupLength));
         hdr.setFileMetaInformationVersion(readBytes(attr, Tag.FileMetaInformationVersion));
@@ -748,11 +748,11 @@ public class Reader {
         hdr.setTransferSyntaxUID(readString(attr, Tag.TransferSyntaxUID));
         hdr.setImplementationClassUID(readString(attr, Tag.ImplementationClassUID));
         hdr.setImplementationVersionName(readString(attr, Tag.ImplementationVersionName));
-        return Optional.of(hdr);
+        return Option.of(hdr);
     }
 
-    private static Optional<DvhItem> dvh(Attributes attr) {
-        if (attr == null) return Optional.empty();
+    private static Option<DvhItem> dvh(Attributes attr) {
+        if (attr == null) return Option.empty();
         DvhItem item = new DvhItem();
         item.setDvhType(readString(attr, Tag.DVHType));
         item.setDoseUnits(readString(attr, Tag.DoseUnits));
@@ -765,11 +765,11 @@ public class Reader {
         item.setDvhMinimumDose(readDouble(attr, Tag.DVHMinimumDose));
         item.setDvhMaximumDose(readDouble(attr, Tag.DVHMaximumDose));
         item.setDvhMeanDose(readDouble(attr, Tag.DVHMeanDose));
-        return Optional.of(item);
+        return Option.of(item);
     }
 
-    public static Optional<CT> ct(Attributes meta, Attributes attr, ByteOrder order) throws IOException, DicomException {
-        if (attr == null) return Optional.empty();
+    public static Option<CT> ct(Attributes meta, Attributes attr, ByteOrder order) throws IOException, DicomException {
+        if (attr == null) return Option.empty();
         if (order != ByteOrder.LITTLE_ENDIAN)
             throw new DicomException("Only little endian DICOM files are currently supported.");
         var optMeta = metaHeader(meta);
@@ -795,7 +795,7 @@ public class Reader {
         ct.setModality(modality(attr));
         if (ct.getModality().isEmpty() || ct.getModality().get() != Modality.CT) {
             log.error("Trying to read a DICOM file that is not a CT");
-            return Optional.empty();
+            return Option.empty();
         }
         ct.setManufacturer(readString(attr, Tag.Manufacturer));
         ct.setInstitutionName(readString(attr, Tag.InstitutionName));
@@ -883,14 +883,14 @@ public class Reader {
                 bb[i] = tbuf[i];
             }
             tbuf = null;
-            optBuf = Optional.empty();
+            optBuf = Option.empty();
             ct.setPixelData(getPixelData(bb, 0, nbuf, bps, optPixelRepresentation.get(), order));
         }
-        return Optional.of(ct);
+        return Option.of(ct);
     }
 
-    public static Optional<RTDose> rtDose(Attributes meta, Attributes attr, ByteOrder order) throws DicomException, IOException {
-        if (attr == null) return Optional.empty();
+    public static Option<RTDose> rtDose(Attributes meta, Attributes attr, ByteOrder order) throws DicomException, IOException {
+        if (attr == null) return Option.empty();
         var optMeta = metaHeader(meta);
         RTDose rtdose;
         if (optMeta.isEmpty()) {
@@ -904,7 +904,7 @@ public class Reader {
         rtdose.setSopClassUID(readString(attr, Tag.SOPClassUID));
         if (rtdose.getSopClassUID().isEmpty() || !rtdose.getSopClassUID().get().equals(UID.RTDoseStorage)) {
             log.error("Trying to read a DICOM file that is not a RTDOSE");
-            return Optional.empty();
+            return Option.empty();
         }
         rtdose.setStudyDate(readDate(attr, Tag.StudyDate));
         rtdose.setStudyTime(DicomUtils.tmToLocalTime(readString(attr, Tag.StudyTime)));
@@ -912,7 +912,7 @@ public class Reader {
         rtdose.setModality(modality(attr));
         if (rtdose.getModality().isEmpty() || !rtdose.getModality().get().equals(Modality.RTDOSE)) {
             log.error("Trying to read a DICOM file that is not a RTDOSE");
-            return Optional.empty();
+            return Option.empty();
         }
         rtdose.setManufacturer(readString(attr, Tag.Manufacturer));
         rtdose.setReferringPhysicianName(readString(attr, Tag.ReferringPhysicianName));
@@ -978,14 +978,14 @@ public class Reader {
                 bb[i] = tbuf[i];
             }
             tbuf = null;
-            optBuf = Optional.empty();
+            optBuf = Option.empty();
             rtdose.setPixelData(getPixelData(bb, 0, nbuf, bps, rtdose.getPixelRepresentation().get(), order));
         }
-        return Optional.of(rtdose);
+        return Option.of(rtdose);
     }
 
-    public static Optional<PT> pt(Attributes meta, Attributes attr, ByteOrder order) throws IOException, DicomException {
-        if (attr == null) return Optional.empty();
+    public static Option<PT> pt(Attributes meta, Attributes attr, ByteOrder order) throws IOException, DicomException {
+        if (attr == null) return Option.empty();
         var optMeta = metaHeader(meta);
         PT pt;
         if (optMeta.isEmpty()) {
@@ -1009,7 +1009,7 @@ public class Reader {
         pt.setModality(modality(attr));
         if (pt.getModality().isEmpty() || pt.getModality().get() != Modality.PT) {
             log.error("Trying to read a DICOM file that is not a PT");
-            return Optional.empty();
+            return Option.empty();
         }
         pt.setManufacturer(readString(attr, Tag.Manufacturer));
         pt.setInstitutionName(readString(attr, Tag.InstitutionName));
@@ -1118,14 +1118,14 @@ public class Reader {
                 bb[i] = tbuf[i];
             }
             tbuf = null;
-            optBuf = Optional.empty();
+            optBuf = Option.empty();
             pt.setPixelData(getPixelData(bb, 0, nbuf, bps, optPixelRepresentation.get(), order));
         }
-        return Optional.of(pt);
+        return Option.of(pt);
     }
 
-    public static Optional<SpatialRegistration> spatialRegistration(Attributes meta, Attributes attr, ByteOrder order) throws IOException {
-        if (attr == null) return Optional.empty();
+    public static Option<SpatialRegistration> spatialRegistration(Attributes meta, Attributes attr, ByteOrder order) throws IOException {
+        if (attr == null) return Option.empty();
         var optMeta = metaHeader(meta);
         SpatialRegistration sr;
         if (optMeta.isEmpty()) {
@@ -1148,7 +1148,7 @@ public class Reader {
         sr.setModality(modality(attr));
         if (sr.getModality().isEmpty() || sr.getModality().get() != Modality.REG) {
             log.error("Trying to read a DICOM file that is not a SR");
-            return Optional.empty();
+            return Option.empty();
         }
         sr.setManufacturer(readString(attr, Tag.Manufacturer));
         sr.setReferringPhysicianName(readString(attr, Tag.ReferringPhysicianName));
@@ -1173,11 +1173,11 @@ public class Reader {
         sr.setContentDescription(readString(attr, Tag.ContentDescription));
         sr.setContentCreatorName(readString(attr, Tag.ContentCreatorName));
         sr.setRegistrationSequence(readSequence(attr, Tag.RegistrationSequence, Reader::registration));
-        return Optional.of(sr);
+        return Option.of(sr);
     }
 
-    public static Optional<RTStructureSet> structureSet(Attributes meta, Attributes attr, ByteOrder order) throws IOException {
-        if (attr == null) return Optional.empty();
+    public static Option<RTStructureSet> structureSet(Attributes meta, Attributes attr, ByteOrder order) throws IOException {
+        if (attr == null) return Option.empty();
         var optMeta = metaHeader(meta);
         RTStructureSet ss;
         if (optMeta.isEmpty()) {
@@ -1196,7 +1196,7 @@ public class Reader {
         ss.setModality(modality(attr));
         if (ss.getModality().isEmpty() || ss.getModality().get() != Modality.RTSTRUCT) {
             log.error("Trying to read a DICOM file that is not a RTSTRUCT");
-            return Optional.empty();
+            return Option.empty();
         }
         ss.setManufacturer(readString(attr, Tag.Manufacturer));
         ss.setReferringPhysicianName(readString(attr, Tag.ReferringPhysicianName));
@@ -1222,6 +1222,6 @@ public class Reader {
         ss.setRoiContourSequence(readSequence(attr, Tag.ROIContourSequence, Reader::roiContour));
         ss.setRtROIObservationsSequence(readSequence(attr, Tag.RTROIObservationsSequence, Reader::rtROIObservations));
         ss.setApprovalStatus(readString(attr, Tag.ApprovalStatus));
-        return Optional.of(ss);
+        return Option.of(ss);
     }
 }

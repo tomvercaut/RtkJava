@@ -1,31 +1,31 @@
 package org.rt.rtkj.dicom;
 
-import java.util.Optional;
+import org.rt.rtkj.Option;
 
 public interface DicomImage3D<T> extends HasPixelRepresentation {
-    Optional<String> getFrameOfReferenceUID();
+    Option<String> getFrameOfReferenceUID();
 
-    Optional<Modality> getModality();
+    Option<Modality> getModality();
 
-    Optional<PatientPosition> getPatientPosition();
+    Option<PatientPosition> getPatientPosition();
 
-    Optional<Double[]> getImagePositionPatient();
+    Option<Double[]> getImagePositionPatient();
 
-    Optional<Double[]> getImageOrientationPatient();
+    Option<Double[]> getImageOrientationPatient();
 
-    Optional<Integer> getRows();
+    Option<Integer> getRows();
 
-    Optional<Integer> getColumns();
+    Option<Integer> getColumns();
 
-    Optional<Double[]> getPixelSpacing();
+    Option<Double[]> getPixelSpacing();
 
-    Optional<Integer> getBitsAllocated();
+    Option<Integer> getBitsAllocated();
 
-    Optional<Integer> getBitsStored();
+    Option<Integer> getBitsStored();
 
-    Optional<Integer> getHighBit();
+    Option<Integer> getHighBit();
 
-    Optional<String> getStudyInstanceUID();
+    Option<String> getStudyInstanceUID();
 
-    Optional<String> getSeriesInstanceUID();
+    Option<String> getSeriesInstanceUID();
 }

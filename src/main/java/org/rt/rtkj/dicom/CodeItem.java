@@ -1,16 +1,16 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
+import org.rt.rtkj.Option;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Data
 public class CodeItem {
-    private Optional<String> codeValue = Optional.empty();
-    private Optional<String> codingSchemeDesignator = Optional.empty();
-    private Optional<String> codeMeaning = Optional.empty();
-    private Optional<String> mappingResource = Optional.empty();
-    private Optional<LocalDateTime> contextGroupVersion = Optional.empty();
-    private Optional<String> contextIdentifier = Optional.empty();
+    private Option<String> codeValue = Option.empty();
+    private Option<String> codingSchemeDesignator = Option.empty();
+    private Option<String> codeMeaning = Option.empty();
+    private Option<String> mappingResource = Option.empty();
+    private Option<LocalDateTime> contextGroupVersion = Option.empty();
+    private Option<String> contextIdentifier = Option.empty();
 }

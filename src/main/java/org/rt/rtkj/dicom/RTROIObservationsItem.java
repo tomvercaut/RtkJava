@@ -1,17 +1,17 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
+import org.rt.rtkj.Option;
 
 import java.util.List;
-import java.util.Optional;
 
 @Data
 public class RTROIObservationsItem {
-    private Optional<Integer> observationNumber = Optional.empty();
-    private Optional<Integer> referencedROINumber = Optional.empty();
-    private Optional<String> rOIObservationLabel = Optional.empty();
-    private Optional<String> rTROIInterpretedType = Optional.empty();
-    private Optional<String> rOIInterpreter = Optional.empty();
-    private Optional<List<ROIPhysicalPropertiesItem>> rOIPhysicalPropertiesSequence = Optional.empty();
-    private Optional<String> materialID = Optional.empty();
+    private Option<Integer> observationNumber = Option.empty();
+    private Option<Integer> referencedROINumber = Option.empty();
+    private Option<String> rOIObservationLabel = Option.empty();
+    private Option<String> rTROIInterpretedType = Option.empty();
+    private Option<String> rOIInterpreter = Option.empty();
+    private Option<List<ROIPhysicalPropertiesItem>> rOIPhysicalPropertiesSequence = Option.empty();
+    private Option<String> materialID = Option.empty();
 }

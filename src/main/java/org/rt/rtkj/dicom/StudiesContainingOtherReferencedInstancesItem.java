@@ -1,13 +1,12 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
+import org.rt.rtkj.Option;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 public class StudiesContainingOtherReferencedInstancesItem {
-    private Optional<List<ReferencedSeriesItem>> referencedSeriesSequence = Optional.empty();
-    private Optional<String> studyInstanceUID = Optional.empty();
+    private Option<List<ReferencedSeriesItem>> referencedSeriesSequence = Option.empty();
+    private Option<String> studyInstanceUID = Option.empty();
 }

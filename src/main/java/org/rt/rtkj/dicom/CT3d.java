@@ -6,11 +6,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.math3.util.Precision;
+import org.rt.rtkj.Option;
 import org.rt.rtkj.utils.CollectionPrecision;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.rt.rtkj.utils.OptUtils.equalsIfPresent;
 import static org.rt.rtkj.utils.OptUtils.equalsNotEmpty;
@@ -58,7 +58,7 @@ public class CT3d implements DicomImage3D {
             logDiffError("Modality");
             return false;
         }
-        if (!equalsNotEmpty(ref.getModality(), Optional.of(Modality.CT))) {
+        if (!equalsNotEmpty(ref.getModality(), Option.of(Modality.CT))) {
             logDiffError("Modality");
             return false;
         }
@@ -320,26 +320,26 @@ public class CT3d implements DicomImage3D {
      * Get a CT slice at a given array index.
      *
      * @param index position in the array
-     * @return A CT slice at the requested array position, Optional.empty is returned otherwise
+     * @return A CT slice at the requested array position, Option.empty is returned otherwise
      */
-    public Optional<CT> get(int index) {
-        if (images == null || index < 0 || index >= size()) return Optional.empty();
-        return Optional.of(images.get(index));
+    public Option<CT> get(int index) {
+        if (images == null || index < 0 || index >= size()) return Option.empty();
+        return Option.of(images.get(index));
     }
 
     /**
      * Get the image orientation patient array if all slices have the same image orientation patient.
      *
-     * @return Image orientation patient if all are equal, Optional.empty is returned otherwise.
+     * @return Image orientation patient if all are equal, Option.empty is returned otherwise.
      */
-    public Optional<Double[]> getImageOrientation() {
+    public Option<Double[]> getImageOrientation() {
         int n = size();
-        Optional<Double[]> opt_io = Optional.empty();
+        Option<Double[]> opt_io = Option.empty();
         for (int i = 0; i < n; i++) {
             var io = images.get(i).getImageOrientationPatient();
             if (io.isEmpty()) {
                 log.error("Every image slice requires an image orientation patient array.");
-                return Optional.empty();
+                return Option.empty();
             }
             if (opt_io.isEmpty()) {
                 opt_io = io;
@@ -347,12 +347,12 @@ public class CT3d implements DicomImage3D {
                 var ref_io = opt_io.get();
                 if (ref_io.length != io.get().length) {
                     log.error("Image orientation patient array is not equal between slices.");
-                    return Optional.empty();
+                    return Option.empty();
                 }
                 for (int j = 0; j < ref_io.length; j++) {
                     if (!Precision.equals(ref_io[j], io.get()[j])) {
                         log.error(String.format("Image orientation is not equal across all slices. [%.10f <-> %.10f]", ref_io[j], io.get()[j]));
-                        return Optional.empty();
+                        return Option.empty();
                     }
                 }
             }
@@ -363,102 +363,102 @@ public class CT3d implements DicomImage3D {
     /**
      * Get the slice thickness of the CT slices if all slices have the same thickness.
      *
-     * @return Uniform slice thickness if all are equal, Optional.empty is returned otherwise.
+     * @return Uniform slice thickness if all are equal, Option.empty is returned otherwise.
      */
-    public Optional<Double> getUniformSliceThickness() {
+    public Option<Double> getUniformSliceThickness() {
         double first = 0.0;
         int n = size();
         final String errMsg = "Unable to obtain uniform slice thickness.";
         if (n == 0) {
             log.error(errMsg);
-            return Optional.empty();
+            return Option.empty();
         }
         if (images.get(0).getSliceThickness().isEmpty()) {
             log.error("First 2D slice of the 3D scan doesn't have a slice thickness defined");
-            return Optional.empty();
+            return Option.empty();
         }
         first = images.get(0).getSliceThickness().get();
         for (int i = 1; i < n; i++) {
             if (images.get(i).getSliceThickness().isEmpty()) {
                 log.error(String.format("2D slice [index=%d] of the 3D scan doesn't have a slice thickness defined", i));
-                return Optional.empty();
+                return Option.empty();
             }
             if (!Precision.equals(first, images.get(i).getSliceThickness().get())) {
                 log.warn("Not all slices have the same slice thickness.");
                 log.error(errMsg);
-                return Optional.empty();
+                return Option.empty();
             }
         }
-        return Optional.of(first);
+        return Option.of(first);
     }
 
     @Override
-    public Optional<String> getFrameOfReferenceUID() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getFrameOfReferenceUID();
+    public Option<String> getFrameOfReferenceUID() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getFrameOfReferenceUID();
     }
 
     @Override
-    public Optional<Modality> getModality() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getModality();
+    public Option<Modality> getModality() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getModality();
     }
 
     @Override
-    public Optional<PatientPosition> getPatientPosition() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getPatientPosition();
+    public Option<PatientPosition> getPatientPosition() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getPatientPosition();
     }
 
     @Override
-    public Optional<Double[]> getImagePositionPatient() {
-        return Optional.empty();
+    public Option<Double[]> getImagePositionPatient() {
+        return Option.empty();
     }
 
     @Override
-    public Optional<Double[]> getImageOrientationPatient() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getImageOrientationPatient();
+    public Option<Double[]> getImageOrientationPatient() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getImageOrientationPatient();
     }
 
     @Override
-    public Optional<Integer> getRows() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getRows();
+    public Option<Integer> getRows() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getRows();
     }
 
     @Override
-    public Optional<Integer> getColumns() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getColumns();
+    public Option<Integer> getColumns() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getColumns();
     }
 
     @Override
-    public Optional<Double[]> getPixelSpacing() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getPixelSpacing();
+    public Option<Double[]> getPixelSpacing() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getPixelSpacing();
     }
 
     @Override
-    public Optional<Integer> getBitsAllocated() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getBitsAllocated();
+    public Option<Integer> getBitsAllocated() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getBitsAllocated();
     }
 
     @Override
-    public Optional<Integer> getBitsStored() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getBitsStored();
+    public Option<Integer> getBitsStored() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getBitsStored();
     }
 
     @Override
-    public Optional<Integer> getHighBit() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getHighBit();
+    public Option<Integer> getHighBit() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getHighBit();
     }
 
     @Override
-    public Optional<String> getStudyInstanceUID() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getStudyInstanceUID();
+    public Option<String> getStudyInstanceUID() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getStudyInstanceUID();
     }
 
     @Override
-    public Optional<PixelRepresentation> getPixelRepresentation() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getPixelRepresentation();
+    public Option<PixelRepresentation> getPixelRepresentation() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getPixelRepresentation();
     }
 
     @Override
-    public Optional<String> getSeriesInstanceUID() {
-        return (images == null || images.isEmpty()) ? Optional.empty() : images.get(0).getSeriesInstanceUID();
+    public Option<String> getSeriesInstanceUID() {
+        return (images == null || images.isEmpty()) ? Option.empty() : images.get(0).getSeriesInstanceUID();
     }
 }

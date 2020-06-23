@@ -4,6 +4,7 @@ import org.apache.commons.math3.util.Precision;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.io.DicomInputStream;
 import org.junit.jupiter.api.Test;
+import org.rt.rtkj.Option;
 import org.rt.rtkj.ResourceFactory;
 
 import java.io.BufferedInputStream;
@@ -13,7 +14,6 @@ import java.nio.ByteOrder;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,8 +57,8 @@ public class SpatialRegistrationTest {
             var referencedSerie = referencedSeriesSequence.get().get(0);
             var referencedInstanceSequence = referencedSerie.getReferencedInstanceSequence().get();
             var referencedInstanceItem = new ReferencedSOPClassInstanceItem();
-            referencedInstanceItem.setReferencedSOPClassUID(Optional.of(UID.CTImageStorage));
-            referencedInstanceItem.setReferencedSOPInstanceUID(Optional.of("1.2.392.200036.9116.2.6.1.16.1613471639.1569981394.848382"));
+            referencedInstanceItem.setReferencedSOPClassUID(Option.of(UID.CTImageStorage));
+            referencedInstanceItem.setReferencedSOPInstanceUID(Option.of("1.2.392.200036.9116.2.6.1.16.1613471639.1569981394.848382"));
             assertEquals(referencedInstanceItem, referencedInstanceSequence.get(0));
             assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1569981382.889372", referencedSerie.getSeriesInstanceUID().get());
         }
@@ -68,8 +68,8 @@ public class SpatialRegistrationTest {
             var referencedSeriesSequence = studiesContainingOtherReferencedInstancesItem.getReferencedSeriesSequence();
             ReferencedSeriesItem referencedSeriesItem = referencedSeriesSequence.get().get(0);
             var referencedInstanceItem = new ReferencedSOPClassInstanceItem();
-            referencedInstanceItem.setReferencedSOPClassUID(Optional.of(UID.CTImageStorage));
-            referencedInstanceItem.setReferencedSOPInstanceUID(Optional.of("1.2.392.200036.9116.2.6.1.16.1613471639.1543482020.16715"));
+            referencedInstanceItem.setReferencedSOPClassUID(Option.of(UID.CTImageStorage));
+            referencedInstanceItem.setReferencedSOPInstanceUID(Option.of("1.2.392.200036.9116.2.6.1.16.1613471639.1543482020.16715"));
             assertEquals(referencedInstanceItem, referencedSeriesItem.getReferencedInstanceSequence().get().get(0));
             assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1543481929.823084", referencedSeriesItem.getSeriesInstanceUID().get());
             assertEquals("1.2.392.200036.9116.2.6.1.16.1613471639.1543481030.280100", studiesContainingOtherReferencedInstancesItem.getStudyInstanceUID().get());
@@ -100,8 +100,8 @@ public class SpatialRegistrationTest {
             var referencedImageSequence = registrationItem0.getReferencedImageSequence().get();
             var b = referencedImageSequence.get(0);
             var a = new ReferencedSOPClassInstanceItem();
-            a.setReferencedSOPClassUID(Optional.of(UID.CTImageStorage));
-            a.setReferencedSOPInstanceUID(Optional.of("1.2.392.200036.9116.2.6.1.16.1613471639.1569981394.848382"));
+            a.setReferencedSOPClassUID(Option.of(UID.CTImageStorage));
+            a.setReferencedSOPInstanceUID(Option.of("1.2.392.200036.9116.2.6.1.16.1613471639.1569981394.848382"));
             assertEquals(a, b);
 
             var matrixRegistrationSequence = registrationItem0.getMatrixRegistrationSequence();
@@ -125,8 +125,8 @@ public class SpatialRegistrationTest {
             var referencedImageSequence = registrationItem1.getReferencedImageSequence();
             var b = referencedImageSequence.get().get(0);
             var a = new ReferencedSOPClassInstanceItem();
-            a.setReferencedSOPClassUID(Optional.of(UID.CTImageStorage));
-            a.setReferencedSOPInstanceUID(Optional.of("1.2.392.200036.9116.2.6.1.16.1613471639.1543482020.16715"));
+            a.setReferencedSOPClassUID(Option.of(UID.CTImageStorage));
+            a.setReferencedSOPInstanceUID(Option.of("1.2.392.200036.9116.2.6.1.16.1613471639.1543482020.16715"));
             assertEquals(a, b);
 
             var matrixRegistrationSequence = registrationItem1.getMatrixRegistrationSequence().get();

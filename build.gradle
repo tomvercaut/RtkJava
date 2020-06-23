@@ -29,6 +29,7 @@ dependencies {
     compileOnly "org.projectlombok:lombok:$lombokVersion"
     compile "org.dcm4che:dcm4che-parent:$dcm4cheVersion"
     compile "org.dcm4che:dcm4che-core:$dcm4cheVersion"
+    compile "org.dcm4che:dcm4che-json:$dcm4cheVersion"
     compile "org.apache.commons:commons-math3:$commonsMathVersion"
     compile "com.twelvemonkeys.imageio:imageio-core:$twelvemonkeysVersion"
     compile "com.twelvemonkeys.imageio:imageio-pnm:$twelvemonkeysVersion"

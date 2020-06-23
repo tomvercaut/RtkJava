@@ -4,9 +4,12 @@ import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Test;
 import org.rt.rtkj.ResourceFactory;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -84,6 +87,22 @@ class DicomFactoryTest {
         assertTrue(optCheckDose.isPresent());
         var checkDose = optCheckDose.get();
 
+        var optInputAttr = Writer.rtdose(inputDose);
+        var optCheckAttr = Writer.rtdose(checkDose);
+
+        assertTrue(optInputAttr.isPresent());
+        assertTrue(optCheckAttr.isPresent());
+
+        var tmpDir = ResourceFactory.getTmpDir();
+        var inputDosePath = Paths.get(tmpDir, "input_dose.txt");
+        var checkDosePath = Paths.get(tmpDir, "check_dose.txt");
+        var bw1 = new BufferedWriter(new FileWriter(inputDosePath.toFile()));
+        var bw2 = new BufferedWriter(new FileWriter(checkDosePath.toFile()));
+        bw1.write(DicomUtils.toJson(optInputAttr.get()));
+        bw2.write(DicomUtils.toJson(optCheckAttr.get()));
+        bw1.close();
+        bw2.close();
+        assertEquals(optInputAttr.get(), optCheckAttr.get());
         assertEquals(inputDose, checkDose);
     }
 }

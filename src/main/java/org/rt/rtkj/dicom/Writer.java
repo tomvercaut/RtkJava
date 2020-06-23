@@ -5,6 +5,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
+import org.rt.rtkj.Option;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageTypeSpecifier;
@@ -19,7 +20,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 
 import static java.awt.image.DataBuffer.TYPE_USHORT;
@@ -81,27 +81,27 @@ public class Writer {
         writer.write(bi);
     }
 
-    private static void writeString(Attributes attr, int tag, VR vr, Optional<String> optionalValue) {
+    private static void writeString(Attributes attr, int tag, VR vr, Option<String> optionalValue) {
         if (attr == null || optionalValue.isEmpty()) return;
         attr.setString(tag, vr, optionalValue.get());
     }
 
-    private static void writeString(Attributes attr, ElementDictionary dict, int tag, Optional<String> optionalValue) {
+    private static void writeString(Attributes attr, ElementDictionary dict, int tag, Option<String> optionalValue) {
         if (attr == null || dict == null || optionalValue.isEmpty()) return;
         attr.setString(tag, dict.vrOf(tag), optionalValue.get());
     }
 
-    private static void writeInt(Attributes attr, ElementDictionary dict, int tag, Optional<Integer> optionalValue) {
+    private static void writeInt(Attributes attr, ElementDictionary dict, int tag, Option<Integer> optionalValue) {
         if (attr == null || dict == null || optionalValue.isEmpty()) return;
         attr.setInt(tag, dict.vrOf(tag), optionalValue.get());
     }
 
-    private static void writeDouble(Attributes attr, ElementDictionary dict, int tag, Optional<Double> optionalValue) {
+    private static void writeDouble(Attributes attr, ElementDictionary dict, int tag, Option<Double> optionalValue) {
         if (attr == null || dict == null || optionalValue.isEmpty()) return;
         attr.setDouble(tag, dict.vrOf(tag), optionalValue.get());
     }
 
-    private static void writeDoubles(Attributes attr, ElementDictionary dict, int tag, Optional<Double[]> optionalValue) {
+    private static void writeDoubles(Attributes attr, ElementDictionary dict, int tag, Option<Double[]> optionalValue) {
         if (attr == null || dict == null || optionalValue.isEmpty()) return;
         var value = optionalValue.get();
         var n = value.length;
@@ -113,11 +113,11 @@ public class Writer {
         attr.setDouble(tag, dict.vrOf(tag), tmp);
     }
 
-    public static Optional<Attributes> rtdose(RTDose dose) {
+    public static Option<Attributes> rtdose(RTDose dose) {
         var dict = ElementDictionary.getStandardElementDictionary();
         if (dose.getModality().isEmpty() || dose.getModality().get() != Modality.RTDOSE) {
             log.error("RTDose instance has an invalid modality: " + dose.getModality().toString());
-            return Optional.empty();
+            return Option.empty();
         }
 
         Attributes root = new Attributes();
@@ -154,7 +154,18 @@ public class Writer {
         writeString(root, dict, Tag.FrameOfReferenceUID, dose.getFrameOfReferenceUID());
         writeString(root, dict, Tag.PositionReferenceIndicator, dose.getPositionReferenceIndicator());
         writeInt(root, dict, Tag.SamplesPerPixel, dose.getSamplesPerPixel());
-        writeString(root, dict, Tag.PhotometricInterpretation, dose.getPhotometricInterpretation().map(Enum::toString));
+        if (dose.getPhotometricInterpretation().isEmpty()) {
+            log.error("Photometric interpretation is required for an RTDOSE.");
+            return Option.empty();
+        }
+        switch (dose.getPhotometricInterpretation().get()) {
+            case MONOCHROME2:
+                writeString(root, dict, Tag.PhotometricInterpretation, dose.getPhotometricInterpretation().map(Enum::toString));
+                break;
+            default:
+                log.error("Unsupported photometrix interpretation: " + dose.getPhotometricInterpretation().get());
+                return Option.empty();
+        }
         writeInt(root, dict, Tag.NumberOfFrames, dose.getNumberOfFrames());
         writeInt(root, dict, Tag.FrameIncrementPointer, dose.getFrameIncrementPointer());
         writeInt(root, dict, Tag.Rows, dose.getRows());
@@ -165,9 +176,19 @@ public class Writer {
         writeInt(root, dict, Tag.HighBit, dose.getHighBit());
         if (dose.getPixelRepresentation().isEmpty()) {
             log.error("RTDose is missing the required pixel representation.");
-            return Optional.empty();
+            return Option.empty();
         }
-        writeString(root, dict, Tag.PixelRepresentation, dose.getPixelRepresentation().map(Enum::toString));
+        switch (dose.getPixelRepresentation().get()) {
+            case NONE:
+                log.error("Pixel representation is set to NONE, this is an invalid value.");
+                return Option.empty();
+            case UNSIGNED:
+                writeInt(root, dict, Tag.PixelRepresentation, Option.of(0));
+                break;
+            case TWO_COMPLEMENT:
+                log.error("Pixel representation of two complement is currently not yet supported.");
+                return Option.empty();
+        }
         writeString(root, dict, Tag.DoseUnits, dose.getDoseUnits());
         writeString(root, dict, Tag.DoseType, dose.getDoseType());
         writeString(root, dict, Tag.DoseSummationType, dose.getDoseSummationType());
@@ -191,23 +212,23 @@ public class Writer {
         // Checks based on info found in C.8.8.3.4
         if (dose.getPhotometricInterpretation().isEmpty() || dose.getPhotometricInterpretation().get() != PhotometricInterpretation.MONOCHROME2) {
             log.error("The photometrix interpretation for RTDOSE file must be MONOCHROME2");
-            return Optional.empty();
+            return Option.empty();
         }
         if (dose.getBitsAllocated().isEmpty() || (dose.getBitsAllocated().get() != 16 && dose.getBitsAllocated().get() != 32)) {
             log.error("The number of bits allocated must be either 16 or 32");
-            return Optional.empty();
+            return Option.empty();
         }
         if (dose.getBitsAllocated().isEmpty() || dose.getBitsStored().get() != dose.getBitsAllocated().get()) {
             log.error("The number of bits stored but be equal to the number of bits allocated.");
-            return Optional.empty();
+            return Option.empty();
         }
         if (dose.getPixelRepresentation().isEmpty() || dose.getPixelRepresentation().get() != PixelRepresentation.UNSIGNED) {
             log.error("Supported pixel representation for RTDOSE pixel data is unsigned integer values. Not the two's complement integer representation.");
-            return Optional.empty();
+            return Option.empty();
         }
         if (dose.getNumberOfFrames().isEmpty() || dose.getNumberOfFrames().get() < 1) {
             log.error("Number of frames must be equal to 1 or higher.");
-            return Optional.empty();
+            return Option.empty();
         }
 
         // Check if the byteorder of the system is Little endian. If not, the following code will be incorrect.
@@ -215,7 +236,7 @@ public class Writer {
         // by the DICOM standard.
         if (ByteOrder.nativeOrder() != ByteOrder.LITTLE_ENDIAN) {
             log.error("The code that write the bytebuffer for the pixel data is written for little endian DICOM streams and assumes that the system is also little endian.");
-            return Optional.empty();
+            return Option.empty();
         }
 
         ByteBuffer pb = null;
@@ -242,14 +263,14 @@ public class Writer {
         if (k != pb.capacity()) {
             log.error(String.format("Index in the byte buffer after filling the buffer should be equal to it's " +
                     "capacity. No remaining bytes should be left. Capacity: %d", pb.capacity()));
-            return Optional.empty();
+            return Option.empty();
         }
         root.setBytes(Tag.PixelData, VR.OW, pb.array());
 
-        return Optional.of(root);
+        return Option.of(root);
     }
 
-    private static <T> boolean addSequence(Attributes parent, int seqTag, Optional<List<T>> optionalItems, ElementDictionary dict, BiFunction<T, ElementDictionary, Optional<Attributes>> function) {
+    private static <T> boolean addSequence(Attributes parent, int seqTag, Option<List<T>> optionalItems, ElementDictionary dict, BiFunction<T, ElementDictionary, Option<Attributes>> function) {
         if (parent == null || dict == null) {
             if (parent == null) log.error("Parent of the sequence can't be null.");
             if (dict == null) log.error("DICOM dictionary can't be null.");
@@ -274,8 +295,8 @@ public class Writer {
         return true;
     }
 
-    private static Optional<Attributes> dvh(DvhItem item, ElementDictionary dict) {
-        if (item == null || dict == null) return Optional.empty();
+    private static Option<Attributes> dvh(DvhItem item, ElementDictionary dict) {
+        if (item == null || dict == null) return Option.empty();
         Attributes attr = new Attributes();
         writeString(attr, dict, Tag.DVHType, item.getDvhType());
         writeString(attr, dict, Tag.DoseUnits, item.getDoseUnits());
@@ -286,44 +307,44 @@ public class Writer {
         if (!addSequence(attr, Tag.DVHReferencedROISequence, item.getDvhReferencedROISequence(), dict, Writer::dvhReferencedROI)) {
 
             log.error("Unable to write DVHReferencedROISequence");
-            return Optional.empty();
+            return Option.empty();
         }
         writeInt(attr, dict, Tag.DVHNumberOfBins, item.getDvhNumberOfBins());
         writeDouble(attr, dict, Tag.DVHMinimumDose, item.getDvhMinimumDose());
         writeDouble(attr, dict, Tag.DVHMaximumDose, item.getDvhMaximumDose());
         writeDouble(attr, dict, Tag.DVHMeanDose, item.getDvhMeanDose());
-        return Optional.of(attr);
+        return Option.of(attr);
     }
 
-    private static Optional<Attributes> dvhReferencedROI(DVHReferencedROIItem item, ElementDictionary dict) {
-        if (item == null || dict == null) return Optional.empty();
+    private static Option<Attributes> dvhReferencedROI(DVHReferencedROIItem item, ElementDictionary dict) {
+        if (item == null || dict == null) return Option.empty();
         Attributes attr = new Attributes();
         writeString(attr, dict, Tag.DVHROIContributionType, item.getDvhROIContributionType());
         writeInt(attr, dict, Tag.ReferencedROINumber, item.getReferencedROINumber());
-        return Optional.of(attr);
+        return Option.of(attr);
     }
 
-    private static Optional<Attributes> referencedSOPClassInstance(ReferencedSOPClassInstanceItem item, ElementDictionary dict) {
-        if (item == null || dict == null) return Optional.empty();
+    private static Option<Attributes> referencedSOPClassInstance(ReferencedSOPClassInstanceItem item, ElementDictionary dict) {
+        if (item == null || dict == null) return Option.empty();
         Attributes attr = new Attributes();
         writeString(attr, dict, Tag.ReferencedSOPClassUID, item.getReferencedSOPClassUID());
         writeString(attr, dict, Tag.ReferencedSOPInstanceUID, item.getReferencedSOPInstanceUID());
-        return Optional.of(attr);
+        return Option.of(attr);
     }
 
-    private static Optional<String> toString(PixelRepresentation pixelRepresentation) {
+    private static Option<String> toString(PixelRepresentation pixelRepresentation) {
         final String errMsg = "Invalid pixel representation.";
         switch (pixelRepresentation) {
             case NONE:
                 log.error(errMsg);
-                return Optional.empty();
+                return Option.empty();
             case UNSIGNED:
-                return Optional.of("0");
+                return Option.of("0");
             case TWO_COMPLEMENT:
-                return Optional.of("1");
+                return Option.of("1");
         }
         log.error(errMsg);
-        return Optional.empty();
+        return Option.empty();
 
     }
 }

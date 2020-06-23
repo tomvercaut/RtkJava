@@ -1,14 +1,13 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
+import org.rt.rtkj.Option;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 public class ROIContourItem {
-    private Optional<Integer[]> rOIDisplayColor = Optional.empty();
-    private Optional<List<ContourItem>> contourSequence = Optional.empty() ;
-    private Optional<Integer> referencedROINumber = Optional.empty();
+    private Option<Integer[]> rOIDisplayColor = Option.empty();
+    private Option<List<ContourItem>> contourSequence = Option.empty();
+    private Option<Integer> referencedROINumber = Option.empty();
 }

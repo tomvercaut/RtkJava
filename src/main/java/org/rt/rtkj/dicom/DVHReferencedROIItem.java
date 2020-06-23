@@ -1,11 +1,10 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
-
-import java.util.Optional;
+import org.rt.rtkj.Option;
 
 @Data
 public class DVHReferencedROIItem {
-    private Optional<String> dvhROIContributionType = Optional.empty();
-    private Optional<Integer> referencedROINumber = Optional.empty();
+    private Option<String> dvhROIContributionType = Option.empty();
+    private Option<Integer> referencedROINumber = Option.empty();
 }

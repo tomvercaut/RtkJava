@@ -1,18 +1,17 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
+import org.rt.rtkj.Option;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 public class RequestAttributesItem {
-    private Optional<String> accessionNumber = Optional.empty();
-    private Optional<List<ReferencedSOPClassInstanceItem>> referencedStudySequence = Optional.empty();
-    private Optional<String> studyInstanceUID = Optional.empty();
-    private Optional<String> requestedProcedureDescription = Optional.empty();
-    private Optional<List<ReducedCodeItem>> requestedProcedureCodeSequence = Optional.empty();
-    private Optional<String> scheduledProcedureStepID = Optional.empty();
-    private Optional<String> requestedProcedureID = Optional.empty();
+    private Option<String> accessionNumber = Option.empty();
+    private Option<List<ReferencedSOPClassInstanceItem>> referencedStudySequence = Option.empty();
+    private Option<String> studyInstanceUID = Option.empty();
+    private Option<String> requestedProcedureDescription = Option.empty();
+    private Option<List<ReducedCodeItem>> requestedProcedureCodeSequence = Option.empty();
+    private Option<String> scheduledProcedureStepID = Option.empty();
+    private Option<String> requestedProcedureID = Option.empty();
 }

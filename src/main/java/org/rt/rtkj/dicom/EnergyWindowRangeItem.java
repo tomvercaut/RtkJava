@@ -1,11 +1,10 @@
 package org.rt.rtkj.dicom;
 
 import lombok.Data;
-
-import java.util.Optional;
+import org.rt.rtkj.Option;
 
 @Data
 public class EnergyWindowRangeItem {
-    private Optional<Double> energyWindowLowerLimit = Optional.empty();
-    private Optional<Double> energyWindowUpperLimit = Optional.empty();
+    private Option<Double> energyWindowLowerLimit = Option.empty();
+    private Option<Double> energyWindowUpperLimit = Option.empty();
 }

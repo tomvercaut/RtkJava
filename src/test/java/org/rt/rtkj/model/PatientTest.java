@@ -4,6 +4,7 @@ import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.rt.rtkj.Option;
 import org.rt.rtkj.dicom.CT;
 import org.rt.rtkj.dicom.DicomException;
 import org.rt.rtkj.dicom.DicomFactory;
@@ -13,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -54,7 +54,7 @@ class PatientTest {
         lct.addAll(lct3);
 //        Collections.shuffle(lct);
         lct.forEach(path -> {
-            Optional<CT> opt_ct = Optional.empty();
+            Option<CT> opt_ct = Option.empty();
             try {
                 var dcmObj = DicomFactory.read(path);
                 assertTrue(dcmObj.hasCT());
