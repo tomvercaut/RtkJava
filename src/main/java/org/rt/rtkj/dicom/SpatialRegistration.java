@@ -52,4 +52,11 @@ public class SpatialRegistration extends MetaHeader {
     public SpatialRegistration(MetaHeader meta) {
         super(meta);
     }
+
+    /**
+     * Clear the meta header
+     */
+    public void clearMetaHeader() {
+        super.clear();
+    }
 }

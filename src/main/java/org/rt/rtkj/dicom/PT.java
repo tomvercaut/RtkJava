@@ -125,4 +125,10 @@ public class PT extends MetaHeader implements DicomImage<Long> {
         super(meta);
     }
 
+    /**
+     * Clear the meta header
+     */
+    public void clearMetaHeader() {
+        super.clear();
+    }
 }

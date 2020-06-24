@@ -105,4 +105,10 @@ public class CT extends MetaHeader implements DicomImage<Long>, HasImagePosition
         super(meta);
     }
 
+    /**
+     * Clear the meta header
+     */
+    public void clearMetaHeader() {
+        super.clear();
+    }
 }

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.function.Function;
 
 @Log4j2
-public class Reader {
+public class Reader<opt> {
 
     /**
      * Read a sequence from attributes by the corresponding DICOM tag.
@@ -53,7 +53,10 @@ public class Reader {
      */
     private static Option<String> readString(Attributes attr, int tag) {
         if (attr == null || !attr.containsValue(tag)) return Option.empty();
-        return Option.ofNullable(attr.getString(tag));
+        var opt = Option.ofNullable(attr.getString(tag));
+        if (opt.isPresent() && opt.get().isBlank())
+            opt = Option.empty();
+        return opt;
     }
 
     /**

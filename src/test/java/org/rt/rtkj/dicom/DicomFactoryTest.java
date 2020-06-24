@@ -103,6 +103,12 @@ class DicomFactoryTest {
         bw1.close();
         bw2.close();
         assertEquals(optInputAttr.get(), optCheckAttr.get());
-        assertEquals(inputDose, checkDose);
+
+        inputDose.clearMetaHeader();
+        checkDose.clearMetaHeader();
+
+        RTDoseComparison rtDoseComparison = new RTDoseComparison();
+        rtDoseComparison.setIgnoreDateTime(true);
+        assertTrue(rtDoseComparison.equals(inputDose, checkDose));
     }
 }

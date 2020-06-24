@@ -1,6 +1,7 @@
 package org.rt.rtkj.utils;
 
 import org.apache.commons.math3.util.Precision;
+import org.rt.rtkj.Option;
 
 import java.util.List;
 
@@ -74,6 +75,29 @@ public class CollectionPrecision {
         if (n != l2.size()) return false;
         for (int i = 0; i < n; i++) {
             if (!Precision.equals(l1.get(i), l2.get(i), eps)) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Return true if the content of the arrays are equal or within the range of allowed error.
+     *
+     * @param ol1 first array
+     * @param ol2 second array
+     * @return {@code true} if both array elements are equal withing the range of allowed error.
+     * @see Precision#equals(double, double)
+     */
+    public static boolean equalsDoubles(Option<Double[]> ol1, Option<Double[]> ol2) {
+        if (ol1 == null && ol2 == null) return true;
+        if (ol1 == null || ol2 == null) return false;
+        if (ol1.isEmpty() && ol2.isEmpty()) return true;
+        if ((ol1.isPresent() && ol2.isEmpty()) || (ol1.isEmpty() && ol2.isPresent())) return false;
+        var l1 = ol1.get();
+        var l2 = ol2.get();
+        int n = l1.length;
+        if (n != l2.length) return false;
+        for (int i = 0; i < n; i++) {
+            if (!Precision.equals(l1[i], l2[i])) return false;
         }
         return true;
     }

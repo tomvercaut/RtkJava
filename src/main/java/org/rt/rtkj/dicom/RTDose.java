@@ -70,6 +70,13 @@ public class RTDose extends MetaHeader //implements DicomImage<Long>
         super(meta);
     }
 
+    /**
+     * Clear the meta header
+     */
+    public void clearMetaHeader() {
+        super.clear();
+    }
+
     public Option<Double> getDose(int index) throws NullPointerException, IndexOutOfBoundsException {
         if (pixelData == null || pixelData.isEmpty()) throw new NullPointerException("PixelData was not initialised.");
         int n = pixelData.get().size();
