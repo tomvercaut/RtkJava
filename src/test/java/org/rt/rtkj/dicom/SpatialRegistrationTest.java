@@ -6,6 +6,7 @@ import org.dcm4che3.io.DicomInputStream;
 import org.junit.jupiter.api.Test;
 import org.rt.rtkj.Option;
 import org.rt.rtkj.ResourceFactory;
+import org.rt.rtkj.utils.TransformBuilder;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -142,6 +143,20 @@ public class SpatialRegistrationTest {
                 assertEquals(exp[i], (double) actual[i], Precision.EPSILON);
             }
         }
+    }
 
+    void transformCoordinates1() throws IOException, DicomException {
+        var resourceDirectory = ResourceFactory.getInstance().getDicomPath();
+        var file = Paths.get(resourceDirectory.toFile().getAbsolutePath(), "reg1.dcm").toFile();
+        assertTrue(file.exists());
+        assertTrue(file.isFile());
+        var dcmObj = DicomFactory.read(file);
+        assertTrue(dcmObj.hasSpatialRegistration());
+        var optSr = dcmObj.getSpatialRegistration();
+        assertTrue(optSr.isPresent());
+        var sr = optSr.get();
+        var ltm = TransformBuilder.getRigidFrameOfReferenceTransformMatrices(sr);
+        assertEquals(2, ltm.size());
+        //TODO complete the validation
     }
 }

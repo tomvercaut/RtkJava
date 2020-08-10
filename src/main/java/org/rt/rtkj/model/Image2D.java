@@ -160,10 +160,10 @@ public class Image2D implements HasImagePositionPatient {
         updateInverseTm = true;
         this.imagePositionPatient = imagePositionPatient;
         if (this.imagePositionPatient.isPresent()) {
-            this.tm.mat.set(0, 3, imagePositionPatient.get()[0]);
-            this.tm.mat.set(1, 3, imagePositionPatient.get()[1]);
-            this.tm.mat.set(2, 3, imagePositionPatient.get()[2]);
-            this.tm.mat.set(3, 3, 1.0);
+            this.tm.set(0, 3, imagePositionPatient.get()[0]);
+            this.tm.set(1, 3, imagePositionPatient.get()[1]);
+            this.tm.set(2, 3, imagePositionPatient.get()[2]);
+            this.tm.set(3, 3, 1.0);
             return true;
         } else {
             return false;
@@ -174,12 +174,12 @@ public class Image2D implements HasImagePositionPatient {
         updateInverseTm = true;
         this.imageOrientationPatient = imageOrientationPatient;
         if (this.imageOrientationPatient.isPresent()) {
-            this.tm.mat.set(0, 0, imageOrientationPatient.get()[0] * pixelSpacing.get()[1]);
-            this.tm.mat.set(1, 0, imageOrientationPatient.get()[1] * pixelSpacing.get()[1]);
-            this.tm.mat.set(2, 0, imageOrientationPatient.get()[2] * pixelSpacing.get()[1]);
-            this.tm.mat.set(0, 1, imageOrientationPatient.get()[3] * pixelSpacing.get()[0]);
-            this.tm.mat.set(1, 1, imageOrientationPatient.get()[4] * pixelSpacing.get()[0]);
-            this.tm.mat.set(2, 1, imageOrientationPatient.get()[5] * pixelSpacing.get()[0]);
+            this.tm.set(0, 0, imageOrientationPatient.get()[0] * pixelSpacing.get()[1]);
+            this.tm.set(1, 0, imageOrientationPatient.get()[1] * pixelSpacing.get()[1]);
+            this.tm.set(2, 0, imageOrientationPatient.get()[2] * pixelSpacing.get()[1]);
+            this.tm.set(0, 1, imageOrientationPatient.get()[3] * pixelSpacing.get()[0]);
+            this.tm.set(1, 1, imageOrientationPatient.get()[4] * pixelSpacing.get()[0]);
+            this.tm.set(2, 1, imageOrientationPatient.get()[5] * pixelSpacing.get()[0]);
             return true;
         }
         return false;
